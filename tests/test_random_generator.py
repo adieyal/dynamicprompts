@@ -237,7 +237,16 @@ class TestRandomGenerator:
 
             assert len(prompts) == 1
             assert prompts[0] == "A red square,circle"
-            # mock_random.choices.assert_called_with(shapes, weights=[1, 1], k=2)
+
+    def test_variants_with_larger_bounds_than_choices(self, generator: RandomGenerator):
+        shapes = ["square", "circle"]
+        with mock.patch("prompts.parser.random_generator.random") as mock_random:
+            mock_random.randint.return_value = 3
+            mock_random.choices.side_effect = [shapes]
+            prompts = generator.generate_prompts("A red {3$$square|circle}", 1)
+
+            assert len(prompts) == 1
+            assert prompts[0] == "A red square,circle"
 
     def test_two_variants(self, generator: RandomGenerator):
         with mock.patch("prompts.parser.random_generator.random.choices") as mock_random:

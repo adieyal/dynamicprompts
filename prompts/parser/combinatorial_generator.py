@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections.abc import Iterable
+from collections import OrderedDict
 
 from .parse import (
     ActionBuilder,
@@ -47,19 +48,7 @@ class CombinatorialWildcardCommand(WildcardCommand):
 
 
 class CombinatorialVariantCommand(VariantCommand):
-    def _resolve_combinations(self, combo) -> Iterable[str]:
-        if len(combo) == 0:
-            yield ""
-        else:
-            c, rest = combo[0], combo[1:]
-            for p in c.prompts():
-                for r in self._resolve_combinations(rest):
-                    if r == "":
-                        yield p
-                    else:
-                        yield self.sep.join([p, r])
-
-    def _combo_to_prompt(self, combo: list[Command]) -> Iterable[list[str]]:
+    def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
         if len(combo) == 0:
             yield []
         else:
@@ -72,17 +61,27 @@ class CombinatorialVariantCommand(VariantCommand):
                     else:
                         yield [p]
 
+    def _dedupe(self, arr: list[str]) -> tuple[str]:
+        d = OrderedDict()
+        for item in arr:
+            d[item] = None
+        return tuple(d.keys())
+
     def prompts(self) -> Iterable[str]:
         if len(self._values) == 0:
             return []
+        
+        seen = set()
 
         for bound in range(self.min_bound, self.max_bound + 1):
             for combo in self._combinations(bound):
                 for prompt_arr in self._combo_to_prompt(combo):
-                    has_duplicates = len(prompt_arr) != len(set(prompt_arr))
-                    if has_duplicates:
-                        continue
-                    yield self.sep.join(prompt_arr)
+                    deduped_arr = self._dedupe(prompt_arr)
+                    correct_size = len(deduped_arr) == bound
+                    if deduped_arr not in seen and correct_size:
+                        seen.add(deduped_arr)
+                        yield self.sep.join(deduped_arr)
+                    
 
     def __repr__(self):
         z = zip(self._weights, self._values)
