@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "dynamic-prompts-parser"
+version = "0.1.0"
+description = ""
+authors = ["Adi Eyal <adi@clearforest.io>"]
+readme = "README.md"
+packages = [{include = "dynamic_prompts_parser"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyparsing = "^3.0.9"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.2.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+pythonpath = [
+  "dynamic_prompts_parser"
+]
+
