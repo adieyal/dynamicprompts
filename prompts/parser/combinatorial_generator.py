@@ -33,9 +33,7 @@ class CombinatorialWildcardCommand(WildcardCommand):
     def __init__(self, wildcard_manager, token):
         super().__init__(wildcard_manager, token)
         self._wildcard_manager = wildcard_manager
-        if type(token) == list:
-            import pdb; pdb.set_trace()
-        self._wildcard = token
+        self._wildcard = token[0]
 
     def prompts(self):
         generator = CombinatorialGenerator(self._wildcard_manager)

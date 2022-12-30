@@ -192,7 +192,7 @@ class TestWildcardsCommand:
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            command1 = CombinatorialWildcardCommand(wildcard_manager, "colours")
+            command1 = CombinatorialWildcardCommand(wildcard_manager, ["colours"])
             command2 = LiteralCommand("are")
             command3 = LiteralCommand("cool")
             sequence = CombinatorialSequenceCommand([command1, command2, command3])
@@ -322,7 +322,6 @@ class TestCombinatorialGenerator:
         with mock.patch.object(
             generator._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            # import pdb; pdb.set_trace()
             prompts = generator.generate_prompts("A __colours__ {square|circle}", 6)
             assert len(prompts) == 6
             assert prompts[0] == "A red square"
@@ -331,7 +330,7 @@ class TestCombinatorialGenerator:
             assert prompts[3] == "A green circle"
             assert prompts[4] == "A blue square"
             assert prompts[5] == "A blue circle"
-            # generator._wildcard_manager.get_all_values.assert_called_once_with("colours")
+            generator._wildcard_manager.get_all_values.assert_called_once_with("colours")
 
     def test_nested_wildcard(self, generator):
         with mock.patch.object(
