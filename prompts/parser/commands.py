@@ -62,6 +62,9 @@ class LiteralCommand(Command):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.literal!r})"
 
+    def __str__(self) -> str:
+        return self.literal
+
 class VariantCommand(Command):
     def __init__(self, variants, min_bound=1, max_bound=1, sep=","):
         super().__init__(variants)
