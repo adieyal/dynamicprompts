@@ -20,6 +20,10 @@ class TestSequence:
         assert sequence[0] == literals[0]
         assert sequence[1] == literals[1]
 
+    def test_equality(self, literals: list[Command]):
+        sequence = SequenceCommand(literals)
+        assert sequence == literals
+
 
 class TestLiteral:
     def test_prompts(self):

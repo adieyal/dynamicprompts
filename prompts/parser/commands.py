@@ -34,6 +34,14 @@ class SequenceCommand(Command):
     def __getitem__(self, idx: int) -> Command:
         return self.tokens[idx]
 
+    def __eq__(self, other):
+        if isinstance(other, SequenceCommand):
+            return self.tokens == other.tokens
+        elif isinstance(other, list):
+            return self.tokens == other
+        else:
+            return False
+
     def prompts(self) -> Iterable[str]:
         raise NotImplementedError()
 
