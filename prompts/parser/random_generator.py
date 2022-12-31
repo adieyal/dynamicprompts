@@ -1,5 +1,6 @@
 from __future__ import annotations
 import random
+from collections.abc import Iterable
 from typing import Iterator, cast
 
 from .parse import Parser, ActionBuilder
@@ -16,7 +17,7 @@ class RandomSequenceCommand(SequenceCommand):
 
 
 class RandomWildcardCommand(Command):
-    def __init__(self, wildcard_manager, token):
+    def __init__(self, wildcard_manager, token: str):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
@@ -41,15 +42,27 @@ class RandomVariantCommand(Command):
         self.sep = sep
         self._remaining_values = self._values
 
+    def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
+        if len(combo) == 0:
+            yield []
+        else:
+            c_1, c_rest = combo[0], combo[1:]
+
+            for p in c_1.prompts():
+                for rest_prompt in self._combo_to_prompt(c_rest):
+                    if rest_prompt != "":
+                        yield [p] + rest_prompt
+                    else:
+                        yield [p]
+
     def prompts(self) -> Iterator[str]:
         if len(self._values) == 0:
             return []
 
         num_choices = random.randint(self.min_bound, self.max_bound)
-        choices = random.choices(self._values, weights=self._weights, k=num_choices)
-        v = self.sep.join(choices)
-
-        return [v]
+        combo = random.choices(self._values, weights=self._weights, k=num_choices)
+        for prompt_arr in self._combo_to_prompt(combo):
+            yield self.sep.join(prompt_arr)
 
     def __repr__(self):
         z = zip(self._weights, self._values)

@@ -316,3 +316,5 @@ class TestRandomGenerator:
                 assert len(prompts) == 2
                 assert prompts[0] == "A red square"
                 assert prompts[1] == "A green circle"
+
+            

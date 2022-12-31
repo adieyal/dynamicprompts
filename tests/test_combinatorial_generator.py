@@ -180,12 +180,15 @@ class TestWildcardsCommand:
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            command = CombinatorialWildcardCommand(wildcard_manager, "colours")
+            command = CombinatorialWildcardCommand(wildcard_manager, ["colours"])
             prompts = list(command.prompts())
             assert len(prompts) == 3
             assert prompts[0] == "red"
             assert prompts[1] == "green"
             assert prompts[2] == "blue"
+
+            wildcard_manager.get_all_values.assert_called_once_with("colours")
+
             
 
     def test_wildcard_with_literal(self, wildcard_manager):
