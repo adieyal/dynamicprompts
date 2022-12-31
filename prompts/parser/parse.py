@@ -9,6 +9,7 @@ from .commands import SequenceCommand, LiteralCommand, VariantCommand, WildcardC
 
 logger = logging.getLogger(__name__)
 
+printable = pp.pyparsing_unicode.Latin1.printables
 
 def parse_bound_expr(expr, max_options):
     lbound = 1
@@ -89,7 +90,7 @@ class Parser:
 
         prompt_editing = self._configure_prompt_editing()
 
-        literal = pp.Word(pp.printables, exclude_chars=non_literal_chars)("literal")
+        literal = pp.Word(printable, exclude_chars=non_literal_chars)("literal")
         literal_sequence = (pp.OneOrMore(~wildcard_enclosure + literal))("literal_sequence")
 
         return prompt_editing | literal_sequence
