@@ -1,5 +1,6 @@
 from __future__ import annotations
-from collections.abc import Iterable
+
+from typing import Iterable
 from collections import OrderedDict
 
 from .parse import (
@@ -115,7 +116,7 @@ class CombinatorialGenerator:
 
         return parser
 
-    def generate_prompts(self, prompt: str, num_prompts: int|None=None):
+    def generate_prompts(self, prompt: str, num_prompts: int|None=None) -> list[str]:
         if len(prompt) == 0:
             return []
 
