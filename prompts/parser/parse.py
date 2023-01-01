@@ -137,22 +137,31 @@ class Parser:
         return wildcard
 
     def _configure_literal_sequence(self):
-        non_literal_chars = r"{}|:$\[\]"
+        non_literal_chars = r"{}()|:$\[\]"
         wildcard_enclosure = pp.Suppress("__")
 
         literal = pp.Regex(rf"[^{non_literal_chars}\s]+")("literal")
-        literal_sequence = pp.Forward()
+        # literal_sequence = pp.Forward()
 
         literal_sequence1 = pp.OneOrMore(~wildcard_enclosure + literal)
-        literal_sequence2 = pp.Word("[") + literal_sequence1 + pp.Word("]")
-        literal_sequence3 = pp.Word("(") + literal_sequence1 + pp.Word(")")
+        literal_sequence_square = pp.Word("[") + literal_sequence1 + pp.Word("]")
+        literal_sequence_round = pp.Word("(") + literal_sequence1 + pp.Word(")")
+        literal_sequence_round2 = pp.Word("(") + literal_sequence1 + pp.Word(":") + real_num + pp.Word(")")
 
-        def join_literal_sequence(s, l, t):
-            return " ".join(t).replace("[ ", "[").replace(" ]", "]")
+        def join_literal_sequence(s, l, tokens):
+            chars = "[]():"
+            s = " ".join([str(t) for t in tokens])
+            for c in chars:
+                s = s.replace(f" {c}", c)
+                s = s.replace(f"{c} ", c)
 
-        literal_sequence2 = literal_sequence2.set_parse_action(join_literal_sequence)
+            return s
+
+        literal_sequence_square = literal_sequence_square.set_parse_action(join_literal_sequence)
+        literal_sequence_round = literal_sequence_round.set_parse_action(join_literal_sequence)
+        literal_sequence_round2 = literal_sequence_round2.set_parse_action(join_literal_sequence)
         
-        literal_sequence = pp.OneOrMore(literal_sequence1 | literal_sequence2 | literal_sequence3)("literal_sequence")
+        literal_sequence = pp.OneOrMore(literal_sequence1 | literal_sequence_square | literal_sequence_round | literal_sequence_round2)
         
         return  literal_sequence("literal_sequence")
 
@@ -226,6 +235,7 @@ class Parser:
         chunk = (extras | variants | wildcard | literal_sequence)
 
         prompt <<= pp.ZeroOrMore(chunk)("prompt")
+        # import pdb; pdb.set_trace()
         
         self._enable_comments(prompt)
 

@@ -66,9 +66,9 @@ class TestParser:
         assert len(sequence) == 1
         assert sequence[0] == "Test (high emphasis)"
 
-        # sequence = parser.parse("Test (high emphasis:0.4)")
-        # assert len(sequence) == 1
-        # assert sequence[0] == "Test (high emphasis:0.4)"
+        sequence = parser.parse("Test (high emphasis:0.4)")
+        assert len(sequence) == 1
+        assert sequence[0] == "Test (high emphasis:0.4)"
 
     def test_wildcard(self, parser: Parser):
         sequence = parser.parse("__colours__")
