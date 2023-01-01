@@ -266,7 +266,7 @@ class TestRandomGenerator:
     def test_variant_with_blank(self, generator: RandomGenerator):
         with mock.patch("prompts.parser.random_generator.random") as mock_random:
             mock_random.choices.side_effect = [
-                [to_seqlit("")],
+                [RandomSequenceCommand([])],
                 [to_seqlit("red")],
                 [to_seqlit("blue")]
             ]
