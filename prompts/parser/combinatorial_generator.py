@@ -106,11 +106,11 @@ class CombinatorialActionBuilder(ActionBuilder):
     def get_sequence_class(self):
         return CombinatorialSequenceCommand
 
-    def get_prompt_alternating_action(self):
-        return lambda x, y, tokens: CombinatorialSequenceCommand(tokens, separator="")
+    def get_prompt_alternating_class(self):
+        return lambda tokens : CombinatorialSequenceCommand(tokens, separator="")
 
-    def get_prompt_editing_action(self):
-        return lambda x, y, tokens: CombinatorialSequenceCommand(tokens, separator="")
+    def get_prompt_editing_class(self):
+        return lambda tokens : CombinatorialSequenceCommand(tokens, separator="")
 
 
 class CombinatorialGenerator:

@@ -33,6 +33,9 @@ def parse_bound_expr(expr, max_options):
     return lbound, ubound, separator
 
 class ActionBuilder:
+    def __init__(self, wildcard_manager):
+        self._wildcard_manager = wildcard_manager
+
     def get_literal_class(self):
         return LiteralCommand
 
@@ -45,14 +48,17 @@ class ActionBuilder:
     def get_sequence_class(self):
         return SequenceCommand
 
+    def get_prompt_editing_class(self):
+        return self.get_sequence_class()
+
+    def get_prompt_alternating_class(self):
+        return self.get_sequence_class()
+
     def get_prompt_editing_action(self):
-        return lambda x, y, tokens: SequenceCommand(tokens)
+        return lambda x, y, tokens: self.get_prompt_editing_class()(tokens)
 
     def get_prompt_alternating_action(self):
-        return lambda x, y, tokens: SequenceCommand(tokens)
-
-    def __init__(self, wildcard_manager):
-        self._wildcard_manager = wildcard_manager
+        return lambda x, y, tokens: self.get_prompt_editing_class()(tokens)
 
     def get_wildcard_action(self, token):
         return self.get_wildcard_class()(self._wildcard_manager, token)

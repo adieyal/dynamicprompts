@@ -88,11 +88,11 @@ class RandomActionBuilder(ActionBuilder):
     def get_sequence_class(self):
         return RandomSequenceCommand
 
-    def get_prompt_alternating_action(self):
-        return lambda x, y, tokens: RandomSequenceCommand(tokens, separator="")
+    def get_prompt_alternating_class(self):
+        return lambda tokens : RandomSequenceCommand(tokens, separator="")
 
-    def get_prompt_editing_action(self):
-        return lambda x, y, tokens: RandomSequenceCommand(tokens, separator="")
+    def get_prompt_editing_class(self):
+        return lambda tokens : RandomSequenceCommand(tokens, separator="")
 
 
 class RandomGenerator:
