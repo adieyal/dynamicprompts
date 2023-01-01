@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
 real_num2 = pp.Combine(pp.Word(pp.nums) + ".")
 real_num3 = pp.Combine("." + pp.Word(pp.nums))
+real_num4 = pp.Word(pp.nums)
 
-real_num = real_num1 | real_num2 | real_num3
+real_num = real_num1 | real_num2 | real_num3 | real_num4
 
 def parse_bound_expr(expr, max_options):
     lbound = 1
