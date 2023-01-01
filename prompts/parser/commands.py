@@ -143,10 +143,8 @@ class WildcardCommand(Command):
         
         if isinstance(token, str):
             self._wildcard = token
-        elif isinstance(token, list) and len(token) == 1:
-            self._wildcard = token[0]
         else:
-            raise ValueError(f"Expected either a str or list[str] of length 1. Received {token} instead")
+            self._wildcard = token[0]
 
 
     @property

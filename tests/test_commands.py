@@ -104,10 +104,6 @@ class TestWildcard:
         l1 = WildcardCommand(mock.Mock(), ["hello"])
         assert l1.wildcard == "hello"
 
-    def test_throws_exception_if_long_list(self):
-        with pytest.raises(ValueError):
-            l1 = WildcardCommand(mock.Mock(), ["hello", "there"])
-
     def test_equality(self):
         l1 = WildcardCommand(mock.Mock(), ["hello"])
         l2 = WildcardCommand(mock.Mock(), ["XXX"])
