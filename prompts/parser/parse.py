@@ -32,6 +32,45 @@ def parse_bound_expr(expr, max_options):
 
     return lbound, ubound, separator
 
+class ActionBuilder:
+    def get_literal_class(self):
+        return LiteralCommand
+
+    def get_wildcard_class(self):
+        return WildcardCommand
+
+    def get_variant_class(self):
+        return VariantCommand
+
+    def get_sequence_class(self):
+        return SequenceCommand
+
+    def __init__(self, wildcard_manager):
+        self._wildcard_manager = wildcard_manager
+
+    def get_wildcard_action(self, token):
+        return self.get_wildcard_class()(self._wildcard_manager, token)
+
+    def get_variant_action(self, token):
+        parts = token[0].as_dict()
+        variants = parts["variants"]
+        variants = [{"weight": v["weight"], "val": v["val"]} for v in variants]
+        if "bound_expr" in parts:
+            min_bound, max_bound, sep = parse_bound_expr(
+                parts["bound_expr"], max_options=len(variants)
+            )
+            command = self.get_variant_class()(variants, min_bound, max_bound, sep)
+        else:
+            command = self.get_variant_class()(variants)
+
+        return command
+
+    def get_literal_action(self, token):
+        s = " ".join(token)
+        return self.get_literal_class()(s)
+
+
+
 
 class Parser:
     def __init__(self, builder: ActionBuilder):
@@ -82,16 +121,18 @@ class Parser:
         return wildcard
 
     def _configure_literal_sequence(self):
-        non_literal_chars = r"{}|$\[\]"
+        non_literal_chars = r"{}|$\[\]:"
         wildcard_enclosure = pp.Suppress("__")
-
-        prompt_alternating = self._configure_prompt_alternating_words()
-        prompt_editing = self._configure_prompt_editing()
 
         literal = pp.Regex(rf"[^{non_literal_chars}\s]+")("literal")
         literal_sequence = (pp.OneOrMore(~wildcard_enclosure + literal))("literal_sequence")
+        
+        return  literal_sequence
 
-        return prompt_alternating | prompt_editing | literal_sequence
+    def _configure_extra(self, prompt):
+        prompt_alternating = self._configure_prompt_alternating_words()
+        prompt_editing = self._configure_prompt_editing(prompt)
+        return  prompt_editing | prompt_alternating
 
     def _configure_prompt_alternating_words(self):
         left_bracket, right_bracket = map(pp.Word, "[]")
@@ -101,18 +142,20 @@ class Parser:
         prompt_alternating = left_bracket + chars + pp.OneOrMore(pipe + chars) + right_bracket
         return prompt_alternating.set_parse_action(lambda s, loc, token: "".join(token))
 
-    def _configure_prompt_editing(self):
+    def _configure_prompt_editing(self, prompt):
         left_bracket, right_bracket = map(pp.Word, "[]")
         colon = pp.Word(":")
-        chars = pp.Regex(r"[^\]:]*")
-        num1 = pp.Word(pp.nums) + "." + pp.Word(pp.nums)
-        num2 = pp.Word(pp.nums) + pp.Optional(".")
-        num3 = pp.Optional(".") + pp.Word(pp.nums)
+        num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
+        num2 = pp.Combine(pp.Word(pp.nums) + ".")
+        num3 = pp.Combine("." + pp.Word(pp.nums))
 
         num = num1 | num2 | num3
+        literals = [left_bracket, right_bracket, colon, num]
+        for l in literals:
+            l.set_parse_action(self._builder.get_literal_action)
 
-        prompt_editing = left_bracket + chars + colon + chars + colon + num + right_bracket
-        pe = prompt_editing.set_parse_action(lambda s, loc, token: "".join(token))
+        prompt_editing = left_bracket + prompt + colon + prompt + colon + num + right_bracket
+        pe = prompt_editing
         
         return pe
 
@@ -149,8 +192,9 @@ class Parser:
         wildcard = self._configure_wildcard()
         literal_sequence = self._configure_literal_sequence()
         variants = self._configure_variants(literal_sequence, bound_expr, prompt)
+        extras = self._configure_extra(prompt)
         
-        chunk = (variants | wildcard | literal_sequence)
+        chunk = (extras | variants | wildcard | literal_sequence)
 
         prompt <<= pp.ZeroOrMore(chunk)("prompt")
         
@@ -166,41 +210,4 @@ class Parser:
 
         return prompt
 
-
-class ActionBuilder:
-    def get_literal_class(self):
-        return LiteralCommand
-
-    def get_wildcard_class(self):
-        return WildcardCommand
-
-    def get_variant_class(self):
-        return VariantCommand
-
-    def get_sequence_class(self):
-        return SequenceCommand
-
-    def __init__(self, wildcard_manager):
-        self._wildcard_manager = wildcard_manager
-
-    def get_wildcard_action(self, token):
-        return self.get_wildcard_class()(self._wildcard_manager, token)
-
-    def get_variant_action(self, token):
-        parts = token[0].as_dict()
-        variants = parts["variants"]
-        variants = [{"weight": v["weight"], "val": v["val"]} for v in variants]
-        if "bound_expr" in parts:
-            min_bound, max_bound, sep = parse_bound_expr(
-                parts["bound_expr"], max_options=len(variants)
-            )
-            command = self.get_variant_class()(variants, min_bound, max_bound, sep)
-        else:
-            command = self.get_variant_class()(variants)
-
-        return command
-
-    def get_literal_action(self, token):
-        s = " ".join(token)
-        return self.get_literal_class()(s)
 

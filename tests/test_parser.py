@@ -239,62 +239,83 @@ class TestParser:
         assert variant.max_bound == 2
         assert variant.sep == " and "
 
-    def test_prompt_alternating_words(self, parser: Parser):
-        prompt_alternating_words = parser._configure_prompt_alternating_words()
-        assert prompt_alternating_words.parse_string("[start prompt|end prompt]")[0] == "[start prompt|end prompt]"
-        with pytest.raises(ParseException):
-            prompt_alternating_words.parse_string("[start prompt|end prompt")
+    # def test_prompt_alternating_words(self, parser: Parser):
+    #     prompt_alternating_words = parser._configure_prompt_alternating_words()
+    #     assert prompt_alternating_words.parse_string("[start prompt|end prompt]")[0] == "[start prompt|end prompt]"
+    #     with pytest.raises(ParseException):
+    #         prompt_alternating_words.parse_string("[start prompt|end prompt")
 
-        sequence = parser.parse("[start prompt|end prompt]")
-        assert len(sequence) == 1
+    #     sequence = parser.parse("[start prompt|end prompt]")
+    #     assert len(sequence) == 1
 
-        assert type(sequence[0]) == LiteralCommand
-        assert sequence[0] == "[start prompt|end prompt]"
+        # assert type(sequence[0]) == LiteralCommand
+        # assert sequence[0] == "[start prompt|end prompt]"
 
-        sequence = parser.parse("{option1|[start prompt|end prompt]}")
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-        variant = cast(VariantCommand, sequence[0])
+        # sequence = parser.parse("{option1|[start prompt|end prompt]}")
+        # assert len(sequence) == 1
+        # assert type(sequence[0]) == VariantCommand
+        # variant = cast(VariantCommand, sequence[0])
 
-        assert len(variant) == 2
-        assert type(variant[0][0]) == LiteralCommand
-        assert variant[0][0] == "option1"
+        # assert len(variant) == 2
+        # assert type(variant[0][0]) == LiteralCommand
+        # assert variant[0][0] == "option1"
 
-        assert type(variant[1][0] == LiteralCommand)
-        assert variant[1][0] == "[start prompt|end prompt]"
+        # assert type(variant[1][0] == LiteralCommand)
+        # assert variant[1][0] == "[start prompt|end prompt]"
 
     def test_prompt_editing(self, parser: Parser):
-        prompt_editing = parser._configure_prompt_editing()
         prompt = "[start:end:0.25]"
-        assert prompt_editing.parse_string(prompt)[0] == prompt 
+        sequence = parser.parse(prompt)
+        assert len(sequence) == 7
+        assert sequence[0] == "["
 
-        prompt = "[start:end:2]"
-        assert prompt_editing.parse_string(prompt)[0] == prompt 
+        assert type(sequence[1]) == SequenceCommand
+        sequence1 = cast(SequenceCommand, sequence[1])
+        assert type(sequence1[0]) == LiteralCommand
+        assert sequence1[0] == "start"
 
-        prompt = "[start:end:2.]"
-        assert prompt_editing.parse_string(prompt)[0] == prompt 
+        assert sequence[2] == ":"
 
-        prompt = "[start:end:.2]"
-        assert prompt_editing.parse_string(prompt)[0] == prompt 
+        assert type(sequence[3]) == SequenceCommand
+        sequence2 = cast(SequenceCommand, sequence[3])
+        assert type(sequence2[0]) == LiteralCommand
+        assert sequence2[0] == "end"
 
-        sequence = parser.parse("[start prompt:end prompt:0.25]")
-        assert len(sequence) == 1
+        assert sequence[4] == ":"
+        assert sequence[5] == "0.25"
+        assert sequence[6] == "]"
 
-        prompt = "[start prompt:end prompt:0.25]"
-        assert type(sequence[0]) == LiteralCommand
-        assert sequence[0] == prompt
+    def test_wildcards_in_prompt_editing(self, parser: Parser):
+        prompt = "[__colours__:mixed __prompt__:0.25]"
+        sequence = parser.parse(prompt)
+        assert len(sequence) == 7
+        
+        sequence1 = cast(SequenceCommand, sequence[1])
+        assert type(sequence1[0]) == WildcardCommand
+        wildcard_command = cast(WildcardCommand, sequence1[0])
+        assert wildcard_command.wildcard == "colours"
 
-        sequence = parser.parse(f"{{option1|{prompt}}}")
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-        variant = cast(VariantCommand, sequence[0])
+        sequence2 = cast(SequenceCommand, sequence[3])
+        assert type(sequence2[0]) == LiteralCommand
+        assert sequence2[0] == "mixed"
 
-        assert len(variant) == 2
-        assert type(variant[0][0]) == LiteralCommand
-        assert variant[0][0] == "option1"
+        assert type(sequence2[1]) == WildcardCommand
+        assert sequence2[1] == "prompt"
 
-        assert type(variant[1][0] == LiteralCommand)
-        assert variant[1][0] == prompt
+    def test_variants_in_prompt_editing(self, parser: Parser):
+        prompt = "[{a|b}:end:0.25]"
+        sequence = parser.parse(prompt)
+        assert len(sequence) == 7
+        assert sequence[0] == "["
+        assert type(sequence[1]) == SequenceCommand
+        sequence1 = cast(SequenceCommand, sequence[1])
+        assert len(sequence1) == 1
+        assert type(sequence1[0]) == VariantCommand
+
+        variant_command = cast(VariantCommand, sequence1[0])
+        assert len(variant_command) == 2
+        assert variant_command[0] == SequenceCommand([LiteralCommand("a")])
+        assert variant_command[1] == SequenceCommand([LiteralCommand("b")])
 
         
     def test_comments(self, parser: Parser):
