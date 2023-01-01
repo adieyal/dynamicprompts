@@ -45,6 +45,12 @@ class ActionBuilder:
     def get_sequence_class(self):
         return SequenceCommand
 
+    def get_prompt_editing_action(self):
+        return lambda x, y, tokens: SequenceCommand(tokens)
+
+    def get_prompt_alternating_action(self):
+        return lambda x, y, tokens: SequenceCommand(tokens)
+
     def __init__(self, wildcard_manager):
         self._wildcard_manager = wildcard_manager
 
@@ -130,17 +136,23 @@ class Parser:
         return  literal_sequence
 
     def _configure_extra(self, prompt):
-        prompt_alternating = self._configure_prompt_alternating_words()
+        prompt_alternating = self._configure_prompt_alternating_words(prompt)
         prompt_editing = self._configure_prompt_editing(prompt)
         return  prompt_editing | prompt_alternating
 
-    def _configure_prompt_alternating_words(self):
+    def _configure_prompt_alternating_words(self, prompt):
         left_bracket, right_bracket = map(pp.Word, "[]")
         pipe = pp.Word("|")
         chars = pp.Regex(r"[^\]|]*")
 
-        prompt_alternating = left_bracket + chars + pp.OneOrMore(pipe + chars) + right_bracket
-        return prompt_alternating.set_parse_action(lambda s, loc, token: "".join(token))
+        literals = [left_bracket, right_bracket, pipe]
+        for l in literals:
+            l.set_parse_action(self._builder.get_literal_action)
+
+        prompt_alternating = left_bracket + prompt + pp.OneOrMore(pipe + prompt) + right_bracket
+        pa =  prompt_alternating.set_parse_action(self._builder.get_prompt_alternating_action())
+
+        return pa
 
     def _configure_prompt_editing(self, prompt):
         left_bracket, right_bracket = map(pp.Word, "[]")
@@ -155,7 +167,7 @@ class Parser:
             l.set_parse_action(self._builder.get_literal_action)
 
         prompt_editing = left_bracket + prompt + colon + prompt + colon + num + right_bracket
-        pe = prompt_editing
+        pe = prompt_editing.set_parse_action(self._builder.get_prompt_editing_action())
         
         return pe
 

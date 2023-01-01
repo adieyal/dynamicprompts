@@ -18,6 +18,10 @@ from .commands import (
 
 
 class CombinatorialSequenceCommand(SequenceCommand):
+    def __init__(self, tokens: list[Command] | None = None, separator=" "):
+        self._sep = separator
+        super().__init__(tokens)
+
     def prompts(self, tokens: list[Command] | None = None) -> Iterable[str]:
         if tokens is None:
             tokens = self.tokens
@@ -28,7 +32,7 @@ class CombinatorialSequenceCommand(SequenceCommand):
             token = tokens[0]
             for prompt in token.prompts():
                 for next_prompts in self.prompts(tokens[1:]):
-                    yield (prompt + " " + next_prompts).strip()
+                    yield (prompt + self._sep + next_prompts).strip()
 
 
 class CombinatorialWildcardCommand(WildcardCommand):
@@ -101,6 +105,12 @@ class CombinatorialActionBuilder(ActionBuilder):
 
     def get_sequence_class(self):
         return CombinatorialSequenceCommand
+
+    def get_prompt_alternating_action(self):
+        return lambda x, y, tokens: CombinatorialSequenceCommand(tokens, separator="")
+
+    def get_prompt_editing_action(self):
+        return lambda x, y, tokens: CombinatorialSequenceCommand(tokens, separator="")
 
 
 class CombinatorialGenerator:
