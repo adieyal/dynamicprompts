@@ -95,3 +95,24 @@ class TestVariant:
         assert variant_command.max_bound == 2
         
         
+class TestWildcard:
+    def test_init_with_str(self):
+        l1 = WildcardCommand(mock.Mock(), "hello")
+        assert l1.wildcard == "hello"
+
+    def test_init_with_list(self):
+        l1 = WildcardCommand(mock.Mock(), ["hello"])
+        assert l1.wildcard == "hello"
+
+    def test_throws_exception_if_long_list(self):
+        with pytest.raises(ValueError):
+            l1 = WildcardCommand(mock.Mock(), ["hello", "there"])
+
+    def test_equality(self):
+        l1 = WildcardCommand(mock.Mock(), ["hello"])
+        l2 = WildcardCommand(mock.Mock(), ["XXX"])
+
+        assert l1 == "hello"
+        assert l2 == "XXX"
+        assert l1 != l2
+        assert l1 != "XXX"

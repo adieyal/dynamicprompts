@@ -140,11 +140,26 @@ class WildcardCommand(Command):
     def __init__(self, wildcard_manager, token):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
-        self._wildcard = token[0]
+        
+        if isinstance(token, str):
+            self._wildcard = token
+        elif isinstance(token, list) and len(token) == 1:
+            self._wildcard = token[0]
+        else:
+            raise ValueError(f"Expected either a str or list[str] of length 1. Received {token} instead")
+
 
     @property
     def wildcard(self):
         return self._wildcard
+
+    def __eq__(self, other):
+        if isinstance(other, WildcardCommand):
+            return self.wildcard == other.wildcard
+        elif isinstance(other, str):
+            return self.wildcard == other
+        else:
+            return False
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._wildcard!r})"
