@@ -4,14 +4,20 @@ import random
 from typing import cast, Iterable
 
 from .parse import Parser, ActionBuilder
-from .commands import SequenceCommand, Command, LiteralCommand, VariantCommand, WildcardCommand
+from .commands import (
+    SequenceCommand,
+    Command,
+    LiteralCommand,
+    VariantCommand,
+    WildcardCommand,
+)
 
 
 class RandomSequenceCommand(SequenceCommand):
     def __init__(self, tokens: list[Command] | None = None, separator=" "):
         self._sep = separator
         super().__init__(tokens)
-        
+
     def prompts(self) -> Iterable[str]:
         if len(self.tokens) == 0:
             return []
@@ -33,7 +39,7 @@ class RandomWildcardCommand(Command):
         prompts = generator.generate_prompts(val, 1)
 
         return prompts
-    
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self._wildcard!r})"
 
@@ -89,10 +95,10 @@ class RandomActionBuilder(ActionBuilder):
         return RandomSequenceCommand
 
     def get_prompt_alternating_class(self):
-        return lambda tokens : RandomSequenceCommand(tokens, separator="")
+        return lambda tokens: RandomSequenceCommand(tokens, separator="")
 
     def get_prompt_editing_class(self):
-        return lambda tokens : RandomSequenceCommand(tokens, separator="")
+        return lambda tokens: RandomSequenceCommand(tokens, separator="")
 
 
 class RandomGenerator:
@@ -114,7 +120,7 @@ class RandomGenerator:
 
         parser = self.configure_parser()
         tokens = parser.parse_string(prompt)
-        tokens = cast(list[Command], tokens)
+        # tokens = cast(list[Command], tokens)
 
         squash_whitespace = lambda s: " ".join(s.split())
 

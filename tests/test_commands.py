@@ -1,9 +1,17 @@
 from unittest import mock
-from prompts.parser.commands import SequenceCommand, LiteralCommand, VariantCommand, Command, WildcardCommand
+from prompts.parser.commands import (
+    SequenceCommand,
+    LiteralCommand,
+    VariantCommand,
+    Command,
+    WildcardCommand,
+)
 import pytest
+
 
 def gen_variant(vals):
     return [{"weight": [1], "val": LiteralCommand(v)} for v in vals]
+
 
 @pytest.fixture
 def literals() -> list[LiteralCommand]:
@@ -61,9 +69,7 @@ class TestVariant:
         assert variant_command[1] == literals[1]
 
     def test_combinations(self):
-        literals = [
-            "one", "two", "three"
-        ]
+        literals = ["one", "two", "three"]
         variant_command = VariantCommand(gen_variant(literals))
         combinations = list(variant_command._combinations(1))
         assert len(combinations) == 3
@@ -84,17 +90,19 @@ class TestVariant:
         assert combinations[8] == ["three", "three"]
 
     def test_range(self):
-        literals = [
-            "one", "two", "three"
-        ]
-        variant_command = VariantCommand(gen_variant(literals), min_bound=-1, max_bound=10)
+        literals = ["one", "two", "three"]
+        variant_command = VariantCommand(
+            gen_variant(literals), min_bound=-1, max_bound=10
+        )
         assert variant_command.min_bound == 1
 
-        variant_command = VariantCommand(gen_variant(literals), min_bound=2, max_bound=1)
+        variant_command = VariantCommand(
+            gen_variant(literals), min_bound=2, max_bound=1
+        )
         assert variant_command.min_bound == 1
         assert variant_command.max_bound == 2
-        
-        
+
+
 class TestWildcard:
     def test_init_with_str(self):
         l1 = WildcardCommand(mock.Mock(), "hello")

@@ -16,6 +16,7 @@ from prompts.parser.commands import LiteralCommand
 def wildcard_manager():
     return mock.Mock()
 
+
 @pytest.fixture
 def generator(wildcard_manager) -> CombinatorialGenerator:
     return CombinatorialGenerator(wildcard_manager)
@@ -49,6 +50,7 @@ class TestLiteralCommand:
     def test_get_prompt(self):
         command = LiteralCommand("test")
         assert command.get_prompt() == "test"
+
 
 class TestVariantCommand:
     def test_empty_variant(self):
@@ -165,16 +167,6 @@ class TestVariantCommand:
         assert prompts[5] == "blue and green"
 
 
-#     def test_prompt_editing(self):
-#         variants = gen_variant(["red", "green", "[dog|cat]"])
-#         command = VariantCommand(variants)
-#         prompts = list(command.prompts())
-#         assert len(prompts) == 3
-#         assert prompts[0] == "red"
-#         assert prompts[1] == "green"
-#         assert prompts[2] == "[dog|cat]"
-
-
 class TestWildcardsCommand:
     def test_basic_wildcard(self, wildcard_manager):
         with mock.patch.object(
@@ -189,8 +181,6 @@ class TestWildcardsCommand:
 
             wildcard_manager.get_all_values.assert_called_once_with("colours")
 
-            
-
     def test_wildcard_with_literal(self, wildcard_manager):
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
@@ -199,7 +189,7 @@ class TestWildcardsCommand:
             command2 = LiteralCommand("are")
             command3 = LiteralCommand("cool")
             sequence = CombinatorialSequenceCommand([command1, command2, command3])
-            
+
             prompts = list(sequence.prompts())
             assert len(prompts) == 3
             assert prompts[0] == "red are cool"
@@ -227,7 +217,9 @@ class TestWildcardsCommand:
 
     def test_variant_nested_in_wildcard(self, wildcard_manager):
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["{red|pink}", "green", "blue"]
+            wildcard_manager,
+            "get_all_values",
+            return_value=["{red|pink}", "green", "blue"],
         ):
             wildcard_command = CombinatorialWildcardCommand(wildcard_manager, "colours")
             sequence = CombinatorialSequenceCommand([wildcard_command])
@@ -242,10 +234,12 @@ class TestWildcardsCommand:
 
     def test_wildcard_nested_in_wildcard(self, wildcard_manager):
         with mock.patch.object(
-            wildcard_manager, "get_all_values", side_effect=[
+            wildcard_manager,
+            "get_all_values",
+            side_effect=[
                 ["__other_colours__", "green", "blue"],
-                ["red", "pink", "yellow"]
-            ]
+                ["red", "pink", "yellow"],
+            ],
         ):
             wildcard_command = CombinatorialWildcardCommand(wildcard_manager, "colours")
             sequence = CombinatorialSequenceCommand([wildcard_command])
@@ -258,6 +252,7 @@ class TestWildcardsCommand:
             assert prompts[2] == "yellow"
             assert prompts[3] == "green"
             assert prompts[4] == "blue"
+
 
 class TestCombinatorialSequenceCommand:
     def test_prompts(self):
@@ -277,6 +272,7 @@ class TestCombinatorialSequenceCommand:
         prompts = list(sequence.prompts())
         assert len(prompts) == 1
         assert prompts[0] == "Asentence"
+
 
 class TestCombinatorialGenerator:
     def test_empty(self, generator: CombinatorialGenerator):
@@ -304,7 +300,6 @@ class TestCombinatorialGenerator:
         assert prompts[0] == "A rose"
         assert prompts[1] == "A red rose"
         assert prompts[2] == "A blue rose"
-        
 
     def test_two_variants(self, generator: CombinatorialGenerator):
         prompts = generator.generate_prompts("A {red|green} {square|circle}", 5)
@@ -342,7 +337,9 @@ class TestCombinatorialGenerator:
         assert prompts[7] == "A blue,red square"
         assert prompts[8] == "A blue,green square"
 
-    def test_combination_variants_with_separator(self, generator: CombinatorialGenerator):
+    def test_combination_variants_with_separator(
+        self, generator: CombinatorialGenerator
+    ):
         prompts = generator.generate_prompts("A {2$$ and $$red|green|blue} square", 10)
         assert len(prompts) == 6
         assert prompts[0] == "A red and green square"
@@ -352,7 +349,9 @@ class TestCombinatorialGenerator:
         assert prompts[4] == "A blue and red square"
         assert prompts[5] == "A blue and green square"
 
-    def test_variants_with_larger_range_than_choices(self, generator: CombinatorialGenerator):
+    def test_variants_with_larger_range_than_choices(
+        self, generator: CombinatorialGenerator
+    ):
         shapes = ["square", "circle"]
         with mock.patch("prompts.parser.random_generator.random") as mock_random:
             mock_random.randint.return_value = 3
@@ -363,7 +362,9 @@ class TestCombinatorialGenerator:
 
     def test_wildcards(self, generator: CombinatorialGenerator):
         with mock.patch.object(
-            generator._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             prompts = generator.generate_prompts("A __colours__ {square|circle}", 6)
             assert len(prompts) == 6
@@ -373,18 +374,24 @@ class TestCombinatorialGenerator:
             assert prompts[3] == "A green circle"
             assert prompts[4] == "A blue square"
             assert prompts[5] == "A blue circle"
-            generator._wildcard_manager.get_all_values.assert_called_once_with("colours")
+            generator._wildcard_manager.get_all_values.assert_called_once_with(
+                "colours"
+            )
 
     def test_nested_wildcard(self, generator: CombinatorialGenerator):
         with mock.patch.object(
-            generator._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             prompts = generator.generate_prompts("{__colours__}", 6)
             assert len(prompts) == 3
 
     def test_nested_wildcard_with_range(self, generator: CombinatorialGenerator):
         with mock.patch.object(
-            generator._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             prompts = generator.generate_prompts("{2$$__colours__}", 6)
             assert len(prompts) == 6
@@ -395,9 +402,13 @@ class TestCombinatorialGenerator:
             assert prompts[4] == "blue,red"
             assert prompts[5] == "blue,green"
 
-    def test_nested_wildcard_with_range_and_literal(self, generator: CombinatorialGenerator):
+    def test_nested_wildcard_with_range_and_literal(
+        self, generator: CombinatorialGenerator
+    ):
         with mock.patch.object(
-            generator._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             prompts = generator.generate_prompts("{2$$__colours__|black}", 20)
             assert len(prompts) == 12
@@ -413,13 +424,3 @@ class TestCombinatorialGenerator:
             assert prompts[9] == "black,red"
             assert prompts[10] == "black,green"
             assert prompts[11] == "black,blue"
-
-    # def test_prompt_editing(self, generator: CombinatorialGenerator):
-    #     prompts = [
-    #         "A [start prompt:end prompt:0.25] example",
-    #         "A [start prompt|end prompt|0.25] example",
-    #     ]
-    #     for p in prompts:
-    #         new_prompts = list(generator.generate_prompts(p, 2))
-    #         assert len(new_prompts) == 1
-    #         assert new_prompts[0] == p
