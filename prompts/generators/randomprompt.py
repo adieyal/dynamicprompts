@@ -1,0 +1,40 @@
+from __future__ import annotations
+
+import logging
+from random import Random
+import random
+
+from prompts import constants
+from prompts.wildcardmanager import WildcardManager
+from prompts.parser.random_generator import RandomGenerator
+from . import PromptGenerator
+
+logger = logging.getLogger(__name__)
+
+class RandomPromptGenerator(PromptGenerator):
+    def __init__(
+        self,
+        wildcard_manager: WildcardManager,
+        template,
+        seed: int | None = None,
+        unlink_seed_from_prompt: bool = constants.UNLINK_SEED_FROM_PROMPT,
+    ):
+        self._wildcard_manager = wildcard_manager
+        self._unlink_seed_from_prompt = unlink_seed_from_prompt
+
+        if self._unlink_seed_from_prompt:
+            self._random = random
+        else:
+            self._random = Random()
+            if seed is not None:
+                self._random.seed(seed)
+
+        self._template = template
+        self._generator = RandomGenerator(wildcard_manager)
+
+    def generate(self, max_prompts=constants.MAX_IMAGES) -> list[str]:
+        if self._template is None or len(self._template) == 0:
+            return [""]
+        prompts = self._generator.generate_prompts(self._template, max_prompts)
+        prompts = list(prompts)
+        return prompts
