@@ -6,6 +6,7 @@ import logging
 import pyparsing as pp
 
 from .commands import SequenceCommand, LiteralCommand, VariantCommand, WildcardCommand
+from .action_builder import ActionBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -17,81 +18,6 @@ real_num4 = pp.Word(pp.nums)
 real_num = real_num1 | real_num2 | real_num3 | real_num4
 double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
-
-
-def parse_bound_expr(expr, max_options):
-    lbound = 1
-    ubound = max_options
-    separator = ","
-
-    if expr is None:
-        return lbound, ubound, separator
-    expr = expr[0]
-
-    if "range" in expr:
-        rng = expr["range"]
-        if "exact" in rng:
-            lbound = ubound = rng["exact"]
-        else:
-            if "lower" in expr["range"]:
-                lbound = int(expr["range"]["lower"])
-            if "upper" in expr["range"]:
-                ubound = int(expr["range"]["upper"])
-
-    if "separator" in expr:
-        separator = expr["separator"][0]
-
-    return lbound, ubound, separator
-
-
-class ActionBuilder:
-    def __init__(self, wildcard_manager):
-        self._wildcard_manager = wildcard_manager
-
-    def get_literal_class(self):
-        return LiteralCommand
-
-    def get_wildcard_class(self):
-        return WildcardCommand
-
-    def get_variant_class(self):
-        return VariantCommand
-
-    def get_sequence_class(self):
-        return SequenceCommand
-
-    def get_prompt_editing_class(self):
-        return self.get_sequence_class()
-
-    def get_prompt_alternating_class(self):
-        return self.get_sequence_class()
-
-    def get_prompt_editing_action(self):
-        return lambda x, y, tokens: self.get_prompt_editing_class()(tokens)
-
-    def get_prompt_alternating_action(self):
-        return lambda x, y, tokens: self.get_prompt_editing_class()(tokens)
-
-    def get_wildcard_action(self, token):
-        return self.get_wildcard_class()(self._wildcard_manager, token)
-
-    def get_variant_action(self, token):
-        parts = token[0].as_dict()
-        variants = parts["variants"]
-        variants = [{"weight": v["weight"], "val": v["val"]} for v in variants]
-        if "bound_expr" in parts:
-            min_bound, max_bound, sep = parse_bound_expr(
-                parts["bound_expr"], max_options=len(variants)
-            )
-            command = self.get_variant_class()(variants, min_bound, max_bound, sep)
-        else:
-            command = self.get_variant_class()(variants)
-
-        return command
-
-    def get_literal_action(self, token):
-        s = " ".join(token)
-        return self.get_literal_class()(s)
 
 
 class Parser:
@@ -192,8 +118,6 @@ class Parser:
         variants.set_parse_action(builder.get_variant_action)
         literal_sequence.set_parse_action(builder.get_literal_action)
 
-        prompt.set_parse_action(
-            lambda s, loc, token: builder.get_sequence_class()(token.as_list())
-        )
+        prompt.set_parse_action(builder.get_sequence_action)
 
         return prompt

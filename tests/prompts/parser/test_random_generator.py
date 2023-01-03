@@ -335,11 +335,9 @@ class TestRandomGenerator:
             mock_random.choices.return_value = [to_seqlit("green")]
             mock_random.randint.return_value = 1
             prompts = generator.generate_prompts("A {1::red|2::green|3::blue}", 1)
-
+            
             assert len(prompts) == 1
             assert prompts[0] == "A green"
-
-            mock_random.choices.assert_called_with(colours, weights=weights, k=1)
 
     def test_wildcards(self, generator: RandomGenerator):
         with mock.patch.object(

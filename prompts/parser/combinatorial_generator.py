@@ -16,6 +16,7 @@ from .commands import (
     VariantCommand,
 )
 
+from prompts.wildcardmanager import WildcardManager
 
 class CombinatorialSequenceCommand(SequenceCommand):
     def __init__(self, tokens: list[Command] | None = None, separator=" "):
@@ -94,23 +95,14 @@ class CombinatorialVariantCommand(VariantCommand):
 
 
 class CombinatorialActionBuilder(ActionBuilder):
-    def get_literal_class(self):
-        return LiteralCommand
+    def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
+        return CombinatorialVariantCommand(variants, min_bound, max_bound, sep)
 
-    def get_variant_class(self):
-        return CombinatorialVariantCommand
+    def create_wildcard_command(self, token: str):
+        return CombinatorialWildcardCommand(self._wildcard_manager, token)
 
-    def get_wildcard_class(self):
-        return CombinatorialWildcardCommand
-
-    def get_sequence_class(self):
-        return CombinatorialSequenceCommand
-
-    def get_prompt_alternating_class(self):
-        return lambda tokens : CombinatorialSequenceCommand(tokens, separator="")
-
-    def get_prompt_editing_class(self):
-        return lambda tokens : CombinatorialSequenceCommand(tokens, separator="")
+    def create_sequence_command(self, token_list: list[Command]):
+        return CombinatorialSequenceCommand(token_list)
 
 
 class CombinatorialGenerator:

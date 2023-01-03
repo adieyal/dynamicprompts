@@ -7,10 +7,8 @@ from .parse import Parser, ActionBuilder
 from .commands import (
     SequenceCommand,
     Command,
-    LiteralCommand,
-    VariantCommand,
-    WildcardCommand,
 )
+from prompts.wildcardmanager import WildcardManager
 
 
 class RandomSequenceCommand(SequenceCommand):
@@ -82,27 +80,22 @@ class RandomVariantCommand(Command):
 
 
 class RandomActionBuilder(ActionBuilder):
-    def get_literal_class(self):
-        return LiteralCommand
+    def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
+        return RandomVariantCommand(variants, min_bound, max_bound, sep)
 
-    def get_variant_class(self):
-        return RandomVariantCommand
+    def create_wildcard_command(self, token: str):
+        return RandomWildcardCommand(self._wildcard_manager, token)
 
-    def get_wildcard_class(self):
-        return RandomWildcardCommand
-
-    def get_sequence_class(self):
-        return RandomSequenceCommand
-
-    def get_prompt_alternating_class(self):
-        return lambda tokens: RandomSequenceCommand(tokens, separator="")
-
-    def get_prompt_editing_class(self):
-        return lambda tokens: RandomSequenceCommand(tokens, separator="")
+    def create_sequence_command(self, token_list: list[Command]):
+        return RandomSequenceCommand(token_list)
 
 
 class RandomGenerator:
-    def __init__(self, wildcard_manager):
+    def __init__(self, wildcard_manager: WildcardManager, rand=None):
+        if rand is None:
+            self._random = random
+        else:
+            self._random = rand
         self._wildcard_manager = wildcard_manager
 
     def get_action_builder(self) -> ActionBuilder:
