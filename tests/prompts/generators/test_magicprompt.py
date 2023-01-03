@@ -1,7 +1,7 @@
 # from unittest import mock
 
-# from prompts.generators import MagicPromptGenerator
-# from prompts.generators import DummyGenerator
+# from dynamicprompts.generators import MagicPromptGenerator
+# from dynamicprompts.generators import DummyGenerator
 # from functools import partial
 
 # class TestMagicPrompt:

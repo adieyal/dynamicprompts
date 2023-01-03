@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from prompts.generators.promptgenerator import PromptGenerator, GeneratorException
+from dynamicprompts.generators.promptgenerator import PromptGenerator, GeneratorException
 import requests
 import random
 

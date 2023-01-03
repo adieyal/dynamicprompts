@@ -16,7 +16,7 @@ from .commands import (
     VariantCommand,
 )
 
-from prompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcardmanager import WildcardManager
 
 class CombinatorialSequenceCommand(SequenceCommand):
     def __init__(self, tokens: list[Command] | None = None, separator=" "):

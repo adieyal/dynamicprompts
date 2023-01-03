@@ -1,5 +1,5 @@
 from itertools import permutations
-from prompts.generators.jinjagenerator import RandomExtension, PermutationExtension
+from dynamicprompts.generators.jinjagenerator import RandomExtension, PermutationExtension
 from unittest import mock
 
 class TestRandomExtension:

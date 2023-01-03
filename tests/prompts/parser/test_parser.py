@@ -4,12 +4,12 @@ from typing import cast
 
 from pyparsing import ParseException
 
-from prompts.parser.parse import (
+from dynamicprompts.parser.parse import (
     Parser,
     ActionBuilder,
 )
 
-from prompts.parser.commands import (
+from dynamicprompts.parser.commands import (
     Command,
     SequenceCommand,
     VariantCommand,

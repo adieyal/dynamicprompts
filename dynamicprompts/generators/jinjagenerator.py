@@ -8,8 +8,8 @@ from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension
 
-from prompts.generators import re_combinations, re_wildcard
-from prompts.generators.promptgenerator import GeneratorException, PromptGenerator
+from dynamicprompts.generators import re_combinations, re_wildcard
+from dynamicprompts.generators.promptgenerator import GeneratorException, PromptGenerator
 
 logger = logging.getLogger(__name__)
 

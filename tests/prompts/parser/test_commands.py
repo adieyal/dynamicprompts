@@ -1,5 +1,5 @@
 from unittest import mock
-from prompts.parser.commands import (
+from dynamicprompts.parser.commands import (
     SequenceCommand,
     LiteralCommand,
     VariantCommand,

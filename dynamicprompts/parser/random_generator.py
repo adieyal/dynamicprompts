@@ -9,7 +9,7 @@ from .commands import (
     SequenceCommand,
     Command,
 )
-from prompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
 

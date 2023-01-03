@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prompts.generators.combinatorial import CombinatorialPromptGenerator
+from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 class TestCombinatorialGenerator:
     def test_literal_template(self):
 

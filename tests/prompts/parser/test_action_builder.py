@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
  
-from prompts.parser.action_builder import ActionBuilder
-from prompts.parser.commands import LiteralCommand, WildcardCommand, VariantCommand, SequenceCommand
+from dynamicprompts.parser.action_builder import ActionBuilder
+from dynamicprompts.parser.commands import LiteralCommand, WildcardCommand, VariantCommand, SequenceCommand
 
 @pytest.fixture
 def wildcard_manager():

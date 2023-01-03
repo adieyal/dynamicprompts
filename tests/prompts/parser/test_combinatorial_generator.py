@@ -3,13 +3,13 @@ from unittest import mock
 import pytest
 
 
-from prompts.parser.combinatorial_generator import (
+from dynamicprompts.parser.combinatorial_generator import (
     CombinatorialSequenceCommand,
     CombinatorialVariantCommand,
     CombinatorialWildcardCommand,
     CombinatorialGenerator,
 )
-from prompts.parser.commands import LiteralCommand
+from dynamicprompts.parser.commands import LiteralCommand
 
 
 @pytest.fixture
@@ -353,7 +353,7 @@ class TestCombinatorialGenerator:
         self, generator: CombinatorialGenerator
     ):
         shapes = ["square", "circle"]
-        with mock.patch("prompts.parser.random_generator.random") as mock_random:
+        with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
             mock_random.randint.return_value = 3
             mock_random.choices.side_effect = [shapes]
             prompts = generator.generate_prompts("A red {3$$square|circle}", 1)

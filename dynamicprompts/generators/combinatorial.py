@@ -3,9 +3,9 @@ from itertools import chain
 import logging
 import random
 
-from prompts.wildcardmanager import WildcardManager
-from prompts import constants
-from prompts.parser.combinatorial_generator import CombinatorialGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts import constants
+from dynamicprompts.parser.combinatorial_generator import CombinatorialGenerator
 from . import PromptGenerator, re_combinations, re_wildcard
 
 logger = logging.getLogger(__name__)

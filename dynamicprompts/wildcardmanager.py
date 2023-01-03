@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from prompts import constants
+from dynamicprompts import constants
 
 from .wildcardfile import WildcardFile
 

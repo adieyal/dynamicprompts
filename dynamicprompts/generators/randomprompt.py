@@ -4,9 +4,9 @@ import logging
 from random import Random
 import random
 
-from prompts import constants
-from prompts.wildcardmanager import WildcardManager
-from prompts.parser.random_generator import RandomGenerator
+from dynamicprompts import constants
+from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.parser.random_generator import RandomGenerator
 from . import PromptGenerator
 
 logger = logging.getLogger(__name__)

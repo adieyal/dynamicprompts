@@ -1,5 +1,5 @@
 from .commands import LiteralCommand, WildcardCommand, VariantCommand, SequenceCommand, Command
-from prompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcardmanager import WildcardManager
 
 def parse_bound_expr(expr, max_options):
     lbound = 1

@@ -2,8 +2,8 @@ from __future__ import annotations
 from itertools import chain
 import logging
 
-from prompts.wildcardmanager import WildcardManager
-from prompts import constants
+from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts import constants
 from . import PromptGenerator, re_combinations, re_wildcard
 
 logger = logging.getLogger(__name__)

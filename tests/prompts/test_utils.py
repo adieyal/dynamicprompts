@@ -1,4 +1,4 @@
-from prompts.utils import slugify
+from dynamicprompts.utils import slugify
 
 class TestSlugify:
     def test_identity(self):

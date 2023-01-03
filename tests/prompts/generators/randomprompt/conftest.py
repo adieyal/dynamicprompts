@@ -2,8 +2,8 @@ import random
 
 import pytest
 
-from prompts.generators.randomprompt import RandomPromptGenerator
-from prompts.wildcardmanager import WildcardManager
+from dynamicprompts.generators.randomprompt import RandomPromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
 
 
 @pytest.fixture
