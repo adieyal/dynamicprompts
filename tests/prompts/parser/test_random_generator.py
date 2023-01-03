@@ -355,3 +355,10 @@ class TestRandomGenerator:
                 assert len(prompts) == 2
                 assert prompts[0] == "A red square"
                 assert prompts[1] == "A green circle"
+
+    def test_missing_wildcard(self, generator: RandomGenerator):
+        with mock.patch.object(generator._wildcard_manager, "get_all_values", return_value=[]):
+            prompts = generator.generate_prompts("A __missing__ wildcard", 1)
+            assert len(prompts) == 1
+            assert prompts[0] == "A __missing__ wildcard"
+
