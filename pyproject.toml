@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dynamicprompts"
-version = "0.1.0"
+version = "0.1.1"
 description = "Dynamic prompts templating library for Stable Diffusion"
 authors = ["Adi Eyal <adi@clearforest.io>"]
 license = "MIT"
