@@ -12,7 +12,7 @@ class FeelingLuckyGenerator(PromptGenerator):
     def __init__(self, search_query):
         self._search_query = search_query
 
-    def generate(self, num_prompts) -> str:
+    def generate(self, num_prompts: int) -> list[str]:
         if self._search_query.strip() == "":
             query = random.randint(0, 10000000)
         else:
@@ -27,7 +27,7 @@ class FeelingLuckyGenerator(PromptGenerator):
             data = response.json()
             images = data["images"]
             prompts = random.choices(images, k=num_prompts)
-            return [v["prompt"] for v in prompts]
+            return prompts
         except Exception as e:
             raise GeneratorException("Error while generating prompt: " + str(e))
 
