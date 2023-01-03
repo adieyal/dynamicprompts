@@ -13,6 +13,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
 
+
 class RandomSequenceCommand(SequenceCommand):
     def __init__(self, tokens: list[Command] | None = None, separator=" "):
         self._sep = separator

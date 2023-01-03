@@ -12,11 +12,11 @@ from .commands import (
     Command,
     SequenceCommand,
     WildcardCommand,
-    LiteralCommand,
     VariantCommand,
 )
 
 from dynamicprompts.wildcardmanager import WildcardManager
+
 
 class CombinatorialSequenceCommand(SequenceCommand):
     def __init__(self, tokens: list[Command] | None = None, separator=" "):
@@ -76,7 +76,7 @@ class CombinatorialVariantCommand(VariantCommand):
     def prompts(self) -> Iterable[str]:
         if len(self._values) == 0:
             return []
-        
+
         seen = set()
 
         for bound in range(self.min_bound, self.max_bound + 1):
@@ -87,7 +87,6 @@ class CombinatorialVariantCommand(VariantCommand):
                     if deduped_arr not in seen and correct_size:
                         seen.add(deduped_arr)
                         yield self.sep.join(deduped_arr)
-                    
 
     def __repr__(self):
         z = zip(self._weights, self._values)
@@ -118,7 +117,9 @@ class CombinatorialGenerator:
 
         return parser
 
-    def generate_prompts(self, prompt: str, num_prompts: int|None=None) -> list[str]:
+    def generate_prompts(
+        self, prompt: str, num_prompts: int | None = None
+    ) -> list[str]:
         if len(prompt) == 0:
             return []
 

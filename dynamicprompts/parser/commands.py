@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class Command:
     def __init__(self, token):
         self.token = token
@@ -20,6 +21,7 @@ class Command:
         if len(prompts) == 0:
             return ""
         return prompts[0]
+
 
 class SequenceCommand(Command):
     def __init__(self, tokens: list[Command]):
@@ -76,6 +78,7 @@ class LiteralCommand(Command):
 
     def __str__(self) -> str:
         return self.literal
+
 
 class VariantCommand(Command):
     def __init__(self, variants, min_bound=1, max_bound=1, sep=","):
@@ -142,12 +145,11 @@ class WildcardCommand(Command):
     def __init__(self, wildcard_manager, token):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
-        
+
         if isinstance(token, str):
             self._wildcard = token
         else:
             self._wildcard = token[0]
-
 
     @property
     def wildcard(self):
@@ -163,5 +165,3 @@ class WildcardCommand(Command):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._wildcard!r})"
-
-

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
-from abc import ABC, abstractmethod
-from dynamicprompts.generators.promptgenerator import PromptGenerator, GeneratorException
-import requests
 import random
+
+import requests
+
+from dynamicprompts.generators.promptgenerator import PromptGenerator, GeneratorException
+
 
 logger = logging.getLogger(__name__)
 

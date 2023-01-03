@@ -1,5 +1,12 @@
-from .commands import LiteralCommand, WildcardCommand, VariantCommand, SequenceCommand, Command
+from .commands import (
+    LiteralCommand,
+    WildcardCommand,
+    VariantCommand,
+    SequenceCommand,
+    Command,
+)
 from dynamicprompts.wildcardmanager import WildcardManager
+
 
 def parse_bound_expr(expr, max_options):
     lbound = 1
@@ -24,6 +31,7 @@ def parse_bound_expr(expr, max_options):
         separator = expr["separator"][0]
 
     return lbound, ubound, separator
+
 
 class ActionBuilder:
     def __init__(self, wildcard_manager: WildcardManager):

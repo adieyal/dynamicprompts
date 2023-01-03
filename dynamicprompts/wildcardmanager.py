@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from dynamicprompts import constants
 
+from . import constants
 from .wildcardfile import WildcardFile
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,9 @@ class WildcardManager:
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:
-        return (self._path / wildcard.strip("__")).with_suffix("." + constants.WILDCARD_SUFFIX)
+        return (self._path / wildcard.strip("__")).with_suffix(
+            "." + constants.WILDCARD_SUFFIX
+        )
 
     def path_to_wilcard(self, path: Path) -> str:
         rel_path = path.relative_to(self._path)
@@ -79,7 +81,8 @@ class WildcardManager:
     def get_collection_dirs(self) -> dict[str, Path]:
         collection_path = self.get_collection_path()
         collection_dirs = [x for x in collection_path.glob("*") if x.is_dir()]
-        collection_names = [str(c.relative_to(collection_path)) for c in collection_dirs]
+        collection_names = [
+            str(c.relative_to(collection_path)) for c in collection_dirs
+        ]
 
         return dict(zip(collection_names, collection_dirs))
-

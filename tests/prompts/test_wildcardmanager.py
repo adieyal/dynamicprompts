@@ -1,7 +1,7 @@
 from unittest import mock
 from pathlib import Path
 
-from prompts.wildcardmanager import WildcardManager, WildcardFile
+from dynamicprompts.wildcardmanager import WildcardManager, WildcardFile
 
 
 class TestWildcardManager:
@@ -12,7 +12,7 @@ class TestWildcardManager:
 
     def test_get_all_values(self):
         with mock.patch(
-            "prompts.wildcardmanager.WildcardManager.match_files"
+            "dynamicprompts.wildcardmanager.WildcardManager.match_files"
         ) as mock_get_files:
             wildcard_files = [
                 WildcardFile(Path("test1.txt")),
