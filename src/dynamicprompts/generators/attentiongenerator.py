@@ -1,14 +1,22 @@
 from __future__ import annotations
 import random
+import logging
 
 from .promptgenerator import PromptGenerator
+
+logger = logging.getLogger(__name__)
+
+try:
+    import spacy
+except ImportError:
+    logger.warning("Spacy not installed, attention generator will not work")
+
 
 
 class AttentionGenerator(PromptGenerator):
     def __init__(
         self, generator: PromptGenerator, min_attention=0.1, max_attention=0.9
     ):
-        import spacy
 
         self._nlp = spacy.load("en_core_web_sm")
         self._prompt_generator = generator

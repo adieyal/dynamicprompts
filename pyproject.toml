@@ -16,6 +16,11 @@ tqdm = "^4.64.1"
 pytest = "^7.2.0"
 black = "^22.12.0"
 
+
+[tool.poetry.group.attentiongrabber.dependencies]
+spacy = "^3.4.4"
+en-core-web-sm = {url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.4.1/en_core_web_sm-3.4.1.tar.gz"}
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
