@@ -16,7 +16,6 @@ class RandomPromptGenerator(PromptGenerator):
     def __init__(
         self,
         wildcard_manager: WildcardManager,
-        template,
         seed: int | None = None,
         unlink_seed_from_prompt: bool = constants.UNLINK_SEED_FROM_PROMPT,
     ):
@@ -30,12 +29,11 @@ class RandomPromptGenerator(PromptGenerator):
             if seed is not None:
                 self._random.seed(seed)
 
-        self._template = template
         self._generator = RandomGenerator(wildcard_manager)
 
-    def generate(self, max_prompts=constants.MAX_IMAGES) -> list[str]:
-        if self._template is None or len(self._template) == 0:
+    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> list[str]:
+        if template is None or len(template) == 0:
             return [""]
-        prompts = self._generator.generate_prompts(self._template, max_prompts)
+        prompts = self._generator.generate_prompts(template, max_prompts)
         prompts = list(prompts)
         return prompts

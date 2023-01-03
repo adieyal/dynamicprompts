@@ -12,6 +12,6 @@ class TestFeelingLucky:
                 mock_response.get.return_value = m
                 mock_random.choices.return_value = ["ABC"]
 
-                generator = FeelingLuckyGenerator("This is a test")
-                generator.generate(1)
+                generator = FeelingLuckyGenerator()
+                generator.generate("This is a test", 1)
                 mock_random.choices.assert_called_with(results, k=1)

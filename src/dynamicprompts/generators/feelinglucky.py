@@ -11,14 +11,11 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator, Generator
 logger = logging.getLogger(__name__)
 
 class FeelingLuckyGenerator(PromptGenerator):
-    def __init__(self, search_query):
-        self._search_query = search_query
-
-    def generate(self, num_prompts: int) -> list[str]:
-        if self._search_query.strip() == "":
+    def generate(self, search_query, num_prompts: int) -> list[str]:
+        if search_query.strip() == "":
             query = random.randint(0, 10000000)
         else:
-            query = self._search_query
+            query = search_query
 
         url = f"https://lexica.art/api/v1/search?q={query}"
         

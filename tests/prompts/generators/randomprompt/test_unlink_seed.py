@@ -5,14 +5,14 @@ from dynamicprompts import constants
 
 class TestUnlinkSeedFromPrompt:
     def test_unlink_seed_from_prompt(self, wildcard_manager):
-        generator = RandomPromptGenerator(wildcard_manager, "A template")
+        generator = RandomPromptGenerator(wildcard_manager)
         assert generator._unlink_seed_from_prompt == constants.UNLINK_SEED_FROM_PROMPT
 
         for i in range(5):
             generator = RandomPromptGenerator(
-                wildcard_manager, "A template", unlink_seed_from_prompt=False, seed=0
+                wildcard_manager, unlink_seed_from_prompt=False, seed=0
             )
-            generator._template = "I love {1-2$$red|green|blue}"
+            prompt = "I love {1-2$$red|green|blue}"
 
             # prompt = generator.generate(5)
             # assert prompt == ['I love blue , red', 'I love blue , green', 'I love red', 'I love blue , red', 'I love green , blue']
