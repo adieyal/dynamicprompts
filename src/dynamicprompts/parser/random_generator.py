@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import cast, Iterable
+from typing import cast, Iterable, List
 
 from .parse import Parser, ActionBuilder
 from .commands import (
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class RandomSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: list[Command] | None = None, separator=" "):
+    def __init__(self, tokens: List[Command] | None = None, separator=" "):
         self._sep = separator
         super().__init__(tokens)
 
@@ -58,7 +58,7 @@ class RandomVariantCommand(Command):
         self.sep = sep
         self._remaining_values = self._values
 
-    def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
+    def _combo_to_prompt(self, combo: List[SequenceCommand]) -> Iterable[List[str]]:
         if len(combo) == 0:
             yield []
         else:
@@ -92,7 +92,7 @@ class RandomActionBuilder(ActionBuilder):
     def create_wildcard_command(self, token: str):
         return RandomWildcardCommand(self._wildcard_manager, token)
 
-    def create_sequence_command(self, token_list: list[Command]):
+    def create_sequence_command(self, token_list: List[Command]):
         return RandomSequenceCommand(token_list)
 
 
@@ -113,13 +113,13 @@ class RandomGenerator:
 
         return parser.prompt
 
-    def generate_prompts(self, prompt: str, num_prompts: int) -> list[str]:
+    def generate_prompts(self, prompt: str, num_prompts: int) -> List[str]:
         if len(prompt) == 0:
             return []
 
         parser = self.configure_parser()
         tokens = parser.parse_string(prompt)
-        # tokens = cast(list[Command], tokens)
+        tokens = cast(List[Command], tokens)
 
         squash_whitespace = lambda s: " ".join(s.split())
 

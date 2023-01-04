@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 import random
 import logging
 
@@ -41,7 +42,7 @@ class AttentionGenerator(PromptGenerator):
 
         return prompt
 
-    def generate(self, *args, **kwargs) -> list[str]:
+    def generate(self, *args, **kwargs) -> List[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
         new_prompts = [self._add_emphasis(p) for p in prompts]
 

@@ -1,3 +1,5 @@
+from typing import List
+
 from unittest import mock
 from dynamicprompts.parser.commands import (
     SequenceCommand,
@@ -14,21 +16,21 @@ def gen_variant(vals):
 
 
 @pytest.fixture
-def literals() -> list[LiteralCommand]:
+def literals() -> List[LiteralCommand]:
     return [LiteralCommand("hello"), LiteralCommand("world")]
 
 
 class TestSequence:
-    def test_length(self, literals: list[Command]):
+    def test_length(self, literals: List[Command]):
         sequence = SequenceCommand(literals)
         assert len(sequence) == 2
 
-    def test_getitem(self, literals: list[Command]):
+    def test_getitem(self, literals: List[Command]):
         sequence = SequenceCommand(literals)
         assert sequence[0] == literals[0]
         assert sequence[1] == literals[1]
 
-    def test_equality(self, literals: list[Command]):
+    def test_equality(self, literals: List[Command]):
         sequence = SequenceCommand(literals)
         assert sequence == literals
 
@@ -59,11 +61,11 @@ class TestLiteral:
 
 
 class TestVariant:
-    def test_length(self, literals: list[LiteralCommand]):
+    def test_length(self, literals: List[LiteralCommand]):
         variant_command = VariantCommand(literals)
         assert len(variant_command) == 2
 
-    def test_getitem(self, literals: list[LiteralCommand]):
+    def test_getitem(self, literals: List[LiteralCommand]):
         variant_command = VariantCommand(literals)
         assert variant_command[0] == literals[0]
         assert variant_command[1] == literals[1]

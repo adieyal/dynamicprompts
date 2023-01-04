@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import logging
 import random
@@ -11,7 +12,7 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator, Generator
 logger = logging.getLogger(__name__)
 
 class FeelingLuckyGenerator(PromptGenerator):
-    def generate(self, search_query, num_prompts: int) -> list[str]:
+    def generate(self, search_query, num_prompts: int) -> List[str]:
         if search_query.strip() == "":
             query = random.randint(0, 10000000)
         else:

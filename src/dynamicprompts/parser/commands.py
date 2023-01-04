@@ -1,6 +1,6 @@
 from __future__ import annotations
+from typing import List, Iterable
 
-from typing import Iterable
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,11 +24,11 @@ class Command:
 
 
 class SequenceCommand(Command):
-    def __init__(self, tokens: list[Command]):
+    def __init__(self, tokens: List[Command]):
         self._tokens = tokens
 
     @property
-    def tokens(self) -> list[Command]:
+    def tokens(self) -> List[Command]:
         return self._tokens
 
     def __repr__(self) -> str:
@@ -91,7 +91,7 @@ class VariantCommand(Command):
         self._weights = self._get_weights(variants)
         self._values = self._get_values(variants)
 
-    def _get_weights(self, variants) -> list[float]:
+    def _get_weights(self, variants) -> List[float]:
         def get_weight(p) -> float:
             try:
                 return p["weight"][0]
@@ -100,7 +100,7 @@ class VariantCommand(Command):
 
         return [get_weight(p) for p in variants]
 
-    def _get_values(self, variants) -> list[SequenceCommand]:
+    def _get_values(self, variants) -> List[SequenceCommand]:
         def get_val(p) -> SequenceCommand:
             try:
                 return p["val"]
@@ -110,7 +110,7 @@ class VariantCommand(Command):
 
         return [get_val(p) for p in variants]
 
-    def _combinations(self, k: int) -> Iterable[list[SequenceCommand]]:
+    def _combinations(self, k: int) -> Iterable[List[SequenceCommand]]:
         if k == 0:
             yield []
         else:
@@ -129,15 +129,15 @@ class VariantCommand(Command):
         z = zip(self._weights, self._values)
         return f"{self.__class__.__name__}({list(z)!r})"
 
-    def get_combinations(self, k: int) -> Iterable[list[SequenceCommand]]:
+    def get_combinations(self, k: int) -> Iterable[List[SequenceCommand]]:
         return self._combinations(k)
 
     @property
-    def variants(self) -> list[SequenceCommand]:
+    def variants(self) -> List[SequenceCommand]:
         return self._values
 
     @property
-    def weights(self) -> list[float]:
+    def weights(self) -> List[float]:
         return self._weights
 
 

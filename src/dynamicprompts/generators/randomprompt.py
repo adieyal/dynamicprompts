@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import List
 
 import logging
 from random import Random
@@ -31,7 +32,7 @@ class RandomPromptGenerator(PromptGenerator):
 
         self._generator = RandomGenerator(wildcard_manager)
 
-    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> list[str]:
+    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> List[str]:
         if template is None or len(template) == 0:
             return [""]
         prompts = self._generator.generate_prompts(template, max_prompts)

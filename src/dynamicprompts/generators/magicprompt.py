@@ -1,4 +1,6 @@
 from __future__ import annotations
+from typing import List
+
 from . import PromptGenerator
 import random
 from enum import Enum
@@ -57,7 +59,7 @@ class MagicPromptGenerator(PromptGenerator):
         if seed is not None:
             set_seed(int(seed))
 
-    def generate(self, *args, **kwargs) -> list[str]:
+    def generate(self, *args, **kwargs) -> List[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
 
         new_prompts = []
