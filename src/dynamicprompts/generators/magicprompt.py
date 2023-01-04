@@ -1,26 +1,31 @@
 from __future__ import annotations
 from . import PromptGenerator
 import random
+from enum import Enum
 import re
+
 from tqdm import trange
 
-from transformers import set_seed
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from transformers import pipeline
 
+try:
+    from transformers import set_seed
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    from transformers import pipeline
+except ImportError:
+    raise ImportError(
+        "You need to install the transformers library to use the MagicPrompt generator. "
+        "You can do this by running `pip install -U dynamicprompts[magicprompt]`."
+    )
 
 MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
 MAX_SEED = 2 ** 32 - 1
+
 
 
 class MagicPromptGenerator(PromptGenerator):
     generator = None
 
     def _load_pipeline(self):
-
-        from modules.devices import get_optimal_device
-
-        device = 0 if get_optimal_device() == "cuda" else -1
 
         if MagicPromptGenerator.generator is None:
             tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -29,7 +34,7 @@ class MagicPromptGenerator(PromptGenerator):
             MagicPromptGenerator.tokenizer = tokenizer
             MagicPromptGenerator.model = model
             MagicPromptGenerator.generator = pipeline(
-                task="text-generation", tokenizer=tokenizer, model=model, device=device
+                task="text-generation", tokenizer=tokenizer, model=model, device=self._device
             )
 
         return MagicPromptGenerator.generator
@@ -37,14 +42,17 @@ class MagicPromptGenerator(PromptGenerator):
     def __init__(
         self,
         prompt_generator: PromptGenerator,
+        device: int,
         max_prompt_length: int = 100,
         temperature: float = 0.7,
         seed: int | None = None,
     ):
+        self._device = device
         self._generator = self._load_pipeline()
         self._prompt_generator = prompt_generator
         self._max_prompt_length = max_prompt_length
         self._temperature = float(temperature)
+        
 
         if seed is not None:
             set_seed(int(seed))

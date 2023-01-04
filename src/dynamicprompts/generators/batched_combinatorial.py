@@ -12,9 +12,9 @@ class BatchedCombinatorialPromptGenerator(PromptGenerator):
         self._generator = generator
         self._batches = batches
 
-    def generate(self, max_prompts=constants.MAX_IMAGES) -> list[str]:
+    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> list[str]:
         images = []
 
         for _ in range(self._batches):
-            images.extend(self._generator.generate(max_prompts))
+            images.extend(self._generator.generate(template, max_prompts))
         return images

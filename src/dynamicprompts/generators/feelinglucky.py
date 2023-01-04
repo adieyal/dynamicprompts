@@ -24,9 +24,9 @@ class FeelingLuckyGenerator(PromptGenerator):
             response = requests.get(url)
             response.raise_for_status()
             data = response.json()
-            images = data["images"]
-            prompts = random.choices(images, k=num_prompts)
-            return prompts
+            prompts = data["images"]
+            selected_prompts = random.choices(prompts, k=num_prompts)
+            return [p["prompt"] for p in selected_prompts]
         except Exception as e:
             raise GeneratorException("Error while generating prompt: " + str(e))
 

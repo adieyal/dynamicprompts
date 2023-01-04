@@ -9,16 +9,22 @@ logger = logging.getLogger(__name__)
 try:
     import spacy
 except ImportError:
-    logger.warning("Spacy not installed, attention generator will not work")
+    logger.warning("Spacy not installed, attention generator will not work. Install with pip install dynamicprompts[attentiongrabber]")
 
-
+MODEL_NAME = "en_core_web_sm"
 
 class AttentionGenerator(PromptGenerator):
     def __init__(
         self, generator: PromptGenerator, min_attention=0.1, max_attention=0.9
     ):
+        try:
+            spacy.load(MODEL_NAME)
+        except OSError:
+            logger.warning("Spacy model not found, downloading...")
+            spacy.cli.download(MODEL_NAME)
 
-        self._nlp = spacy.load("en_core_web_sm")
+        self._nlp = spacy.load(MODEL_NAME)
+        
         self._prompt_generator = generator
         m, M = min(min_attention, max_attention), max(min_attention, max_attention)
         self._min_attention, self._max_attention = m, M
