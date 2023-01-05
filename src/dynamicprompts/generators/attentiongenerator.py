@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 from typing import List
 import random
 import logging
 
 from .promptgenerator import PromptGenerator
+from dynamicprompts.generators import DummyGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ MODEL_NAME = "en_core_web_sm"
 
 class AttentionGenerator(PromptGenerator):
     def __init__(
-        self, generator: PromptGenerator, min_attention=0.1, max_attention=0.9
+        self, generator: PromptGenerator|None=None, min_attention=0.1, max_attention=0.9
     ):
         try:
             spacy.load(MODEL_NAME)
@@ -25,8 +27,12 @@ class AttentionGenerator(PromptGenerator):
             spacy.cli.download(MODEL_NAME)
 
         self._nlp = spacy.load(MODEL_NAME)
-        
-        self._prompt_generator = generator
+
+        if generator is None:
+            self._prompt_generator = DummyGenerator()
+        else:
+            self._prompt_generator = generator
+
         m, M = min(min_attention, max_attention), max(min_attention, max_attention)
         self._min_attention, self._max_attention = m, M
 

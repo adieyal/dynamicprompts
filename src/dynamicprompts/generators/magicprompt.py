@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 from typing import List
 
 from . import PromptGenerator
+from dynamicprompts.generators import DummyGenerator
 import random
 from enum import Enum
 import re
@@ -43,15 +45,20 @@ class MagicPromptGenerator(PromptGenerator):
 
     def __init__(
         self,
-        prompt_generator: PromptGenerator,
-        device: int,
+        prompt_generator: PromptGenerator|None=None,
+        device: int = -1,
         max_prompt_length: int = 100,
         temperature: float = 0.7,
         seed: int | None = None,
     ):
         self._device = device
         self._generator = self._load_pipeline()
-        self._prompt_generator = prompt_generator
+
+        if prompt_generator is None:
+            self._prompt_generator = DummyGenerator()
+        else:
+            self._prompt_generator = prompt_generator
+
         self._max_prompt_length = max_prompt_length
         self._temperature = float(temperature)
         

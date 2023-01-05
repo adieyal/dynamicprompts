@@ -1,8 +1,13 @@
 import pytest
 from unittest import mock
 
-from dynamicprompts.generators import FeelingLuckyGenerator
+from dynamicprompts.generators import FeelingLuckyGenerator, DummyGenerator
+
 class TestFeelingLucky:
+    def test_default_generator(self):
+        generator = FeelingLuckyGenerator()
+        assert isinstance(generator._generator, DummyGenerator)
+
     def test_generate(self):
         results = [{"prompt": "ABC"}, {"prompt": "XYZ"}]
         with mock.patch("dynamicprompts.generators.feelinglucky.requests") as mock_response:
