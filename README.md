@@ -85,28 +85,28 @@ Instead of generating random prompts from a template, combinatorial generation p
 `I {love|hate} {New York|Chicago} in {June|July|August}`
 
 will produce:
-- I love New York in June
-- I love New York in July
-- I love New York in August
-- I love Chicago in June
-- I love Chicago in July
-- I love Chicago in August
-- I hate New York in June
-- I hate New York in July
-- I hate New York in August
-- I hate Chicago in June
-- I hate Chicago in July
-- I hate Chicago in August
+> I love New York in June<br>
+> I love New York in July<br>
+> I love New York in August<br>
+> I love Chicago in June<br>
+> I love Chicago in July<br>
+> I love Chicago in August<br>
+> I hate New York in June<br>
+> I hate New York in July<br>
+> I hate New York in August<br>
+> I hate Chicago in June<br>
+> I hate Chicago in July<br>
+> I hate Chicago in August<br>
 
 If a `__wildcard__` is provided, then a new prompt will be produced for every value in the wildcard file. For example:
 
 `My favourite season is __seasons__`
 
 will produce:
-- My favourite season is Summer
-- My favourite season is August
-- My favourite season is Winter
-- My favourite season is Sprint
+> My favourite season is Summer<br>
+> My favourite season is August<br>
+> My favourite season is Winter<br>
+> My favourite season is Sprint<br>
 
 ### Usage
 ```
