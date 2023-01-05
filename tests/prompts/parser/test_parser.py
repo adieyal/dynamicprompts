@@ -297,3 +297,14 @@ class TestParser:
         assert variant[0][0] == "cat"
         assert variant[1][0] == "dog"
         assert variant[2][0] == "bird"
+
+    def test_alternating_words(self, parser: Parser):
+        sequence = parser.parse("[cat|dog]")
+        assert len(sequence) == 1
+        assert sequence[0] == "[cat|dog]"
+
+    def test_prompt_editing(self, parser: Parser):
+        prompt = "[cat:dog:0.25]"
+        sequence = parser.parse(prompt)
+        assert len(sequence) == 1
+        assert sequence[0] == prompt

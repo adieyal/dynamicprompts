@@ -68,8 +68,12 @@ class Parser:
 
         return wildcard("wildcard")
 
-    def _configure_literal_sequence(self):
-        non_literal_chars = r"{}|$"
+    def _configure_literal_sequence(self, is_variant_literal=False):
+
+        if is_variant_literal:
+            non_literal_chars = r"{}|$"
+        else:
+            non_literal_chars = r"{}$"
 
         literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}\s])+")(
             "literal"
@@ -84,7 +88,7 @@ class Parser:
 
         return weight
 
-    def _configure_variants(self, literal_sequence, bound_expr, prompt):
+    def _configure_variants(self, bound_expr, prompt):
         weight_delim = pp.Suppress("::")
 
         left_brace, right_brace = map(pp.Suppress, "{}")
@@ -106,18 +110,27 @@ class Parser:
         bound_expr = self._configure_range()
 
         prompt = pp.Forward()
+        variant_prompt = pp.Forward()
+
         wildcard = self._configure_wildcard()
         literal_sequence = self._configure_literal_sequence()
-        variants = self._configure_variants(literal_sequence, bound_expr, prompt)
+        variant_literal_sequence = self._configure_literal_sequence(is_variant_literal=True)
+        variants = self._configure_variants(bound_expr, variant_prompt)
 
         chunk = variants | wildcard | literal_sequence
+        variant_chunk = variants | wildcard | variant_literal_sequence
+
 
         prompt <<= pp.ZeroOrMore(chunk)("prompt")
+        variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
+
         self._enable_comments(prompt)
         wildcard.set_parse_action(builder.get_wildcard_action)
         variants.set_parse_action(builder.get_variant_action)
         literal_sequence.set_parse_action(builder.get_literal_action)
+        variant_literal_sequence.set_parse_action(builder.get_literal_action)
 
         prompt.set_parse_action(builder.get_sequence_action)
+        variant_prompt.set_parse_action(builder.get_sequence_action)
 
         return prompt
