@@ -192,12 +192,14 @@ Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if
 ```
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator
 
-generator = FeelingLuckyGenerator()
+generator = RandomPromptGenerator(wm)
+lucky_generator = FeelingLuckyGenerator(generator)
 
 num_prompts = 5
-generator.generate("I love {red|green|blue} roses", num_prompts)
+lucky_generator.generate("I love {red|green|blue} roses", num_prompts)
 
 >> ['“ guns and roses ” ', '🌹🥀🏜. 🌌🌠⭐. 💯. ', 'tattoo design, stencil, beautiful japanese girls face, roses and ivy surrounding by artgerm, artgerm, cat girl, anime ', 'rose made of glass dramatic lighting', 'a wireframe render of a red rose']
 
