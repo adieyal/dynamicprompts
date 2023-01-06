@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 re_wildcard = re.compile(r"__(.*?)__")
 re_combinations = re.compile(r"\{([^{}]*)}")
+
 class RandomExtension(Extension):
     def __init__(self, environment):
         super().__init__(environment)
@@ -96,8 +97,7 @@ class PromptExtension(Extension):
         return caller()
 
 class JinjaGenerator(PromptGenerator):
-    def __init__(self, template, wildcard_manager=None, context=None):
-        self._template = template
+    def __init__(self, wildcard_manager=None, context=None):
         self._wildcard_manager = wildcard_manager
 
         if context is not None:
@@ -106,7 +106,7 @@ class JinjaGenerator(PromptGenerator):
             self._context = {}
 
 
-    def generate(self, num_prompts=1) -> List[str]:
+    def generate(self, template: str, num_prompts: int=1) -> List[str]:
         try:
             env = Environment(
                 extensions=[RandomExtension, PromptExtension, WildcardExtension, PermutationExtension]
@@ -116,8 +116,8 @@ class JinjaGenerator(PromptGenerator):
 
             prompts = []
             for i in range(num_prompts):
-                template = env.from_string(self._template)
-                s = template.render(**self._context)
+                jinja_template = env.from_string(template)
+                s = jinja_template.render(**self._context)
                 prompts.append(s)
 
             if env.prompt_blocks:
