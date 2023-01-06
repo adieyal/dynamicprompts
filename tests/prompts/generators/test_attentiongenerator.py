@@ -1,5 +1,11 @@
-from dynamicprompts.generators import AttentionGenerator, DummyGenerator
+import pytest
 
+try:
+    from dynamicprompts.generators import AttentionGenerator, DummyGenerator
+except ImportError:
+    pass
+
+@pytest.mark.attentiongenerator
 class TestAttentionGenerator:
     def test_default_generator(self):
         generator = AttentionGenerator()

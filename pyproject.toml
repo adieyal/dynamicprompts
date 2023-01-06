@@ -29,3 +29,7 @@ magicprompt = ["transformers", "torch", "torchvision"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+markers = [
+    "magicprompt: tests related to the MagicPromptGenerator need the transformers library installed",
+    "attentiongenerator: tests related to the AttentionGenerator need the spacy library installed",
+]

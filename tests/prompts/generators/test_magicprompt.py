@@ -1,9 +1,15 @@
 from unittest import mock
-
-from dynamicprompts.generators.magicprompt import MagicPromptGenerator
-from dynamicprompts.generators import DummyGenerator
 from functools import partial
 
+import pytest
+
+try:
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+    from dynamicprompts.generators import DummyGenerator
+except ImportError:
+    pass
+
+@pytest.mark.magicprompt
 class TestMagicPrompt:
     def test_default_generator(self):
         generator = MagicPromptGenerator()
