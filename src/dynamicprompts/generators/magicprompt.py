@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+import logging
 from typing import List
 
-from . import PromptGenerator
+from .promptgenerator import PromptGenerator
 from dynamicprompts.generators import DummyGenerator
-import random
-from enum import Enum
 import re
 
 from tqdm import trange
 
+logger = logging.getLogger(__name__)
 
 try:
     from transformers import set_seed
@@ -52,6 +52,7 @@ class MagicPromptGenerator(PromptGenerator):
         seed: int | None = None,
     ):
         self._device = device
+        logger.warning("First load of MagicPrompt may take a while.")
         self._generator = self._load_pipeline()
 
         if prompt_generator is None:

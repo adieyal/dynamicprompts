@@ -32,9 +32,9 @@ class RandomPromptGenerator(PromptGenerator):
 
         self._generator = RandomGenerator(wildcard_manager)
 
-    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> List[str]:
+    def generate(self, template, num_images=1) -> List[str]:
         if template is None or len(template) == 0:
             return [""]
-        prompts = self._generator.generate_prompts(template, max_prompts)
+        prompts = self._generator.generate_prompts(template, num_images)
         prompts = list(prompts)
         return prompts
