@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "dynamicprompts"
-version = "0.1.17"
+version = "0.1.18"
 description = "Dynamic prompts templating library for Stable Diffusion"
 authors = ["Adi Eyal <adi@clearforest.io>"]
 license = "MIT"
