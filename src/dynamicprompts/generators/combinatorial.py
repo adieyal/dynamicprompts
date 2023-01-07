@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class CombinatorialPromptGenerator(PromptGenerator):
-    def __init__(self, wildcard_manager: WildcardManager):
+    def __init__(self, wildcard_manager: WildcardManager, ignore_whitespace=False):
         self._wildcard_manager = wildcard_manager
-        self._generator = CombinatorialGenerator(wildcard_manager)
+        self._generator = CombinatorialGenerator(wildcard_manager, ignore_whitespace=ignore_whitespace)
 
     def generate(self, template, max_prompts=constants.MAX_IMAGES) -> List[str]:
         if template is None or len(template) == 0:
