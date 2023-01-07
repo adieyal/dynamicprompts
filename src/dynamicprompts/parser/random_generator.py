@@ -140,6 +140,6 @@ class RandomGenerator:
             else:
                 prompt = prompts[0]
 
-            generated_prompts.append(prompts[0])
+            generated_prompts.append(prompt)
 
         return generated_prompts
