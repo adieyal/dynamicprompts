@@ -3,10 +3,13 @@ from unittest import mock
 import pytest
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+
 
 @pytest.fixture
 def wildcard_manager():
     return mock.Mock()
+
 
 class TestCombinatorialGenerator:
     def test_literal_template(self, wildcard_manager):
@@ -14,7 +17,7 @@ class TestCombinatorialGenerator:
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        prompts = generator.generate(prompt, 10)
+        prompts = list(generator.generate(prompt, 10))
 
         assert len(prompts) == 1
         assert prompts[0] == prompt
@@ -25,13 +28,9 @@ class TestCombinatorialGenerator:
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         wildcard_manager.get_all_values.return_value = ["bread", "butter", "cheese"]
-        prompts = generator.generate(prompt, 10)
+        prompts = list(generator.generate(prompt, 10))
 
         assert len(prompts) == 3
         assert prompts[0] == "I love bread"
         assert prompts[1] == "I love butter"
         assert prompts[2] == "I love cheese"
-        
-        
-
-        

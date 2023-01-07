@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import List, Iterable
 
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts import constants
@@ -16,10 +16,9 @@ class CombinatorialPromptGenerator(PromptGenerator):
         self._wildcard_manager = wildcard_manager
         self._generator = CombinatorialGenerator(wildcard_manager, ignore_whitespace=ignore_whitespace)
 
-    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> List[str]:
+    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> Iterable[str]:
         if template is None or len(template) == 0:
             return [""]
         prompts = self._generator.generate_prompts(template, max_prompts)
-        prompts = list(prompts)
 
         return prompts

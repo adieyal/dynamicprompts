@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple
+from itertools import islice
 
 from typing import Iterable
 from collections import OrderedDict
@@ -125,7 +126,7 @@ class CombinatorialGenerator:
 
     def generate_prompts(
         self, prompt: str, num_prompts: int | None = None
-    ) -> List[str]:
+    ) -> Iterable[str]:
         if len(prompt) == 0:
             return []
 
@@ -140,6 +141,6 @@ class CombinatorialGenerator:
         
 
         if num_prompts is None:
-            return list(prompts)
+            return prompts
         else:
-            return [p for idx, p in enumerate(prompts) if idx < num_prompts]
+            return islice(prompts, num_prompts)
