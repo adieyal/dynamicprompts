@@ -39,13 +39,14 @@ class CombinatorialSequenceCommand(SequenceCommand):
 
 
 class CombinatorialWildcardCommand(WildcardCommand):
-    def __init__(self, wildcard_manager, token):
+    def __init__(self, wildcard_manager: WildcardManager, builder: ActionBuilder, token):
         super().__init__(wildcard_manager, token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
+        self._builder = builder
 
     def prompts(self):
-        generator = CombinatorialGenerator(self._wildcard_manager)
+        generator = self._builder.create_generator()
         values = self._wildcard_manager.get_all_values(self._wildcard)
         for val in values:
             for prompt in generator.generate_prompts(val):
@@ -100,11 +101,13 @@ class CombinatorialActionBuilder(ActionBuilder):
         return CombinatorialVariantCommand(variants, min_bound, max_bound, sep)
 
     def create_wildcard_command(self, token: str):
-        return CombinatorialWildcardCommand(self._wildcard_manager, token)
+        return CombinatorialWildcardCommand(self._wildcard_manager, self, token)
 
     def create_sequence_command(self, token_list: List[Command]):
         return CombinatorialSequenceCommand(token_list)
 
+    def create_generator(self):
+        return CombinatorialGenerator(self._wildcard_manager, ignore_whitespace=self._ignore_whitespace)
 
 class CombinatorialGenerator:
     def __init__(self, wildcard_manager, ignore_whitespace=False):
@@ -112,7 +115,7 @@ class CombinatorialGenerator:
         self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
-        return CombinatorialActionBuilder(self._wildcard_manager)
+        return CombinatorialActionBuilder(self._wildcard_manager, self._ignore_whitespace)
 
     def configure_parser(self) -> Parser:
         builder = self.get_action_builder()

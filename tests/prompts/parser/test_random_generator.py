@@ -6,6 +6,7 @@ from dynamicprompts.parser.random_generator import (
     RandomVariantCommand,
     RandomWildcardCommand,
     RandomGenerator,
+    RandomActionBuilder
 )
 from dynamicprompts.parser.commands import LiteralCommand
 
@@ -19,6 +20,9 @@ def to_seqlit(*args):
 def wildcard_manager():
     return mock.Mock()
 
+@pytest.fixture
+def builder(wildcard_manager):
+    return RandomActionBuilder(wildcard_manager)
 
 @pytest.fixture
 def generator(wildcard_manager):
@@ -201,11 +205,11 @@ class TestVariantCommand:
 
 
 class TestWildcardsCommand:
-    def test_basic_wildcard(self, wildcard_manager):
-        command = RandomWildcardCommand(wildcard_manager, "colours")
+    def test_basic_wildcard(self, builder: RandomActionBuilder):
+        command = builder.get_wildcard_action("colours")
 
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
             with mock.patch(
                 "dynamicprompts.parser.random_generator.random"
@@ -216,18 +220,15 @@ class TestWildcardsCommand:
                 assert len(prompts) == 1
                 assert prompts[0] == "green"
 
-    def test_wildcard_with_literal(self, wildcard_manager):
-        command1 = RandomWildcardCommand(wildcard_manager, "colours")
-        command2 = LiteralCommand(" ")
-        command3 = LiteralCommand("are")
-        command4 = LiteralCommand(" ")
-        command5 = LiteralCommand("cool")
-        sequence = RandomSequenceCommand(
-            [command1, command2, command3, command4, command5]
-        )
+    def test_wildcard_with_literal(self, builder: RandomActionBuilder):
+        command1 = builder.get_wildcard_action("colours")
+        space = builder.get_literal_action(" ")
+        command2 = builder.get_literal_action("are")
+        command3 = builder.get_literal_action("cool")
+        sequence = builder.get_sequence_action([command1, space, command2, space, command3])
 
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
             with mock.patch(
                 "dynamicprompts.parser.random_generator.random"
@@ -238,14 +239,14 @@ class TestWildcardsCommand:
                 for c in random_choices:
                     assert sequence.get_prompt() == f"{c} are cool"
 
-    def test_wildcard_with_variant(self, wildcard_manager):
-        command1 = RandomWildcardCommand(wildcard_manager, "colours")
-        command2 = LiteralCommand(" ")
+    def test_wildcard_with_variant(self, builder: RandomActionBuilder):
+        command1 = builder.get_wildcard_action("colours")
+        space = builder.get_literal_action(" ")
         command3 = RandomVariantCommand(gen_variant(["circles", "squares"]))
-        sequence = RandomSequenceCommand([command1, command2, command3])
+        sequence = builder.get_sequence_action([command1, space, command3])
 
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
             with mock.patch(
                 "dynamicprompts.parser.random_generator.random"

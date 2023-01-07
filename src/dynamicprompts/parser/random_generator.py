@@ -28,13 +28,14 @@ class RandomSequenceCommand(SequenceCommand):
 
 
 class RandomWildcardCommand(Command):
-    def __init__(self, wildcard_manager, token: str):
+    def __init__(self, wildcard_manager, builder: ActionBuilder, token: str):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
+        self._builder = builder
 
     def prompts(self) -> Iterable[str]:
-        generator = RandomGenerator(self._wildcard_manager)
+        generator = self._builder.create_generator()
         values = self._wildcard_manager.get_all_values(self._wildcard)
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {self._wildcard}")
@@ -86,7 +87,7 @@ class RandomVariantCommand(Command):
 
 
 class RandomActionBuilder(ActionBuilder):
-    def __init__(self, wildcard_manager: WildcardManager, seq_sep=" "):
+    def __init__(self, wildcard_manager: WildcardManager, seq_sep=""):
         super().__init__(wildcard_manager)
         self._seq_sep = seq_sep
 
@@ -94,10 +95,13 @@ class RandomActionBuilder(ActionBuilder):
         return RandomVariantCommand(variants, min_bound, max_bound, sep)
 
     def create_wildcard_command(self, token: str):
-        return RandomWildcardCommand(self._wildcard_manager, token)
+        return RandomWildcardCommand(self._wildcard_manager, self, token)
 
     def create_sequence_command(self, token_list: List[Command]):
         return RandomSequenceCommand(token_list, separator=self._seq_sep)
+
+    def create_generator(self):
+        return RandomGenerator(self._wildcard_manager, ignore_whitespace=self._ignore_whitespace)
 
 
 class RandomGenerator:

@@ -8,6 +8,7 @@ from dynamicprompts.parser.combinatorial_generator import (
     CombinatorialVariantCommand,
     CombinatorialWildcardCommand,
     CombinatorialGenerator,
+    CombinatorialActionBuilder
 )
 from dynamicprompts.parser.commands import LiteralCommand
 
@@ -21,6 +22,9 @@ def wildcard_manager():
 def generator(wildcard_manager) -> CombinatorialGenerator:
     return CombinatorialGenerator(wildcard_manager)
 
+@pytest.fixture
+def builder(wildcard_manager) -> CombinatorialActionBuilder:
+    return CombinatorialActionBuilder(wildcard_manager)
 
 def gen_variant(vals):
     return [{"weight": [1], "val": LiteralCommand(v)} for v in vals]
@@ -169,42 +173,43 @@ class TestVariantCommand:
 
 
 class TestWildcardsCommand:
-    def test_basic_wildcard(self, wildcard_manager):
+    def test_basic_wildcard(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            command = CombinatorialWildcardCommand(wildcard_manager, ["colours"])
+            command = builder.get_wildcard_action(["colours"])
             prompts = list(command.prompts())
             assert len(prompts) == 3
             assert prompts[0] == "red"
             assert prompts[1] == "green"
             assert prompts[2] == "blue"
 
-            wildcard_manager.get_all_values.assert_called_once_with("colours")
+            builder._wildcard_manager.get_all_values.assert_called_once_with("colours")
 
-    def test_wildcard_with_literal(self, wildcard_manager):
+    def test_wildcard_with_literal(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            command1 = CombinatorialWildcardCommand(wildcard_manager, ["colours"])
-            command2 = LiteralCommand(" are cool")
-            sequence = CombinatorialSequenceCommand([command1, command2])
+            command1 = builder.get_wildcard_action(["colours"])
+            command2 = builder.get_literal_action(" are cool")
+            sequence = builder.get_sequence_action([command1, command2])
 
             prompts = list(sequence.prompts())
             assert len(prompts) == 3
             assert prompts[0] == "red are cool"
             assert prompts[1] == "green are cool"
             assert prompts[2] == "blue are cool"
-            wildcard_manager.get_all_values.assert_called_once_with("colours")
+            builder._wildcard_manager.get_all_values.assert_called_once_with("colours")
 
-    def test_wildcard_with_variant(self, wildcard_manager):
+    def test_wildcard_with_variant(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            command1 = CombinatorialWildcardCommand(wildcard_manager, "colours")
-            space = LiteralCommand(" ")
+            
+            command1 = builder.get_wildcard_action("colours")
+            space = builder.get_literal_action(" ")
             command2 = CombinatorialVariantCommand(gen_variant(["circles", "squares"]))
-            sequence = CombinatorialSequenceCommand([command1, space, command2])
+            sequence = builder.get_sequence_action([command1, space, command2])
 
             prompts = list(sequence.prompts())
 
@@ -216,13 +221,13 @@ class TestWildcardsCommand:
             assert prompts[4] == "blue circles"
             assert prompts[5] == "blue squares"
 
-    def test_variant_nested_in_wildcard(self, wildcard_manager):
+    def test_variant_nested_in_wildcard(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            wildcard_manager,
+            builder._wildcard_manager,
             "get_all_values",
             return_value=["{red|pink}", "green", "blue"],
         ):
-            wildcard_command = CombinatorialWildcardCommand(wildcard_manager, "colours")
+            wildcard_command = builder.get_wildcard_action("colours")
             sequence = CombinatorialSequenceCommand([wildcard_command])
 
             prompts = list(sequence.prompts())
@@ -233,17 +238,17 @@ class TestWildcardsCommand:
             assert prompts[2] == "green"
             assert prompts[3] == "blue"
 
-    def test_wildcard_nested_in_wildcard(self, wildcard_manager):
+    def test_wildcard_nested_in_wildcard(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            wildcard_manager,
+            builder._wildcard_manager,
             "get_all_values",
             side_effect=[
                 ["__other_colours__", "green", "blue"],
                 ["red", "pink", "yellow"],
             ],
         ):
-            wildcard_command = CombinatorialWildcardCommand(wildcard_manager, "colours")
-            sequence = CombinatorialSequenceCommand([wildcard_command])
+            wildcard_command = builder.get_wildcard_action("colours")
+            sequence = builder.get_sequence_action([wildcard_command])
 
             prompts = list(sequence.prompts())
 
