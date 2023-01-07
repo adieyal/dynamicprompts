@@ -37,7 +37,10 @@ class TestLiteralCommand:
         command1 = LiteralCommand("one")
         command2 = LiteralCommand("two")
         command3 = LiteralCommand("three")
-        sequence = CombinatorialSequenceCommand([command1, command2, command3])
+        space = LiteralCommand(" ")
+        sequence = CombinatorialSequenceCommand(
+            [command1, space, command2, space, command3]
+        )
 
         prompts = list(sequence.prompts())
         assert len(prompts) == 1
@@ -79,7 +82,7 @@ class TestVariantCommand:
         variants = gen_variant(["one", "two", "three"])
         command1 = CombinatorialVariantCommand(variants)
 
-        command2 = LiteralCommand("circles and squares")
+        command2 = LiteralCommand(" circles and squares")
         sequence = CombinatorialSequenceCommand([command1, command2])
 
         prompts = list(sequence.prompts())
@@ -94,7 +97,8 @@ class TestVariantCommand:
 
         command1 = CombinatorialVariantCommand(variants1)
         command2 = CombinatorialVariantCommand(variants2)
-        sequence = CombinatorialSequenceCommand([command1, command2])
+        space = LiteralCommand(" ")
+        sequence = CombinatorialSequenceCommand([command1, space, command2])
 
         prompts = list(sequence.prompts())
         assert len(prompts) == 6
@@ -108,14 +112,11 @@ class TestVariantCommand:
     def test_varied_prompt(self):
         variants1 = gen_variant(["red", "green"])
         variants2 = gen_variant(["circles", "squares", "triangles"])
-
+        space = LiteralCommand(" ")
         command1 = CombinatorialVariantCommand(variants1)
         command2 = CombinatorialVariantCommand(variants2)
-        command3 = LiteralCommand("are")
-        command4 = LiteralCommand("cool")
-        sequence = CombinatorialSequenceCommand(
-            [command1, command2, command3, command4]
-        )
+        command3 = LiteralCommand(" are cool")
+        sequence = CombinatorialSequenceCommand([command1, space, command2, command3])
 
         prompts = list(sequence.prompts())
 
@@ -186,9 +187,8 @@ class TestWildcardsCommand:
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
             command1 = CombinatorialWildcardCommand(wildcard_manager, ["colours"])
-            command2 = LiteralCommand("are")
-            command3 = LiteralCommand("cool")
-            sequence = CombinatorialSequenceCommand([command1, command2, command3])
+            command2 = LiteralCommand(" are cool")
+            sequence = CombinatorialSequenceCommand([command1, command2])
 
             prompts = list(sequence.prompts())
             assert len(prompts) == 3
@@ -202,8 +202,9 @@ class TestWildcardsCommand:
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
             command1 = CombinatorialWildcardCommand(wildcard_manager, "colours")
+            space = LiteralCommand(" ")
             command2 = CombinatorialVariantCommand(gen_variant(["circles", "squares"]))
-            sequence = CombinatorialSequenceCommand([command1, command2])
+            sequence = CombinatorialSequenceCommand([command1, space, command2])
 
             prompts = list(sequence.prompts())
 
@@ -258,7 +259,8 @@ class TestCombinatorialSequenceCommand:
     def test_prompts(self):
         command1 = LiteralCommand("A")
         command2 = LiteralCommand("sentence")
-        sequence = CombinatorialSequenceCommand([command1, command2])
+        space = LiteralCommand(" ")
+        sequence = CombinatorialSequenceCommand([command1, space, command2])
 
         prompts = list(sequence.prompts())
         assert len(prompts) == 1
@@ -297,7 +299,7 @@ class TestCombinatorialGenerator:
     def test_variant_with_blank(self, generator: CombinatorialGenerator):
         prompts = generator.generate_prompts("A {|red|blue} rose", 3)
         assert len(prompts) == 3
-        assert prompts[0] == "A rose"
+        assert prompts[0] == "A  rose"
         assert prompts[1] == "A red rose"
         assert prompts[2] == "A blue rose"
 

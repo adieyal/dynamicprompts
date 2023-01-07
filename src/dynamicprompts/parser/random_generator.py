@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class RandomSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: List[Command] | None = None, separator=" "):
+    def __init__(self, tokens: List[Command] | None = None, separator=""):
         self._sep = separator
         super().__init__(tokens)
 
@@ -86,6 +86,10 @@ class RandomVariantCommand(Command):
 
 
 class RandomActionBuilder(ActionBuilder):
+    def __init__(self, wildcard_manager: WildcardManager, seq_sep=" "):
+        super().__init__(wildcard_manager)
+        self._seq_sep = seq_sep
+
     def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
         return RandomVariantCommand(variants, min_bound, max_bound, sep)
 
@@ -93,19 +97,20 @@ class RandomActionBuilder(ActionBuilder):
         return RandomWildcardCommand(self._wildcard_manager, token)
 
     def create_sequence_command(self, token_list: List[Command]):
-        return RandomSequenceCommand(token_list)
+        return RandomSequenceCommand(token_list, separator=self._seq_sep)
 
 
 class RandomGenerator:
-    def __init__(self, wildcard_manager: WildcardManager, rand=None):
+    def __init__(self, wildcard_manager: WildcardManager, rand=None, ignore_whitespace=False):
         if rand is None:
             self._random = random
         else:
             self._random = rand
         self._wildcard_manager = wildcard_manager
+        self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
-        return RandomActionBuilder(self._wildcard_manager)
+        return RandomActionBuilder(self._wildcard_manager, seq_sep="")
 
     def configure_parser(self):
         builder = self.get_action_builder()
@@ -113,7 +118,7 @@ class RandomGenerator:
 
         return parser.prompt
 
-    def generate_prompts(self, prompt: str, num_prompts: int) -> List[str]:
+    def generate_prompts(self, prompt: str, num_prompts: int = 0) -> List[str]:
         if len(prompt) == 0:
             return []
 
@@ -126,6 +131,11 @@ class RandomGenerator:
         generated_prompts = []
         for i in range(num_prompts):
             prompts = list(tokens[0].prompts())
-            generated_prompts.append(squash_whitespace(prompts[0]))
+            if self._ignore_whitespace:
+                prompt = squash_whitespace(prompts[0])
+            else:
+                prompt = prompts[0]
+
+            generated_prompts.append(prompts[0])
 
         return generated_prompts

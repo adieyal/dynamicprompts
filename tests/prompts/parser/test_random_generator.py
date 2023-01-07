@@ -34,7 +34,7 @@ def gen_variant(vals, weights=None):
 
 class TestRandomSequenceCommand:
     def test_prompts(self):
-        sequence = to_seqlit("one", "two", "three")
+        sequence = to_seqlit("one", " ", "two", " ", "three")
         prompts = list(sequence.prompts())
 
         assert len(prompts) == 1
@@ -76,9 +76,9 @@ class TestVariantCommand:
     def test_variant_with_literal(self):
         variants = gen_variant(["one", "two", "three"])
         command1 = RandomVariantCommand(variants)
-
-        command2 = LiteralCommand("circles")
-        sequence = RandomSequenceCommand([command1, command2])
+        command2 = LiteralCommand(" ")
+        command3 = LiteralCommand("circles")
+        sequence = RandomSequenceCommand([command1, command2, command3])
         with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
             random_choices = [
                 [to_seqlit("one")],
@@ -157,8 +157,9 @@ class TestVariantCommand:
         variants2 = gen_variant(["circles", "squares", "triangles"])
 
         command1 = RandomVariantCommand(variants1)
-        command2 = RandomVariantCommand(variants2)
-        sequence = RandomSequenceCommand([command1, command2])
+        command2 = LiteralCommand(" ")
+        command3 = RandomVariantCommand(variants2)
+        sequence = RandomSequenceCommand([command1, command2, command3])
 
         with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
             random_choices = [
@@ -176,10 +177,15 @@ class TestVariantCommand:
         variants2 = gen_variant(["circles", "squares", "triangles"])
 
         command1 = RandomVariantCommand(variants1)
-        command2 = RandomVariantCommand(variants2)
-        command3 = LiteralCommand("are")
-        command4 = LiteralCommand("cool")
-        sequence = RandomSequenceCommand([command1, command2, command3, command4])
+        command2 = LiteralCommand(" ")
+        command3 = RandomVariantCommand(variants2)
+        command4 = LiteralCommand(" ")
+        command5 = LiteralCommand("are")
+        command6 = LiteralCommand(" ")
+        command7 = LiteralCommand("cool")
+        sequence = RandomSequenceCommand(
+            [command1, command2, command3, command4, command5, command6, command7]
+        )
 
         with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
             random_choices = [
@@ -201,7 +207,9 @@ class TestWildcardsCommand:
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
+            with mock.patch(
+                "dynamicprompts.parser.random_generator.random"
+            ) as mock_random:
                 mock_random.choice.side_effect = ["green"]
 
                 prompts = list(command.prompts())
@@ -210,14 +218,20 @@ class TestWildcardsCommand:
 
     def test_wildcard_with_literal(self, wildcard_manager):
         command1 = RandomWildcardCommand(wildcard_manager, "colours")
-        command2 = LiteralCommand("are")
-        command3 = LiteralCommand("cool")
-        sequence = RandomSequenceCommand([command1, command2, command3])
+        command2 = LiteralCommand(" ")
+        command3 = LiteralCommand("are")
+        command4 = LiteralCommand(" ")
+        command5 = LiteralCommand("cool")
+        sequence = RandomSequenceCommand(
+            [command1, command2, command3, command4, command5]
+        )
 
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
+            with mock.patch(
+                "dynamicprompts.parser.random_generator.random"
+            ) as mock_random:
                 random_choices = ["green", "red"]
                 mock_random.choice.side_effect = random_choices
 
@@ -226,13 +240,16 @@ class TestWildcardsCommand:
 
     def test_wildcard_with_variant(self, wildcard_manager):
         command1 = RandomWildcardCommand(wildcard_manager, "colours")
-        command2 = RandomVariantCommand(gen_variant(["circles", "squares"]))
-        sequence = RandomSequenceCommand([command1, command2])
+        command2 = LiteralCommand(" ")
+        command3 = RandomVariantCommand(gen_variant(["circles", "squares"]))
+        sequence = RandomSequenceCommand([command1, command2, command3])
 
         with mock.patch.object(
             wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
+            with mock.patch(
+                "dynamicprompts.parser.random_generator.random"
+            ) as mock_random:
                 mock_random.choice.side_effect = ["red", "blue"]
                 mock_random.choices.side_effect = [
                     [to_seqlit("circles")],
@@ -288,7 +305,7 @@ class TestRandomGenerator:
             prompts = generator.generate_prompts("A {|red|blue} rose", 3)
 
             assert len(prompts) == 3
-            assert prompts[0] == "A rose"
+            assert prompts[0] == "A  rose"
             assert prompts[1] == "A red rose"
             assert prompts[2] == "A blue rose"
 
@@ -335,7 +352,7 @@ class TestRandomGenerator:
             mock_random.choices.return_value = [to_seqlit("green")]
             mock_random.randint.return_value = 1
             prompts = generator.generate_prompts("A {1::red|2::green|3::blue}", 1)
-            
+
             assert len(prompts) == 1
             assert prompts[0] == "A green"
 
@@ -345,7 +362,9 @@ class TestRandomGenerator:
             "get_all_values",
             return_value=to_seqlit("red", "green", "blue"),
         ):
-            with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
+            with mock.patch(
+                "dynamicprompts.parser.random_generator.random"
+            ) as mock_random:
                 mock_random.choice.side_effect = ["red", "green"]
                 mock_random.choices.side_effect = [
                     [to_seqlit("square")],
@@ -357,8 +376,22 @@ class TestRandomGenerator:
                 assert prompts[1] == "A green circle"
 
     def test_missing_wildcard(self, generator: RandomGenerator):
-        with mock.patch.object(generator._wildcard_manager, "get_all_values", return_value=[]):
+        with mock.patch.object(
+            generator._wildcard_manager, "get_all_values", return_value=[]
+        ):
             prompts = generator.generate_prompts("A __missing__ wildcard", 1)
             assert len(prompts) == 1
             assert prompts[0] == "A __missing__ wildcard"
 
+    def test_nospace_before_or_after_wildcard(self, generator: RandomGenerator):
+        with mock.patch.object(
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=to_seqlit("red", "green", "blue"),
+        ):
+            with mock.patch(
+                "dynamicprompts.parser.random_generator.random"
+            ) as mock_random:
+                mock_random.choice.side_effect = ["red", "green"]
+                prompts = generator.generate_prompts("(__colours__:2.3) ", 1)
+                assert prompts[0] == "(red:2.3) "

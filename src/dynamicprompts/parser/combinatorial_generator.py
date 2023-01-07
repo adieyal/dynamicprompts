@@ -20,7 +20,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 
 class CombinatorialSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: List[Command] | None = None, separator=" "):
+    def __init__(self, tokens: List[Command] | None = None, separator=""):
         self._sep = separator
         super().__init__(tokens)
 
@@ -34,7 +34,8 @@ class CombinatorialSequenceCommand(SequenceCommand):
             token = tokens[0]
             for prompt in token.prompts():
                 for next_prompts in self.prompts(tokens[1:]):
-                    yield (prompt + self._sep + next_prompts).strip()
+                    res = prompt + self._sep + next_prompts
+                    yield res
 
 
 class CombinatorialWildcardCommand(WildcardCommand):
@@ -63,7 +64,7 @@ class CombinatorialVariantCommand(VariantCommand):
 
             for p in c_1.prompts():
                 for rest_prompt in self._combo_to_prompt(c_rest):
-                    if rest_prompt != "":
+                    if rest_prompt != []:
                         yield [p] + rest_prompt
                     else:
                         yield [p]
@@ -106,8 +107,9 @@ class CombinatorialActionBuilder(ActionBuilder):
 
 
 class CombinatorialGenerator:
-    def __init__(self, wildcard_manager):
+    def __init__(self, wildcard_manager, ignore_whitespace=False):
         self._wildcard_manager = wildcard_manager
+        self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
         return CombinatorialActionBuilder(self._wildcard_manager)
@@ -124,11 +126,17 @@ class CombinatorialGenerator:
         if len(prompt) == 0:
             return []
 
+        squash_whitespace = lambda s: " ".join(s.split())
+
         parser = self.configure_parser()
         sequence = parser.parse(prompt)
         prompts = sequence.prompts()
 
+        if self._ignore_whitespace:
+            prompts = (squash_whitespace(p) for p in prompts)
+        
+
         if num_prompts is None:
-            return [p for idx, p in enumerate(prompts)]
+            return list(prompts)
         else:
             return [p for idx, p in enumerate(prompts) if idx < num_prompts]
