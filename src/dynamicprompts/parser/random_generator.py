@@ -87,8 +87,8 @@ class RandomVariantCommand(Command):
 
 
 class RandomActionBuilder(ActionBuilder):
-    def __init__(self, wildcard_manager: WildcardManager, seq_sep=""):
-        super().__init__(wildcard_manager)
+    def __init__(self, wildcard_manager: WildcardManager, seq_sep="", ignore_whitespace=False):
+        super().__init__(wildcard_manager, ignore_whitespace=ignore_whitespace)
         self._seq_sep = seq_sep
 
     def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
