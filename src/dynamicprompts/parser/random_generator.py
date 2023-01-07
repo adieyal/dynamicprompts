@@ -114,7 +114,7 @@ class RandomGenerator:
         self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
-        return RandomActionBuilder(self._wildcard_manager, seq_sep="")
+        return RandomActionBuilder(self._wildcard_manager, seq_sep="", ignore_whitespace=self._ignore_whitespace)
 
     def configure_parser(self):
         builder = self.get_action_builder()
