@@ -133,8 +133,16 @@ class RandomGenerator:
         squash_whitespace = lambda s: " ".join(s.split())
 
         generated_prompts = []
+        if len(tokens) == 0:
+            return []
+
         for i in range(num_prompts):
+            
+
             prompts = list(tokens[0].prompts())
+            if len(prompts) == 0:
+                
+                continue
             if self._ignore_whitespace:
                 prompt = squash_whitespace(prompts[0])
             else:

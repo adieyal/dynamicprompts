@@ -1,3 +1,4 @@
+0.2.2 - Minor bug fixes
 0.2.1 - Fixed a bug that cause the CombinatorialPromptGenerator to run very slowly when many wildcards were used.
 0.2.0 - The parser now treats whitespace as significant in order to not ensure that the original prompt is left unaltered
 0.1.19 - Added the Jinja2 generator from the SD Dynamic Prompts extension. Also fixed the Jinja2 interface to match the other generators
