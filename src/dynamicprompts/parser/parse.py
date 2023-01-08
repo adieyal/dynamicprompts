@@ -90,10 +90,8 @@ class Parser:
         return weight
 
     def _configure_variants(self, bound_expr, prompt):
-        weight_delim = pp.Suppress("::")
-
         left_brace, right_brace = map(pp.Suppress, "{}")
-        weight = pp.common.integer + weight_delim
+        weight = self._configure_weight()
 
         variant_option = prompt
         variant = pp.Group(pp.Opt(weight, default=1)("weight") + variant_option("val"))

@@ -251,6 +251,17 @@ class TestParser:
         assert variant[1][0] == "dog"
         assert variant[2][0] == "bird"
 
+        sequence = parser.parse("{0.2::cat|0.3::dog|0.4::bird} test")
+
+        variant = cast(VariantCommand, sequence[0])
+        assert variant.weights[0] == 0.2
+        assert variant.weights[1] == 0.3
+        assert variant.weights[2] == 0.4
+
+        assert variant[0][0] == "cat"
+        assert variant[1][0] == "dog"
+        assert variant[2][0] == "bird"
+
     def test_variant_with_defaultweights(self, parser: Parser):
         sequence = parser.parse("{1::cat|dog|3::bird} test")
 
