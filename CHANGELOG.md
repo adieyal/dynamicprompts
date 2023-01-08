@@ -1,3 +1,4 @@
+0.2.3 - Fixed unlink seed from prompt which allows for a custom random number generator to be passed to the RandomGenerator
 0.2.2 - Minor bug fixes
 0.2.1 - Fixed a bug that cause the CombinatorialPromptGenerator to run very slowly when many wildcards were used.
 0.2.0 - The parser now treats whitespace as significant in order to not ensure that the original prompt is left unaltered

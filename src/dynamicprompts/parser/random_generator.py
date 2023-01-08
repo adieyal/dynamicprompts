@@ -28,11 +28,12 @@ class RandomSequenceCommand(SequenceCommand):
 
 
 class RandomWildcardCommand(Command):
-    def __init__(self, wildcard_manager, builder: ActionBuilder, token: str):
+    def __init__(self, wildcard_manager, builder: ActionBuilder, token: str, rand=None):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
         self._builder = builder
+        self._random = rand or random
 
     def prompts(self) -> Iterable[str]:
         generator = self._builder.create_generator()
@@ -40,7 +41,7 @@ class RandomWildcardCommand(Command):
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {self._wildcard}")
             return [f"__{self._wildcard}__"]
-        val = random.choice(values)
+        val = self._random.choice(values)
         prompts = generator.generate_prompts(val, 1)
 
         return prompts
@@ -50,7 +51,7 @@ class RandomWildcardCommand(Command):
 
 
 class RandomVariantCommand(Command):
-    def __init__(self, variants, min_bound=1, max_bound=1, sep=","):
+    def __init__(self, variants, min_bound=1, max_bound=1, sep=",", rand=None):
         super().__init__(variants)
         self._weights = [p["weight"][0] for p in variants]
         self._values = [p["val"] for p in variants]
@@ -58,6 +59,7 @@ class RandomVariantCommand(Command):
         self.max_bound = max_bound
         self.sep = sep
         self._remaining_values = self._values
+        self._random = rand or random
 
     def _combo_to_prompt(self, combo: List[SequenceCommand]) -> Iterable[List[str]]:
         if len(combo) == 0:
@@ -76,8 +78,8 @@ class RandomVariantCommand(Command):
         if len(self._values) == 0:
             return []
 
-        num_choices = random.randint(self.min_bound, self.max_bound)
-        combo = random.choices(self._values, weights=self._weights, k=num_choices)
+        num_choices = self._random.randint(self.min_bound, self.max_bound)
+        combo = self._random.choices(self._values, weights=self._weights, k=num_choices)
         for prompt_arr in self._combo_to_prompt(combo):
             yield self.sep.join(prompt_arr)
 
@@ -87,15 +89,16 @@ class RandomVariantCommand(Command):
 
 
 class RandomActionBuilder(ActionBuilder):
-    def __init__(self, wildcard_manager: WildcardManager, seq_sep="", ignore_whitespace=False):
+    def __init__(self, wildcard_manager: WildcardManager, rand=None, seq_sep="", ignore_whitespace=False):
         super().__init__(wildcard_manager, ignore_whitespace=ignore_whitespace)
         self._seq_sep = seq_sep
+        self._random = rand or random
 
     def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
-        return RandomVariantCommand(variants, min_bound, max_bound, sep)
+        return RandomVariantCommand(variants, min_bound, max_bound, sep, rand=self._random)
 
     def create_wildcard_command(self, token: str):
-        return RandomWildcardCommand(self._wildcard_manager, self, token)
+        return RandomWildcardCommand(self._wildcard_manager, self, token, rand=self._random)
 
     def create_sequence_command(self, token_list: List[Command]):
         return RandomSequenceCommand(token_list, separator=self._seq_sep)
@@ -114,7 +117,7 @@ class RandomGenerator:
         self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
-        return RandomActionBuilder(self._wildcard_manager, seq_sep="", ignore_whitespace=self._ignore_whitespace)
+        return RandomActionBuilder(self._wildcard_manager, seq_sep="", ignore_whitespace=self._ignore_whitespace, rand=self._random)
 
     def configure_parser(self):
         builder = self.get_action_builder()
@@ -141,7 +144,7 @@ class RandomGenerator:
 
             prompts = list(tokens[0].prompts())
             if len(prompts) == 0:
-                
+
                 continue
             if self._ignore_whitespace:
                 prompt = squash_whitespace(prompts[0])

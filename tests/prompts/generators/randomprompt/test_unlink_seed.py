@@ -4,9 +4,9 @@ from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts import constants
 
 class TestUnlinkSeedFromPrompt:
-    def test_unlink_seed_from_prompt(self, wildcard_manager):
-        generator = RandomPromptGenerator(wildcard_manager)
-        assert generator._unlink_seed_from_prompt == constants.UNLINK_SEED_FROM_PROMPT
+    def test_no_unlink_seed_from_prompt(self, wildcard_manager):
+        generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=False)
+        assert generator._unlink_seed_from_prompt == False
 
         for i in range(5):
             generator = RandomPromptGenerator(
@@ -14,19 +14,28 @@ class TestUnlinkSeedFromPrompt:
             )
             prompt = "I love {1-2$$red|green|blue}"
 
-            # prompt = generator.generate(5)
-            # assert prompt == ['I love blue , red', 'I love blue , green', 'I love red', 'I love blue , red', 'I love green , blue']
+            prompts = list(generator.generate(prompt, 5))
+            first_prompts = prompts
+
+            for i in range(10):
+                generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=False, seed=0)
+                prompts = list(generator.generate(prompt, 5))
+                assert prompts == first_prompts
             
+    def test_unlink_seed_from_prompt(self, wildcard_manager):
+        generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=True)
+        assert generator._unlink_seed_from_prompt == True
 
-        # prev_prompt = None
-        # random.seed(0)
-        # for i in range(5):
-        #     generator = RandomPromptGenerator(
-        #         wildcard_manager, "A template", unlink_seed_from_prompt=True, seed=0
-        #     )
-        #     generator._template = "I love {1-2$$red|green|blue}"
+        for i in range(5):
+            generator = RandomPromptGenerator(
+                wildcard_manager, unlink_seed_from_prompt=True, seed=0
+            )
+            prompt = "I love {1-2$$red|green|blue}"
 
-        #     prompt = generator.generate(5)
-        #     assert prompt != prev_prompt
-        #     prev_prompt = prompt
+            prompts = list(generator.generate(prompt, 20))
+            first_prompts = prompts
 
+            for i in range(10):
+                generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=True, seed=0)
+                prompts = list(generator.generate(prompt, 20))
+                assert prompts != first_prompts
