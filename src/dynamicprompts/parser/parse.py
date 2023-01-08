@@ -67,7 +67,7 @@ class Parser:
     def _configure_wildcard(self):
         wildcard = wildcard_enclosure + ... + wildcard_enclosure
 
-        return wildcard("wildcard")
+        return wildcard("wildcard").leave_whitespace()
 
     def _configure_literal_sequence(self, is_variant_literal=False):
 

@@ -91,6 +91,10 @@ class TestParser:
         wildcard_command = cast(WildcardCommand, wildcard_command)
         assert wildcard_command.wildcard == "path/to/colours"
 
+    def test_two_wildcards_adjancent(self, parser: Parser):
+        sequence = parser.parse("__colours__ __colours__")
+        assert len(sequence) == 3
+
     def test_wildcard_with_accents(self, parser: Parser):
         sequence = parser.parse("__änder__")
         assert len(sequence) == 1
@@ -302,7 +306,7 @@ class TestParser:
         """
 
         sequence = parser.parse(prompt)
-        assert len(sequence) == 4
+        assert len(sequence) == 5
 
         assert sequence[0] == "\n        one\n        two\n        three  \n        "
 
@@ -313,11 +317,13 @@ class TestParser:
         assert variant[1][0] == "dog"
         assert variant[2][0] == "bird"
 
-        assert isinstance(sequence[2], WildcardCommand)
-        wildcard = cast(WildcardCommand, sequence[2])
+        assert isinstance(sequence[2], LiteralCommand)
+        assert sequence[2] == "\n        "
+        assert isinstance(sequence[3], WildcardCommand)
+        wildcard = cast(WildcardCommand, sequence[3])
         assert wildcard.wildcard == "wildcard_comment"
 
-        assert sequence[3] == "\n        five\n        "
+        assert sequence[4] == "\n        five\n        "
 
     def test_alternating_words(self, parser: Parser):
 
