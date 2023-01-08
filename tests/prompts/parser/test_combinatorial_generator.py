@@ -287,42 +287,42 @@ class TestCombinatorialGenerator:
         assert len(prompts) == 0
 
     def test_literals(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A literal sentence", 5)
+        prompts = list(generator.generate_prompts("A literal sentence", 5))
         assert len(prompts) == 1
 
     def test_literal_with_square_brackets(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("Test [low emphasis]", 1)
+        prompts = list(generator.generate_prompts("Test [low emphasis]", 1))
         assert len(prompts) == 1
         assert prompts[0] == "Test [low emphasis]"
 
     def test_variants(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A red {square|circle}", 5)
+        prompts = list(generator.generate_prompts("A red {square|circle}", 5))
         assert len(prompts) == 2
         assert prompts[0] == "A red square"
         assert prompts[1] == "A red circle"
 
     def test_variant_with_blank(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A {|red|blue} rose", 3)
+        prompts = list(generator.generate_prompts("A {|red|blue} rose", 3))
         assert len(prompts) == 3
         assert prompts[0] == "A  rose"
         assert prompts[1] == "A red rose"
         assert prompts[2] == "A blue rose"
 
     def test_two_variants(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A {red|green} {square|circle}", 5)
+        prompts = list(generator.generate_prompts("A {red|green} {square|circle}", 5))
         assert len(prompts) == 4
         assert prompts[0] == "A red square"
         assert prompts[1] == "A red circle"
         assert prompts[2] == "A green square"
         assert prompts[3] == "A green circle"
 
-        prompts = generator.generate_prompts("A {red|green} {square|circle}", 2)
+        prompts = list(generator.generate_prompts("A {red|green} {square|circle}", 2))
         assert len(prompts) == 2
         assert prompts[0] == "A red square"
         assert prompts[1] == "A red circle"
 
     def test_combination_variants(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A {2$$red|green|blue} square", 10)
+        prompts = list(generator.generate_prompts("A {2$$red|green|blue} square", 10))
         assert len(prompts) == 6
         assert prompts[0] == "A red,green square"
         assert prompts[1] == "A red,blue square"
@@ -332,7 +332,7 @@ class TestCombinatorialGenerator:
         assert prompts[5] == "A blue,green square"
 
     def test_combination_variants_range(self, generator: CombinatorialGenerator):
-        prompts = generator.generate_prompts("A {1-2$$red|green|blue} square", 10)
+        prompts = list(generator.generate_prompts("A {1-2$$red|green|blue} square", 10))
         assert len(prompts) == 9
         assert prompts[0] == "A red square"
         assert prompts[1] == "A green square"
@@ -347,7 +347,7 @@ class TestCombinatorialGenerator:
     def test_combination_variants_with_separator(
         self, generator: CombinatorialGenerator
     ):
-        prompts = generator.generate_prompts("A {2$$ and $$red|green|blue} square", 10)
+        prompts = list(generator.generate_prompts("A {2$$ and $$red|green|blue} square", 10))
         assert len(prompts) == 6
         assert prompts[0] == "A red and green square"
         assert prompts[1] == "A red and blue square"
@@ -363,7 +363,7 @@ class TestCombinatorialGenerator:
         with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
             mock_random.randint.return_value = 3
             mock_random.choices.side_effect = [shapes]
-            prompts = generator.generate_prompts("A red {3$$square|circle}", 1)
+            prompts = list(generator.generate_prompts("A red {3$$square|circle}", 1))
 
             assert len(prompts) == 0
 
@@ -373,7 +373,7 @@ class TestCombinatorialGenerator:
             "get_all_values",
             return_value=["red", "green", "blue"],
         ):
-            prompts = generator.generate_prompts("A __colours__ {square|circle}", 6)
+            prompts = list(generator.generate_prompts("A __colours__ {square|circle}", 6))
             assert len(prompts) == 6
             assert prompts[0] == "A red square"
             assert prompts[1] == "A red circle"
@@ -391,7 +391,7 @@ class TestCombinatorialGenerator:
             "get_all_values",
             return_value=["red", "green", "blue"],
         ):
-            prompts = generator.generate_prompts("{__colours__}", 6)
+            prompts = list(generator.generate_prompts("{__colours__}", 6))
             assert len(prompts) == 3
 
     def test_nested_wildcard_with_range(self, generator: CombinatorialGenerator):
@@ -400,7 +400,7 @@ class TestCombinatorialGenerator:
             "get_all_values",
             return_value=["red", "green", "blue"],
         ):
-            prompts = generator.generate_prompts("{2$$__colours__}", 6)
+            prompts = list(generator.generate_prompts("{2$$__colours__}", 6))
             assert len(prompts) == 6
             assert prompts[0] == "red,green"
             assert prompts[1] == "red,blue"
@@ -417,7 +417,7 @@ class TestCombinatorialGenerator:
             "get_all_values",
             return_value=["red", "green", "blue"],
         ):
-            prompts = generator.generate_prompts("{2$$__colours__|black}", 20)
+            prompts = list(generator.generate_prompts("{2$$__colours__|black}", 20))
             assert len(prompts) == 12
             assert prompts[0] == "red,green"
             assert prompts[1] == "red,blue"
