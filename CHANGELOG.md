@@ -1,3 +1,4 @@
+0.2.6 - Wildcards caching for speeding up complex prompts - with thanks to @RossM - see [#pr1](https://github.com/adieyal/dynamicprompts/pull/1)
 0.2.5 - Fixed decimal weights in variants
 0.2.4 - Fixed missing whitespace between two wildcards
 0.2.3 - Fixed unlink seed from prompt which allows for a custom random number generator to be passed to the RandomGenerator
