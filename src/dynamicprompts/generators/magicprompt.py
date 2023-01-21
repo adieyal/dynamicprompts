@@ -21,39 +21,42 @@ except ImportError:
         "You can do this by running `pip install -U dynamicprompts[magicprompt]`."
     )
 
-MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
+DEFAULT_MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
 MAX_SEED = 2 ** 32 - 1
 
 
 
 class MagicPromptGenerator(PromptGenerator):
     generator = None
+    _model_name = None
 
-    def _load_pipeline(self):
+    def _load_pipeline(self, model_name: str):
+        logger.warning("First load of MagicPrompt may take a while.")
 
         if MagicPromptGenerator.generator is None:
-            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-            model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForCausalLM.from_pretrained(model_name)
 
             MagicPromptGenerator.tokenizer = tokenizer
             MagicPromptGenerator.model = model
             MagicPromptGenerator.generator = pipeline(
                 task="text-generation", tokenizer=tokenizer, model=model, device=self._device
             )
+            MagicPromptGenerator._model_name = model_name
 
         return MagicPromptGenerator.generator
 
     def __init__(
         self,
         prompt_generator: PromptGenerator|None=None,
+        model_name: str = DEFAULT_MODEL_NAME,
         device: int = -1,
         max_prompt_length: int = 100,
         temperature: float = 0.7,
         seed: int | None = None,
     ):
         self._device = device
-        logger.warning("First load of MagicPrompt may take a while.")
-        self._generator = self._load_pipeline()
+        self.set_model(model_name)
 
         if prompt_generator is None:
             self._prompt_generator = DummyGenerator()
@@ -67,6 +70,19 @@ class MagicPromptGenerator(PromptGenerator):
         if seed is not None:
             set_seed(int(seed))
 
+    @property
+    def model_name(self):
+        return self._model_name
+
+    def set_model(self, model_name: str):
+        if model_name != MagicPromptGenerator._model_name:
+            MagicPromptGenerator._model_name = model_name
+            MagicPromptGenerator.generator = None
+
+            self._generator = self._load_pipeline(model_name)
+        else:
+            self._generator = MagicPromptGenerator.generator
+    
     def generate(self, *args, **kwargs) -> List[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
 

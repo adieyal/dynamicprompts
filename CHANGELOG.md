@@ -1,3 +1,4 @@
+0.3.0 - Added additional models to Magic Prompt
 0.2.6 - Wildcards caching for speeding up complex prompts - with thanks to @RossM - see [#pr1](https://github.com/adieyal/dynamicprompts/pull/1)
 0.2.5 - Fixed decimal weights in variants
 0.2.4 - Fixed missing whitespace between two wildcards

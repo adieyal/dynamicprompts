@@ -161,6 +161,15 @@ Magic Prompt is not available by default, you need to install it as follows:
 
 `pip install "dynamicprompts[magicprompt]"`
 
+There a few alternatives to Gusacosta's model available. You can try:
+
+
+`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-lexart")`
+`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-safe")`
+`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-unsafe")`
+
+Note that each model requires a download of large model files.
+
 ### Usage
 ```
 from pathlib import Path
