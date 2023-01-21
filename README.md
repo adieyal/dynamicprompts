@@ -33,6 +33,11 @@ You can also use the same wildcard twice
 
 More complete documentation can be found [below](#syntax).
 
+## Dynamic Prompts in the wild. 
+Dynamic Prompts has been used in:
+1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
+2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
+
 ## Installation
 
 `pip install dynamicprompts`

@@ -336,7 +336,7 @@ name = "jinja2"
 version = "3.1.2"
 description = "A very fast and expressive template engine."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
@@ -369,7 +369,7 @@ name = "markupsafe"
 version = "2.1.1"
 description = "Safely add untrusted strings to HTML/XML markup."
 category = "main"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "MarkupSafe-2.1.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b1f75c4e7c2ac2ccdaec2b9022845dbb81880ca318bb7a0a01fbf7813e3812"},
@@ -1545,9 +1545,9 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 
 [extras]
 attentiongrabber = ["spacy"]
-magicprompt = []
+magicprompt = ["transformers"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "1887c0c8203675b15fbf02a017b5844f38fe131a1a020c8b354031a3883fdd74"
+content-hash = "ab8e5ef7ba5fb8a38294ee7fb5edcd76e31471d1bd629c2b2f0b48eedd397605"

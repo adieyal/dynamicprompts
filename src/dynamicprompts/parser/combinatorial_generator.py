@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Tuple
+from itertools import islice
 
 from typing import Iterable
 from collections import OrderedDict
@@ -20,7 +21,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 
 class CombinatorialSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: List[Command] | None = None, separator=" "):
+    def __init__(self, tokens: List[Command] | None = None, separator=""):
         self._sep = separator
         super().__init__(tokens)
 
@@ -34,17 +35,19 @@ class CombinatorialSequenceCommand(SequenceCommand):
             token = tokens[0]
             for prompt in token.prompts():
                 for next_prompts in self.prompts(tokens[1:]):
-                    yield (prompt + self._sep + next_prompts).strip()
+                    res = prompt + self._sep + next_prompts
+                    yield res
 
 
 class CombinatorialWildcardCommand(WildcardCommand):
-    def __init__(self, wildcard_manager: WildcardManager, token: str):
+    def __init__(self, wildcard_manager: WildcardManager, builder: ActionBuilder, token):
         super().__init__(wildcard_manager, token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
+        self._builder = builder
 
     def prompts(self) -> Iterable[str]:
-        generator = CombinatorialGenerator(self._wildcard_manager)
+        generator = self._builder.create_generator()
         values = self._wildcard_manager.get_all_values(self._wildcard)
         for val in values:
             for prompt in generator.generate_prompts(val):
@@ -63,7 +66,7 @@ class CombinatorialVariantCommand(VariantCommand):
 
             for p in c_1.prompts():
                 for rest_prompt in self._combo_to_prompt(c_rest):
-                    if rest_prompt != "":
+                    if rest_prompt != []:
                         yield [p] + rest_prompt
                     else:
                         yield [p]
@@ -99,18 +102,21 @@ class CombinatorialActionBuilder(ActionBuilder):
         return CombinatorialVariantCommand(variants, min_bound, max_bound, sep)
 
     def create_wildcard_command(self, token: str):
-        return CombinatorialWildcardCommand(self._wildcard_manager, token)
+        return CombinatorialWildcardCommand(self._wildcard_manager, self, token)
 
     def create_sequence_command(self, token_list: List[Command]):
         return CombinatorialSequenceCommand(token_list)
 
+    def create_generator(self):
+        return CombinatorialGenerator(self._wildcard_manager, ignore_whitespace=self._ignore_whitespace)
 
 class CombinatorialGenerator:
-    def __init__(self, wildcard_manager):
+    def __init__(self, wildcard_manager, ignore_whitespace=False):
         self._wildcard_manager = wildcard_manager
+        self._ignore_whitespace = ignore_whitespace
 
     def get_action_builder(self) -> ActionBuilder:
-        return CombinatorialActionBuilder(self._wildcard_manager)
+        return CombinatorialActionBuilder(self._wildcard_manager, self._ignore_whitespace)
 
     def configure_parser(self) -> Parser:
         builder = self.get_action_builder()
@@ -119,15 +125,22 @@ class CombinatorialGenerator:
         return parser
 
     def generate_prompts(
-        self, prompt: str, num_prompts: int | None = None) -> List[str]:
+        self, prompt: str, num_prompts: int | None = None
+    ) -> Iterable[str]:
         if len(prompt) == 0:
             return []
+
+        squash_whitespace = lambda s: " ".join(s.split())
 
         parser = self.configure_parser()
         sequence = parser.parse(prompt)
         prompts = sequence.prompts()
 
+        if self._ignore_whitespace:
+            prompts = (squash_whitespace(p) for p in prompts)
+        
+
         if num_prompts is None:
-            return [p for idx, p in enumerate(prompts)]
+            return prompts
         else:
-            return [p for idx, p in enumerate(prompts) if idx < num_prompts]
+            return islice(prompts, num_prompts)

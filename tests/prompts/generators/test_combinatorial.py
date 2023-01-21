@@ -3,10 +3,13 @@ from unittest import mock
 import pytest
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+
 
 @pytest.fixture
 def wildcard_manager():
     return mock.Mock()
+
 
 class TestCombinatorialGenerator:
     def test_literal_template(self, wildcard_manager):
@@ -14,7 +17,7 @@ class TestCombinatorialGenerator:
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        prompts = generator.generate(prompt, 10)
+        prompts = list(generator.generate(prompt, 10))
 
         assert len(prompts) == 1
         assert prompts[0] == prompt
@@ -25,7 +28,7 @@ class TestCombinatorialGenerator:
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         wildcard_manager.get_all_values.return_value = ["bread", "butter", "cheese"]
-        prompts = generator.generate(prompt, 10)
+        prompts = list(generator.generate(prompt, 10))
 
         assert len(prompts) == 3
         assert prompts[0] == "I love bread"
@@ -33,7 +36,7 @@ class TestCombinatorialGenerator:
         assert prompts[2] == "I love cheese"
 
 
-        prompts = generator.generate(prompt, 2)
+        prompts = list(generator.generate(prompt, 2))
 
         assert len(prompts) == 2
         assert prompts[0] == "I love bread"
@@ -45,7 +48,7 @@ class TestCombinatorialGenerator:
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         wildcard_manager.get_all_values.return_value = ["bread", "butter", "cheese"]
-        prompts = generator.generate(prompt, None)
+        prompts = list(generator.generate(prompt, None))
 
         assert len(prompts) == 9
         assert prompts[0] == "I love bread and bread"
@@ -60,7 +63,7 @@ class TestCombinatorialGenerator:
 
         prompts = generator.generate(prompt)
 
-        assert len(prompts) == 9
+        assert len(list(prompts)) == 9
 
 
         

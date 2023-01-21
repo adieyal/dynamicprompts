@@ -37,8 +37,9 @@ def parse_bound_expr(expr, max_options):
 
 
 class ActionBuilder:
-    def __init__(self, wildcard_manager: WildcardManager):
+    def __init__(self, wildcard_manager: WildcardManager, ignore_whitespace=False):
         self._wildcard_manager = wildcard_manager
+        self._ignore_whitespace = ignore_whitespace
 
     def create_literal_command(self, token) -> LiteralCommand:
         return LiteralCommand(token)
@@ -51,6 +52,9 @@ class ActionBuilder:
 
     def create_sequence_command(self, token_list: List[Command]):
         return SequenceCommand(token_list)
+
+    def create_generator(self):
+        raise NotImplementedError()
 
     def get_wildcard_action(self, token) -> WildcardCommand:
         return self.create_wildcard_command(token)

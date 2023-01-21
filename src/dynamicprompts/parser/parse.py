@@ -43,9 +43,10 @@ class Parser:
         hyphen = pp.Suppress("-")
         variant_delim = pp.Suppress("$$")
 
-        separator = pp.Word(pp.alphanums + " ", exclude_chars="$").leave_whitespace()(
+        separator = pp.Word(pp.alphanums + " ", exclude_chars="$")(
             "separator"
-        )
+        ).leave_whitespace()
+
         bound = pp.common.integer
         bound_range1 = bound("exact")
         bound_range2 = bound("lower") + hyphen
@@ -66,18 +67,18 @@ class Parser:
     def _configure_wildcard(self):
         wildcard = wildcard_enclosure + ... + wildcard_enclosure
 
-        return wildcard("wildcard")
+        return wildcard("wildcard").leave_whitespace()
 
     def _configure_literal_sequence(self, is_variant_literal=False):
 
         if is_variant_literal:
-            non_literal_chars = r"{}|$"
+            non_literal_chars = r"{}|$#"
         else:
-            non_literal_chars = r"{}$"
+            non_literal_chars = r"{}$#"
 
-        literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}\s])+")(
+        literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
             "literal"
-        )
+        ).leave_whitespace()
         literal_sequence = pp.OneOrMore(literal)
 
         return literal_sequence("literal_sequence")
@@ -89,10 +90,8 @@ class Parser:
         return weight
 
     def _configure_variants(self, bound_expr, prompt):
-        weight_delim = pp.Suppress("::")
-
         left_brace, right_brace = map(pp.Suppress, "{}")
-        weight = pp.common.integer + weight_delim
+        weight = self._configure_weight()
 
         variant_option = prompt
         variant = pp.Group(pp.Opt(weight, default=1)("weight") + variant_option("val"))
@@ -104,7 +103,7 @@ class Parser:
             + right_brace
         )
 
-        return variants
+        return variants.leave_whitespace()
 
     def _configure_parser(self, builder: ActionBuilder):
         bound_expr = self._configure_range()
@@ -114,12 +113,13 @@ class Parser:
 
         wildcard = self._configure_wildcard()
         literal_sequence = self._configure_literal_sequence()
-        variant_literal_sequence = self._configure_literal_sequence(is_variant_literal=True)
+        variant_literal_sequence = self._configure_literal_sequence(
+            is_variant_literal=True
+        )
         variants = self._configure_variants(bound_expr, variant_prompt)
 
         chunk = variants | wildcard | literal_sequence
         variant_chunk = variants | wildcard | variant_literal_sequence
-
 
         prompt <<= pp.ZeroOrMore(chunk)("prompt")
         variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
