@@ -38,12 +38,12 @@ class CombinatorialSequenceCommand(SequenceCommand):
 
 
 class CombinatorialWildcardCommand(WildcardCommand):
-    def __init__(self, wildcard_manager, token):
+    def __init__(self, wildcard_manager: WildcardManager, token: str):
         super().__init__(wildcard_manager, token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
 
-    def prompts(self):
+    def prompts(self) -> Iterable[str]:
         generator = CombinatorialGenerator(self._wildcard_manager)
         values = self._wildcard_manager.get_all_values(self._wildcard)
         for val in values:
@@ -119,8 +119,7 @@ class CombinatorialGenerator:
         return parser
 
     def generate_prompts(
-        self, prompt: str, num_prompts: int | None = None
-    ) -> List[str]:
+        self, prompt: str, num_prompts: int | None = None) -> List[str]:
         if len(prompt) == 0:
             return []
 
