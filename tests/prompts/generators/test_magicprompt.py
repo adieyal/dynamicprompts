@@ -4,6 +4,9 @@ from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 from dynamicprompts.generators import DummyGenerator
 from functools import partial
 
+import pytest
+
+@pytest.mark.slow
 class TestMagicPrompt:
     def test_default_generator(self):
         generator = MagicPromptGenerator()
