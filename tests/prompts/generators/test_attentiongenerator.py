@@ -1,4 +1,4 @@
-from dynamicprompts.generators import AttentionGenerator, DummyGenerator
+from dynamicprompts.generators.attentiongenerator import AttentionGenerator, DummyGenerator
 
 class TestAttentionGenerator:
     def test_default_generator(self):
