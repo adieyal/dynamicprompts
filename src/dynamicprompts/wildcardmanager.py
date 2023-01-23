@@ -50,9 +50,7 @@ class WildcardManager:
 
     def get_wildcards(self) -> list[str]:
         files = self.get_files(relative=True)
-        wildcards = [self.path_to_wildcard(f) for f in files]
-
-        return wildcards
+        return [self.path_to_wildcard(f) for f in files]
 
     def get_all_values(self, wildcard: str) -> list[str]:
         files = self.match_files(wildcard)
@@ -63,8 +61,8 @@ class WildcardManager:
             path = self._path
 
         files = path.glob(f"*.{constants.WILDCARD_SUFFIX}")
-        wildcards = sorted([self.path_to_wildcard(f) for f in files])
-        directories = sorted([d for d in path.glob("*") if d.is_dir()])
+        wildcards = sorted(self.path_to_wildcard(f) for f in files)
+        directories = sorted(d for d in path.glob("*") if d.is_dir())
 
         hierarchy = {d.name: self.get_wildcard_hierarchy(d) for d in directories}
         return (wildcards, hierarchy)
