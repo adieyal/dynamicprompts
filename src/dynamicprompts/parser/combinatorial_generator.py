@@ -14,6 +14,7 @@ from dynamicprompts.parser.parse import (
     ActionBuilder,
     Parser,
 )
+from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -127,15 +128,12 @@ class CombinatorialGenerator:
         if len(prompt) == 0:
             return []
 
-        squash_whitespace = lambda s: " ".join(s.split())
-
         parser = self.configure_parser()
         sequence = parser.parse(prompt)
         prompts = sequence.prompts()
 
         if self._ignore_whitespace:
             prompts = (squash_whitespace(p) for p in prompts)
-        
 
         if num_prompts is None:
             return prompts

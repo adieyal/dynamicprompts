@@ -9,6 +9,7 @@ from dynamicprompts.parser.commands import (
     SequenceCommand,
 )
 from dynamicprompts.parser.parse import ActionBuilder, Parser
+from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -132,8 +133,6 @@ class RandomGenerator:
         parser = self.configure_parser()
         tokens = parser.parse_string(prompt)
         tokens = cast(List[Command], tokens)
-
-        squash_whitespace = lambda s: " ".join(s.split())
 
         generated_prompts = []
         if len(tokens) == 0:
