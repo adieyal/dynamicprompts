@@ -6,11 +6,6 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 
 @pytest.fixture
-def wildcard_manager() -> WildcardManager:
-    return WildcardManager(None)
-
-
-@pytest.fixture
 def seed() -> int:
     s = 0
     random.seed(s)

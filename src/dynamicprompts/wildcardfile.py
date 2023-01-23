@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dynamicprompts.constants import DEFAULT_ENCODING
 from dynamicprompts.utils import is_empty_line
 
 
 class WildcardFile:
-    def __init__(self, path: Path, encoding="utf8"):
+    def __init__(self, path: Path, encoding=DEFAULT_ENCODING):
         self._path = path
         self._encoding = encoding
         self._cache = None
