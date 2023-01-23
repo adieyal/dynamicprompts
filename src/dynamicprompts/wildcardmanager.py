@@ -44,13 +44,13 @@ class WildcardManager:
             "." + constants.WILDCARD_SUFFIX
         )
 
-    def path_to_wilcard(self, path: Path) -> str:
+    def path_to_wildcard(self, path: Path) -> str:
         rel_path = path.relative_to(self._path)
         return f"__{rel_path.with_suffix('')}__"
 
     def get_wildcards(self) -> list[str]:
         files = self.get_files(relative=True)
-        wildcards = [self.path_to_wilcard(f) for f in files]
+        wildcards = [self.path_to_wildcard(f) for f in files]
 
         return wildcards
 
@@ -63,7 +63,7 @@ class WildcardManager:
             path = self._path
 
         files = path.glob("*.txt")
-        wildcards = sorted([self.path_to_wilcard(f) for f in files])
+        wildcards = sorted([self.path_to_wildcard(f) for f in files])
         directories = sorted([d for d in path.glob("*") if d.is_dir()])
 
         hierarchy = {d.name: self.get_wildcard_hierarchy(d) for d in directories}
