@@ -3,15 +3,15 @@ from unittest import mock
 
 import pytest
 
-try:
-    from dynamicprompts.generators import DummyGenerator
-    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
-except ImportError:
-    pass
+pytest.importorskip("dynamicprompts.generators.magicprompt")
+
 
 @pytest.mark.slow
 class TestMagicPrompt:
     def test_default_generator(self):
+        from dynamicprompts.generators.dummygenerator import DummyGenerator
+        from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+
         generator = MagicPromptGenerator()
         assert isinstance(generator._prompt_generator, DummyGenerator)
 
@@ -19,6 +19,7 @@ class TestMagicPrompt:
         assert generator._device == CPU
 
     def test_cleanup_magic_prompt(self):
+        from dynamicprompts.generators.magicprompt import MagicPromptGenerator
         #patch the load_pipeline method to return a mock generator
         with mock.patch.object(MagicPromptGenerator, "_load_pipeline") as mock_load_pipeline:
             mock_load_pipeline.return_value = mock.MagicMock()
