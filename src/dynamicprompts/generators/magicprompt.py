@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import logging
 from typing import List
-
-from .promptgenerator import PromptGenerator
-from dynamicprompts.generators import DummyGenerator
 import re
 
 from tqdm import trange
+
+from dynamicprompts.generators.dummygenerator import DummyGenerator
+
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

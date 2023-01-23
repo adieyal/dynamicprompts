@@ -6,7 +6,9 @@ from typing import List, Iterable
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts import constants
 from dynamicprompts.parser.combinatorial_generator import CombinatorialGenerator
-from . import PromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

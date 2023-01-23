@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List
 
-from .promptgenerator import PromptGenerator
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 
 class DummyGenerator(PromptGenerator):

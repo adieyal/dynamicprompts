@@ -5,8 +5,8 @@ import logging
 
 import pyparsing as pp
 
-from .commands import SequenceCommand
-from .action_builder import ActionBuilder
+from dynamicprompts.parser.commands import SequenceCommand
+from dynamicprompts.parser.action_builder import ActionBuilder
 
 logger = logging.getLogger(__name__)
 

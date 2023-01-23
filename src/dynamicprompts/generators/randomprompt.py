@@ -8,8 +8,8 @@ import random
 from dynamicprompts import constants
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.parser.random_generator import RandomGenerator
-
-from . import PromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

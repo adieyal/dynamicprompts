@@ -4,8 +4,8 @@ import logging
 import random
 from typing import cast, Iterable, List
 
-from .parse import Parser, ActionBuilder
-from .commands import (
+from dynamicprompts.parser.parse import Parser, ActionBuilder
+from dynamicprompts.parser.commands import (
     SequenceCommand,
     Command,
 )

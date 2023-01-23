@@ -7,9 +7,11 @@ import random
 
 import requests
 
-from dynamicprompts.generators.promptgenerator import PromptGenerator, GeneratorException
-from dynamicprompts.generators import DummyGenerator
-
+from dynamicprompts.generators.dummygenerator import DummyGenerator
+from dynamicprompts.generators.promptgenerator import (
+    GeneratorException,
+    PromptGenerator,
+)
 
 logger = logging.getLogger(__name__)
 

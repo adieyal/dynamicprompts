@@ -1,10 +1,10 @@
-from .batched_combinatorial import BatchedCombinatorialPromptGenerator
-from .combinatorial import CombinatorialPromptGenerator
-from .dummygenerator import DummyGenerator
-from .feelinglucky import FeelingLuckyGenerator
-from .jinjagenerator import JinjaGenerator
-from .promptgenerator import PromptGenerator
-from .randomprompt import RandomPromptGenerator
+from dynamicprompts.generators.batched_combinatorial import BatchedCombinatorialPromptGenerator
+from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
+from dynamicprompts.generators.dummygenerator import DummyGenerator
+from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator
+from dynamicprompts.generators.jinjagenerator import JinjaGenerator
+from dynamicprompts.generators.promptgenerator import PromptGenerator
+from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 
 __all__ = [
     "BatchedCombinatorialPromptGenerator",

@@ -4,8 +4,8 @@ from typing import List
 import random
 import logging
 
-from .promptgenerator import PromptGenerator
-from dynamicprompts.generators import DummyGenerator
+from dynamicprompts.generators.dummygenerator import DummyGenerator
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

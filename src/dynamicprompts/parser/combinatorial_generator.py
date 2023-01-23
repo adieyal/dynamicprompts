@@ -5,12 +5,12 @@ from itertools import islice
 from typing import Iterable
 from collections import OrderedDict
 
-from .parse import (
+from dynamicprompts.parser.parse import (
     ActionBuilder,
     Parser,
 )
 
-from .commands import (
+from dynamicprompts.parser.commands import (
     Command,
     SequenceCommand,
     WildcardCommand,

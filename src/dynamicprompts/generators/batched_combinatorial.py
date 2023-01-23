@@ -3,7 +3,8 @@ from typing import List
 import logging
 
 from dynamicprompts import constants
-from . import PromptGenerator
+
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

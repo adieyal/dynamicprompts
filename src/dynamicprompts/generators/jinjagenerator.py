@@ -11,7 +11,10 @@ from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension
 
-from dynamicprompts.generators.promptgenerator import GeneratorException, PromptGenerator
+from dynamicprompts.generators.promptgenerator import (
+    GeneratorException,
+    PromptGenerator,
+)
 
 logger = logging.getLogger(__name__)
 

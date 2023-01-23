@@ -1,14 +1,15 @@
 from __future__ import annotations
 from typing import List
 
-from .commands import (
-    LiteralCommand,
-    WildcardCommand,
-    VariantCommand,
-    SequenceCommand,
-    Command,
-)
 from dynamicprompts.wildcardmanager import WildcardManager
+
+from dynamicprompts.parser.commands import (
+    Command,
+    LiteralCommand,
+    SequenceCommand,
+    VariantCommand,
+    WildcardCommand,
+)
 
 
 def parse_bound_expr(expr, max_options):

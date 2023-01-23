@@ -55,6 +55,7 @@ select = [
     "F",
     "I",
     "UP",
+    "TID252",
 ]
 ignore = [
     "B007",

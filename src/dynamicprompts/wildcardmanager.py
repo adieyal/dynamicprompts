@@ -4,8 +4,8 @@ from typing import List, Dict
 import logging
 from pathlib import Path
 
-from . import constants
-from .wildcardfile import WildcardFile
+from dynamicprompts import constants
+from dynamicprompts.wildcardfile import WildcardFile
 
 logger = logging.getLogger(__name__)
 
