@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -8,12 +7,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 
 @pytest.fixture
-def wildcard_manager():
-    return WildcardManager(Path("wildcards").absolute())
-
-
-@pytest.fixture
-def generator(wildcard_manager):
+def generator(wildcard_manager: WildcardManager):
     return JinjaGenerator(wildcard_manager)
 
 
@@ -81,20 +75,15 @@ class TestJinjaGenerator:
 
     def test_wildcards(self, generator):
         template = """
-        {% for colour in wildcard("__colours__") %}
+        {% for colour in wildcard("__colors-cold__") %}
             {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
         {% endfor %}
         """
 
-        with patch('dynamicprompts.wildcardmanager.WildcardManager.get_all_values') as mock_values:
-            mock_values.return_value = ["pink", "yellow", "black", "purple"]
-            prompts = generator.generate(template)
-
-            assert len(prompts) == 4
-            assert prompts[0] == "My favourite colour is pink"
-            assert prompts[1] == "My favourite colour is yellow"
-            assert prompts[2] == "My favourite colour is black"
-            assert prompts[3] == "My favourite colour is purple"
+        prompts = generator.generate(template)
+        assert len(prompts) == 2
+        assert prompts[0] == "My favourite colour is blue"
+        assert prompts[1] == "My favourite colour is green"
 
     def test_nested_wildcards(self, generator):
         template = """
@@ -171,16 +160,13 @@ class TestJinjaGenerator:
         {% prompt %}My favourite colour is {{ choice(wildcard("__colours__")) }}{% endprompt %}
         """
 
-        with patch('dynamicprompts.wildcardmanager.WildcardManager.get_all_values') as mock_values:
-            mock_values.return_value = ["pink", "yellow", "black", "purple"]
+        with patch('random.choice') as mock_choice:
+            mock_choice.return_value = "yellow"
 
-            with patch('random.choice') as mock_choice:
-                mock_choice.return_value = "yellow"
+            prompts = generator.generate(template)
 
-                prompts = generator.generate(template)
-
-                assert len(prompts) == 1
-                assert prompts[0] == "My favourite colour is yellow"
+            assert len(prompts) == 1
+            assert prompts[0] == "My favourite colour is yellow"
 
     def test_invalid_syntax_throws_exception(self, generator):
         template = """

@@ -1,35 +1,53 @@
-from pathlib import Path
-from unittest import mock
-
-from dynamicprompts.wildcardmanager import WildcardFile, WildcardManager
+from dynamicprompts.wildcardmanager import WildcardManager
 
 
-class TestWildcardManager:
-    def test_is_wildcard(self):
-        wm = WildcardManager(Path("test_data/wildcards"))
-        assert wm.is_wildcard("__test__")
-        assert not wm.is_wildcard("test")
+def test_is_wildcard(wildcard_manager: WildcardManager):
+    assert wildcard_manager.is_wildcard("__test__")
+    assert not wildcard_manager.is_wildcard("test")
 
-    def test_get_all_values(self):
-        with mock.patch(
-            "dynamicprompts.wildcardmanager.WildcardManager.match_files"
-        ) as mock_get_files:
-            wildcard_files = [
-                WildcardFile(Path("test1.txt")),
-                WildcardFile(Path("test2.txt")),
-            ]
-            mock_get_files.return_value = wildcard_files
 
-            wildcard_files[0].get_wildcards = mock.Mock(return_value={"red", "green"})
-            wildcard_files[1].get_wildcards = mock.Mock(return_value={"green", "blue"})
+def test_get_all_values(wildcard_manager: WildcardManager):
+    assert wildcard_manager.get_all_values("color*") == [
+        "blue",
+        "green",
+        "red",
+        "yellow",
+    ]
+    assert wildcard_manager.get_all_values("flavors/*") == [
+        "chocolate",
+        "grapefruit",
+        "lemon",
+        "strawberry",
+        "vanilla",
+    ]
 
-            wm = WildcardManager(Path("test_data/wildcards"))
-            assert wm.get_all_values("test") == ["blue", "green", "red"]
 
-    def test_match_files_with_missing_wildcard(self):
-        wm = WildcardManager(Path("test_data/wildcards"))
-        assert wm.match_files("__invalid_wildcard__") == []
+def test_match_files_with_missing_wildcard(wildcard_manager: WildcardManager):
+    assert wildcard_manager.match_files("__invalid_wildcard__") == []
 
-    def test_get_all_values_with_missing_wildcard(self):
-        wm = WildcardManager(Path("test_data/wildcards"))
-        assert wm.get_all_values("__invalid_wildcard__") == []
+
+def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager):
+    assert wildcard_manager.get_all_values("__invalid_wildcard__") == []
+
+
+def test_collections(wildcard_manager: WildcardManager):
+    assert wildcard_manager.get_collections() == ["derp"]
+
+
+def test_hierarchy(wildcard_manager: WildcardManager):
+    assert wildcard_manager.get_wildcard_hierarchy() == (
+        ['__colors-cold__', '__colors-warm__'],  # Top level
+        {  # child folders
+            'animals': (
+                ['__animals/mystical__'],
+                {'mammals': (
+                    ['__animals/mammals/canine__', '__animals/mammals/feline__'],
+                    {},
+                )},
+            ),
+            'flavors': (
+                ['__flavors/sour__', '__flavors/sweet__'],
+                {},
+            ),
+        },
+    )
