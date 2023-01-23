@@ -8,17 +8,20 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 
-try:
-    import spacy
-except ImportError:
-    logger.warning("Spacy not installed, attention generator will not work. Install with pip install dynamicprompts[attentiongrabber]")
-
 MODEL_NAME = "en_core_web_sm"
+
 
 class AttentionGenerator(PromptGenerator):
     def __init__(
-        self, generator: PromptGenerator|None=None, min_attention=0.1, max_attention=0.9
+        self, generator: PromptGenerator | None = None, min_attention=0.1, max_attention=0.9
     ):
+        try:
+            import spacy
+        except ImportError as ie:
+            raise ImportError(
+                "Could not import spacy, attention generator will not work. "
+                "Install with pip install dynamicprompts[attentiongrabber]"
+            ) from ie
         try:
             spacy.load(MODEL_NAME)
         except OSError:
