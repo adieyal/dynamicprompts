@@ -1,4 +1,3 @@
-from itertools import permutations
 from unittest import mock
 
 from dynamicprompts.generators.jinjagenerator import (

@@ -55,7 +55,7 @@ class TestVariantCommand:
     def test_single_variant(self):
         command = RandomVariantCommand(gen_variant(["one"]))
 
-        prompts = [p for p in command.prompts()]
+        prompts = list(command.prompts())
 
         assert len(prompts) == 1
         assert prompts[0] == "one"

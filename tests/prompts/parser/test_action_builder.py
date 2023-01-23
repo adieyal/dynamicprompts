@@ -5,7 +5,6 @@ from dynamicprompts.parser.action_builder import ActionBuilder
 from dynamicprompts.parser.commands import (
     LiteralCommand,
     SequenceCommand,
-    VariantCommand,
     WildcardCommand,
 )
 

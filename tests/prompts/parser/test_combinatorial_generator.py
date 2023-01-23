@@ -6,7 +6,6 @@ from dynamicprompts.parser.combinatorial_generator import (
     CombinatorialGenerator,
     CombinatorialSequenceCommand,
     CombinatorialVariantCommand,
-    CombinatorialWildcardCommand,
 )
 from dynamicprompts.parser.commands import LiteralCommand
 

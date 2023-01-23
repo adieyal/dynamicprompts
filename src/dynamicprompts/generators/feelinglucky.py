@@ -29,7 +29,7 @@ class FeelingLuckyGenerator(PromptGenerator):
             query = search_query
 
         url = f"https://lexica.art/api/v1/search?q={query}"
-        
+
         try:
             logger.info(f"Requesting {url}")
             response = requests.get(url)

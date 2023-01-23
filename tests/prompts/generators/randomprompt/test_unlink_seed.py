@@ -1,13 +1,11 @@
-import random
 
-from dynamicprompts import constants
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 
 
 class TestUnlinkSeedFromPrompt:
     def test_no_unlink_seed_from_prompt(self, wildcard_manager):
         generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=False)
-        assert generator._unlink_seed_from_prompt == False
+        assert generator._unlink_seed_from_prompt is False
 
         for i in range(5):
             generator = RandomPromptGenerator(
@@ -25,7 +23,7 @@ class TestUnlinkSeedFromPrompt:
             
     def test_unlink_seed_from_prompt(self, wildcard_manager):
         generator = RandomPromptGenerator(wildcard_manager, unlink_seed_from_prompt=True)
-        assert generator._unlink_seed_from_prompt == True
+        assert generator._unlink_seed_from_prompt is True
 
         for i in range(5):
             generator = RandomPromptGenerator(

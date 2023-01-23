@@ -199,7 +199,7 @@ class TestJinjaGenerator:
         """
 
         with pytest.raises(GeneratorException):
-            prompts = generator.generate(template)
+            generator.generate(template)
 
     def test_random(self, generator):
         with patch('random.random') as mock_choice:

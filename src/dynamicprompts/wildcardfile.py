@@ -12,7 +12,7 @@ class WildcardFile:
         self._cache = None
 
     def get_wildcards(self) -> set[str]:
-        if self._cache != None:
+        if self._cache is not None:
             return self._cache
 
         with self._path.open(encoding=self._encoding, errors="ignore") as f:

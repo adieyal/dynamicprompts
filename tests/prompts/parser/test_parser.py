@@ -3,7 +3,6 @@ from unittest import mock
 
 import pytest
 from dynamicprompts.parser.commands import (
-    Command,
     LiteralCommand,
     SequenceCommand,
     VariantCommand,

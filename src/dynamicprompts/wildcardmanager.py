@@ -19,7 +19,7 @@ class WildcardManager:
     def ensure_directory(self):
         try:
             self._path.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
+        except Exception:
             logger.exception(f"Failed to create directory {self._path}")
 
     def get_files(self, relative: bool = False) -> list[Path]:

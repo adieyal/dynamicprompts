@@ -1,6 +1,5 @@
 from unittest import mock
 
-import pytest
 from dynamicprompts.generators import DummyGenerator, FeelingLuckyGenerator
 
 
