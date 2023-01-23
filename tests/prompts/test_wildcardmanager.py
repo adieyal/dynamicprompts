@@ -1,3 +1,4 @@
+
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -51,3 +52,8 @@ def test_hierarchy(wildcard_manager: WildcardManager):
             ),
         },
     )
+
+
+def test_backslash_norm(wildcard_manager: WildcardManager):
+    assert len(wildcard_manager.get_all_values("flavors\\*")) == 5
+    # Empirically, this also works on Windows
