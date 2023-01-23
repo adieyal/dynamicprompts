@@ -1,21 +1,19 @@
-import pytest
-from unittest import mock
 from typing import cast
+from unittest import mock
 
-from pyparsing import ParseException
-
-from dynamicprompts.parser.parse import (
-    Parser,
-    ActionBuilder,
-)
-
+import pytest
 from dynamicprompts.parser.commands import (
     Command,
+    LiteralCommand,
     SequenceCommand,
     VariantCommand,
-    LiteralCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.parse import (
+    ActionBuilder,
+    Parser,
+)
+from pyparsing import ParseException
 
 
 @pytest.fixture

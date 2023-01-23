@@ -1,10 +1,11 @@
-import pytest
-
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
-from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators.promptgenerator import GeneratorException
+from dynamicprompts.wildcardmanager import WildcardManager
+
 
 @pytest.fixture
 def wildcard_manager():

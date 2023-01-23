@@ -1,6 +1,11 @@
 from itertools import permutations
-from dynamicprompts.generators.jinjagenerator import RandomExtension, PermutationExtension
 from unittest import mock
+
+from dynamicprompts.generators.jinjagenerator import (
+    PermutationExtension,
+    RandomExtension,
+)
+
 
 class TestRandomExtension:
     def test_choice(self):

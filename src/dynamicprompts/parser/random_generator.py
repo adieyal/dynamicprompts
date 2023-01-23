@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import cast, Iterable, List
+from typing import Iterable, List, cast
 
-from dynamicprompts.parser.parse import Parser, ActionBuilder
 from dynamicprompts.parser.commands import (
-    SequenceCommand,
     Command,
+    SequenceCommand,
 )
+from dynamicprompts.parser.parse import ActionBuilder, Parser
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import logging
-from random import Random
 import random
+from random import Random
 
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.parser.random_generator import RandomGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
-from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

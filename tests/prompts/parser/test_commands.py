@@ -1,14 +1,14 @@
 from typing import List
-
 from unittest import mock
+
+import pytest
 from dynamicprompts.parser.commands import (
-    SequenceCommand,
-    LiteralCommand,
-    VariantCommand,
     Command,
+    LiteralCommand,
+    SequenceCommand,
+    VariantCommand,
     WildcardCommand,
 )
-import pytest
 
 
 def gen_variant(vals):

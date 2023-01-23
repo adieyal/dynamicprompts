@@ -1,7 +1,6 @@
 import random
 
 import pytest
-
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
 

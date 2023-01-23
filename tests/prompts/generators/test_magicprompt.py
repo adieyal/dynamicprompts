@@ -1,11 +1,11 @@
-from unittest import mock
 from functools import partial
+from unittest import mock
 
 import pytest
 
 try:
-    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
     from dynamicprompts.generators import DummyGenerator
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 except ImportError:
     pass
 

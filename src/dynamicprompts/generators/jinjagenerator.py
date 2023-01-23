@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import random
-from itertools import permutations
 import re
+from itertools import permutations
 
 import jinja2.nodes
 from jinja2 import Environment

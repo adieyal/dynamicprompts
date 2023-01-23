@@ -1,7 +1,10 @@
 import pytest
 
 try:
-    from dynamicprompts.generators.attentiongenerator import AttentionGenerator, DummyGenerator
+    from dynamicprompts.generators.attentiongenerator import (
+        AttentionGenerator,
+        DummyGenerator,
+    )
 except ImportError:
     pass
 

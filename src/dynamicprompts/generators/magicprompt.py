@@ -6,15 +6,12 @@ import re
 from tqdm import trange
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
-
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 
 try:
-    from transformers import set_seed
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-    from transformers import pipeline
+    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, set_seed
 except ImportError:
     raise ImportError(
         "You need to install the transformers library to use the MagicPrompt generator. "

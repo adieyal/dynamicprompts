@@ -1,4 +1,6 @@
-from dynamicprompts.generators.batched_combinatorial import BatchedCombinatorialPromptGenerator
+from dynamicprompts.generators.batched_combinatorial import (
+    BatchedCombinatorialPromptGenerator,
+)
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator

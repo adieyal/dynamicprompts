@@ -1,7 +1,7 @@
-from unittest import mock
 from pathlib import Path
+from unittest import mock
 
-from dynamicprompts.wildcardmanager import WildcardManager, WildcardFile
+from dynamicprompts.wildcardmanager import WildcardFile, WildcardManager
 
 
 class TestWildcardManager:

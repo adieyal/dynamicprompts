@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dynamicprompts.wildcardmanager import WildcardManager
-
 from dynamicprompts.parser.commands import (
     Command,
     LiteralCommand,
@@ -9,6 +7,7 @@ from dynamicprompts.parser.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.wildcardmanager import WildcardManager
 
 
 def parse_bound_expr(expr, max_options):

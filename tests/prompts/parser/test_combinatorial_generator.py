@@ -1,14 +1,12 @@
 from unittest import mock
 
 import pytest
-
-
 from dynamicprompts.parser.combinatorial_generator import (
+    CombinatorialActionBuilder,
+    CombinatorialGenerator,
     CombinatorialSequenceCommand,
     CombinatorialVariantCommand,
     CombinatorialWildcardCommand,
-    CombinatorialGenerator,
-    CombinatorialActionBuilder
 )
 from dynamicprompts.parser.commands import LiteralCommand
 

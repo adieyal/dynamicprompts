@@ -1,7 +1,8 @@
 import random
 
-from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts import constants
+from dynamicprompts.generators.randomprompt import RandomPromptGenerator
+
 
 class TestUnlinkSeedFromPrompt:
     def test_no_unlink_seed_from_prompt(self, wildcard_manager):

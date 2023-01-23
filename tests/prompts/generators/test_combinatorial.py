@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
 

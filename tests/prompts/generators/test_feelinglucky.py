@@ -1,7 +1,8 @@
-import pytest
 from unittest import mock
 
-from dynamicprompts.generators import FeelingLuckyGenerator, DummyGenerator
+import pytest
+from dynamicprompts.generators import DummyGenerator, FeelingLuckyGenerator
+
 
 class TestFeelingLucky:
     def test_default_generator(self):

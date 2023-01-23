@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import cast
 import logging
+from typing import cast
 
 import pyparsing as pp
 
-from dynamicprompts.parser.commands import SequenceCommand
 from dynamicprompts.parser.action_builder import ActionBuilder
+from dynamicprompts.parser.commands import SequenceCommand
 
 logger = logging.getLogger(__name__)
 

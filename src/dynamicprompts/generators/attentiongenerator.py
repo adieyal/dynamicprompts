@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import random
 import logging
+import random
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator

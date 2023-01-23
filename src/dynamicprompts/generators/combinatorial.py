@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from typing import Iterable
 
-from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts import constants
+from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.parser.combinatorial_generator import CombinatorialGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
-
-from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
+
 import logging
 
 from dynamicprompts import constants
-
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)

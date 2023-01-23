@@ -1,15 +1,15 @@
-from unittest import mock
 from typing import cast
-import pytest
+from unittest import mock
 
+import pytest
+from dynamicprompts.parser.commands import LiteralCommand
 from dynamicprompts.parser.random_generator import (
+    RandomActionBuilder,
+    RandomGenerator,
     RandomSequenceCommand,
     RandomVariantCommand,
     RandomWildcardCommand,
-    RandomGenerator,
-    RandomActionBuilder
 )
-from dynamicprompts.parser.commands import LiteralCommand
 
 
 def to_seqlit(*args):

@@ -1,21 +1,19 @@
 from __future__ import annotations
-from itertools import islice
 
-from typing import Iterable
 from collections import OrderedDict
-
-from dynamicprompts.parser.parse import (
-    ActionBuilder,
-    Parser,
-)
+from itertools import islice
+from typing import Iterable
 
 from dynamicprompts.parser.commands import (
     Command,
     SequenceCommand,
-    WildcardCommand,
     VariantCommand,
+    WildcardCommand,
 )
-
+from dynamicprompts.parser.parse import (
+    ActionBuilder,
+    Parser,
+)
 from dynamicprompts.wildcardmanager import WildcardManager
 
 

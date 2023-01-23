@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import Iterable
 
 import logging
+from typing import Iterable
 
 logger = logging.getLogger(__name__)
 
