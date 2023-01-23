@@ -10,6 +10,15 @@ from dynamicprompts.wildcardfile import WildcardFile
 logger = logging.getLogger(__name__)
 
 
+def _is_relative_to(p1: Path, p2: Path) -> bool:
+    # Port of Path.is_relative_to from Python 3.9
+    try:
+        p1.relative_to(p2)
+        return True
+    except ValueError:
+        return False
+
+
 def _normalize_wildcard(wildcard: str):
     return wildcard.strip("_").replace("/", os.sep).replace("\\", os.sep)
 
@@ -42,6 +51,7 @@ class WildcardManager:
         return [
             WildcardFile(path)
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
+            if _is_relative_to(path.resolve(), self._path)
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:

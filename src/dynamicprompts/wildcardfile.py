@@ -12,6 +12,9 @@ class WildcardFile:
         self._encoding = encoding
         self._cache = None
 
+    def __str__(self):
+        return f"<WildcardFile: {self._path}>"
+
     def get_wildcards(self) -> set[str]:
         if self._cache is not None:
             return self._cache

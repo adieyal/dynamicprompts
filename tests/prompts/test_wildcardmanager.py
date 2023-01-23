@@ -1,4 +1,3 @@
-
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -57,3 +56,8 @@ def test_hierarchy(wildcard_manager: WildcardManager):
 def test_backslash_norm(wildcard_manager: WildcardManager):
     assert len(wildcard_manager.get_all_values("flavors\\*")) == 5
     # Empirically, this also works on Windows
+
+
+def test_directory_traversal(wildcard_manager: WildcardManager):
+    assert not wildcard_manager.get_all_values("../cant_touch_this")
+    assert not wildcard_manager.get_all_values("..\\cant_touch_this")
