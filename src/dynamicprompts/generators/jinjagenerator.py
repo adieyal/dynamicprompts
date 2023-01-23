@@ -127,4 +127,4 @@ class JinjaGenerator(PromptGenerator):
             return prompts
         except TemplateSyntaxError as e:
             logger.exception(e)
-            raise GeneratorException(e.message)
+            raise GeneratorException(e.message) from e

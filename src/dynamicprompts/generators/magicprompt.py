@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, set_seed
-except ImportError:
+except ImportError as ie:
     raise ImportError(
         "You need to install the transformers library to use the MagicPrompt generator. "
         "You can do this by running `pip install -U dynamicprompts[magicprompt]`."
-    )
+    ) from ie
 
 DEFAULT_MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
 MAX_SEED = 2 ** 32 - 1
