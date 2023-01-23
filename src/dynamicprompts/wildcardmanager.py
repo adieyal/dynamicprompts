@@ -14,7 +14,7 @@ class WildcardManager:
         self._path = path
 
     def _directory_exists(self) -> bool:
-        return self._path.exists() and self._path.is_dir()
+        return self._path.is_dir()
 
     def ensure_directory(self):
         try:
