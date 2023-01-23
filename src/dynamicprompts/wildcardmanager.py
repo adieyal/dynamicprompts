@@ -33,14 +33,14 @@ class WildcardManager:
         return list(files)
 
     def match_files(self, wildcard: str) -> list[WildcardFile]:
-        wildcard = wildcard.strip("__")
+        wildcard = wildcard.strip("_")
         return [
             WildcardFile(path)
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:
-        return (self._path / wildcard.strip("__")).with_suffix(
+        return (self._path / wildcard.strip("_")).with_suffix(
             "." + constants.WILDCARD_SUFFIX
         )
 
