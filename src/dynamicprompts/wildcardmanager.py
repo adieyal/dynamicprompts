@@ -62,7 +62,7 @@ class WildcardManager:
 
         files = path.glob(f"*.{constants.WILDCARD_SUFFIX}")
         wildcards = sorted(self.path_to_wildcard(f) for f in files)
-        directories = sorted(d for d in path.glob("*") if d.is_dir())
+        directories = sorted(d for d in path.iterdir() if d.is_dir())
 
         hierarchy = {d.name: self.get_wildcard_hierarchy(d) for d in directories}
         return (wildcards, hierarchy)
@@ -78,7 +78,7 @@ class WildcardManager:
 
     def get_collection_dirs(self) -> dict[str, Path]:
         collection_path = self.get_collection_path()
-        collection_dirs = [x for x in collection_path.glob("*") if x.is_dir()]
+        collection_dirs = [x for x in collection_path.iterdir() if x.is_dir()]
         collection_names = [
             str(c.relative_to(collection_path)) for c in collection_dirs
         ]
