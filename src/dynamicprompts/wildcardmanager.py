@@ -41,7 +41,7 @@ class WildcardManager:
 
     def wildcard_to_path(self, wildcard: str) -> Path:
         return (self._path / wildcard.strip("_")).with_suffix(
-            "." + constants.WILDCARD_SUFFIX
+            f".{constants.WILDCARD_SUFFIX}"
         )
 
     def path_to_wildcard(self, path: Path) -> str:
@@ -62,7 +62,7 @@ class WildcardManager:
         if path is None:
             path = self._path
 
-        files = path.glob("*.txt")
+        files = path.glob(f"*.{constants.WILDCARD_SUFFIX}")
         wildcards = sorted([self.path_to_wildcard(f) for f in files])
         directories = sorted([d for d in path.glob("*") if d.is_dir()])
 
