@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from dynamicprompts.utils import is_empty_line
+
 
 class WildcardFile:
     def __init__(self, path: Path, encoding="utf8"):
@@ -12,12 +14,6 @@ class WildcardFile:
     def get_wildcards(self) -> set[str]:
         if self._cache != None:
             return self._cache
-    
-        is_empty_line = (
-            lambda line: line is None
-            or line.strip() == ""
-            or line.strip().startswith("#")
-        )
 
         with self._path.open(encoding=self._encoding, errors="ignore") as f:
             lines = [line.strip() for line in f if not is_empty_line(line)]
