@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List
 
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -51,7 +50,7 @@ class ActionBuilder:
     def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
         return VariantCommand(variants, min_bound, max_bound, sep)
 
-    def create_sequence_command(self, token_list: List[Command]):
+    def create_sequence_command(self, token_list: list[Command]):
         return SequenceCommand(token_list)
 
     def create_generator(self):
@@ -80,5 +79,5 @@ class ActionBuilder:
         s = " ".join(token)
         return self.create_literal_command(s)
 
-    def get_sequence_action(self, token_list: List[Command]) -> SequenceCommand:
+    def get_sequence_action(self, token_list: list[Command]) -> SequenceCommand:
         return self.create_sequence_command(token_list)

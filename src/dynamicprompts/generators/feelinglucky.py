@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import List
 
 import logging
 import random
@@ -22,7 +21,7 @@ class FeelingLuckyGenerator(PromptGenerator):
         else:
             self._generator = generator
 
-    def generate(self, search_query, num_prompts: int) -> List[str]:
+    def generate(self, search_query, num_prompts: int) -> list[str]:
         search_query = self._generator.generate(search_query, 1)[0]
 
         if search_query.strip() == "":

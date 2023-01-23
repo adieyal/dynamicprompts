@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import List, Dict
 import logging
 from pathlib import Path
 
@@ -23,7 +22,7 @@ class WildcardManager:
         except Exception as e:
             logger.exception(f"Failed to create directory {self._path}")
 
-    def get_files(self, relative: bool = False) -> List[Path]:
+    def get_files(self, relative: bool = False) -> list[Path]:
         if not self._directory_exists():
             return []
 
@@ -33,7 +32,7 @@ class WildcardManager:
 
         return list(files)
 
-    def match_files(self, wildcard: str) -> List[WildcardFile]:
+    def match_files(self, wildcard: str) -> list[WildcardFile]:
         wildcard = wildcard.strip("__")
         return [
             WildcardFile(path)
@@ -49,13 +48,13 @@ class WildcardManager:
         rel_path = path.relative_to(self._path)
         return f"__{rel_path.with_suffix('')}__"
 
-    def get_wildcards(self) -> List[str]:
+    def get_wildcards(self) -> list[str]:
         files = self.get_files(relative=True)
         wildcards = [self.path_to_wilcard(f) for f in files]
 
         return wildcards
 
-    def get_all_values(self, wildcard: str) -> List[str]:
+    def get_all_values(self, wildcard: str) -> list[str]:
         files = self.match_files(wildcard)
         return sorted(set().union(*[f.get_wildcards() for f in files]))
 
@@ -76,10 +75,10 @@ class WildcardManager:
     def get_collection_path(self) -> Path:
         return self._path.parent / "collections"
 
-    def get_collections(self) -> List[str]:
+    def get_collections(self) -> list[str]:
         return list(self.get_collection_dirs().keys())
 
-    def get_collection_dirs(self) -> Dict[str, Path]:
+    def get_collection_dirs(self) -> dict[str, Path]:
         collection_path = self.get_collection_path()
         collection_dirs = [x for x in collection_path.glob("*") if x.is_dir()]
         collection_names = [

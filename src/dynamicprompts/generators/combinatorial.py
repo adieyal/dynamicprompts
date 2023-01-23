@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Iterable
+from typing import Iterable
 
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts import constants

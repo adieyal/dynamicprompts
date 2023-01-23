@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import List, Tuple
 from itertools import islice
 
 from typing import Iterable
@@ -21,11 +20,11 @@ from dynamicprompts.wildcardmanager import WildcardManager
 
 
 class CombinatorialSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: List[Command] | None = None, separator=""):
+    def __init__(self, tokens: list[Command] | None = None, separator=""):
         self._sep = separator
         super().__init__(tokens)
 
-    def prompts(self, tokens: List[Command] | None = None) -> Iterable[str]:
+    def prompts(self, tokens: list[Command] | None = None) -> Iterable[str]:
         if tokens is None:
             tokens = self.tokens
 
@@ -58,7 +57,7 @@ class CombinatorialWildcardCommand(WildcardCommand):
 
 
 class CombinatorialVariantCommand(VariantCommand):
-    def _combo_to_prompt(self, combo: List[SequenceCommand]) -> Iterable[List[str]]:
+    def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
         if len(combo) == 0:
             yield []
         else:
@@ -71,7 +70,7 @@ class CombinatorialVariantCommand(VariantCommand):
                     else:
                         yield [p]
 
-    def _dedupe(self, arr: List[str]) -> Tuple[str]:
+    def _dedupe(self, arr: list[str]) -> tuple[str]:
         d = OrderedDict()
         for item in arr:
             d[item] = None
@@ -104,7 +103,7 @@ class CombinatorialActionBuilder(ActionBuilder):
     def create_wildcard_command(self, token: str):
         return CombinatorialWildcardCommand(self._wildcard_manager, self, token)
 
-    def create_sequence_command(self, token_list: List[Command]):
+    def create_sequence_command(self, token_list: list[Command]):
         return CombinatorialSequenceCommand(token_list)
 
     def create_generator(self):

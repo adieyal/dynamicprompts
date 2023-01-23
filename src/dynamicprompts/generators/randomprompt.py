@@ -1,11 +1,9 @@
 from __future__ import annotations
-from typing import List
 
 import logging
 from random import Random
 import random
 
-from dynamicprompts import constants
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.parser.random_generator import RandomGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -33,7 +31,7 @@ class RandomPromptGenerator(PromptGenerator):
 
         self._generator = RandomGenerator(wildcard_manager, rand=self._random, ignore_whitespace=ignore_whitespace)
 
-    def generate(self, template, num_images=1) -> List[str]:
+    def generate(self, template, num_images=1) -> list[str]:
         if template is None or len(template) == 0:
             return [""]
         prompts = self._generator.generate_prompts(template, num_images)

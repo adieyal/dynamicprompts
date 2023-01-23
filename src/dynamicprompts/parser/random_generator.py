@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class RandomSequenceCommand(SequenceCommand):
-    def __init__(self, tokens: List[Command] | None = None, separator=""):
+    def __init__(self, tokens: list[Command] | None = None, separator=""):
         self._sep = separator
         super().__init__(tokens)
 
@@ -61,7 +61,7 @@ class RandomVariantCommand(Command):
         self._remaining_values = self._values
         self._random = rand or random
 
-    def _combo_to_prompt(self, combo: List[SequenceCommand]) -> Iterable[List[str]]:
+    def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
         if len(combo) == 0:
             yield []
         else:
@@ -100,7 +100,7 @@ class RandomActionBuilder(ActionBuilder):
     def create_wildcard_command(self, token: str):
         return RandomWildcardCommand(self._wildcard_manager, self, token, rand=self._random)
 
-    def create_sequence_command(self, token_list: List[Command]):
+    def create_sequence_command(self, token_list: list[Command]):
         return RandomSequenceCommand(token_list, separator=self._seq_sep)
 
     def create_generator(self):
@@ -125,7 +125,7 @@ class RandomGenerator:
 
         return parser.prompt
 
-    def generate_prompts(self, prompt: str, num_prompts: int = 0) -> List[str]:
+    def generate_prompts(self, prompt: str, num_prompts: int = 0) -> list[str]:
         if len(prompt) == 0:
             return []
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List
 import re
 
 from tqdm import trange
@@ -84,7 +83,7 @@ class MagicPromptGenerator(PromptGenerator):
         else:
             self._generator = MagicPromptGenerator.generator
     
-    def generate(self, *args, **kwargs) -> List[str]:
+    def generate(self, *args, **kwargs) -> list[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
 
         new_prompts = []
