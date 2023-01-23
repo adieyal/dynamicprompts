@@ -202,7 +202,7 @@ class TestWildcardsCommand:
         with mock.patch.object(
             builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            
+
             command1 = builder.get_wildcard_action("colours")
             space = builder.get_literal_action(" ")
             command2 = CombinatorialVariantCommand(gen_variant(["circles", "squares"]))

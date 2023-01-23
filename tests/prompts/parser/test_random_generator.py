@@ -240,7 +240,7 @@ class TestWildcardsCommand:
         with mock.patch.object(
             builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-            
+
             random_choices = ["green", "red"]
             command1._random.choice.side_effect = random_choices
 
@@ -260,7 +260,7 @@ class TestWildcardsCommand:
         with mock.patch.object(
             builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
         ):
-           
+
             command1._random.choice.side_effect = ["red", "blue"]
             command3._random.choices.side_effect = [
                 [to_seqlit("circles")],
@@ -359,7 +359,7 @@ class TestRandomGenerator:
     def test_weighted_variant(self, generator: RandomGenerator):
         generator._random = mock.Mock()
 
-    
+
         generator._random.choices.return_value = [to_seqlit("green")]
         generator._random.randint.return_value = 1
         prompts = generator.generate_prompts("A {1::red|2::green|3::blue}", 1)
@@ -399,7 +399,7 @@ class TestRandomGenerator:
             "get_all_values",
             return_value=to_seqlit("red", "green", "blue"),
         ):
-        
+
             generator._random.choice.side_effect = ["red", "green"]
             prompts = generator.generate_prompts("(__colours__:2.3) ", 1)
             assert prompts[0] == "(red:2.3) "

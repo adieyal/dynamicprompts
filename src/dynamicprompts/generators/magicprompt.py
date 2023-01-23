@@ -62,7 +62,7 @@ class MagicPromptGenerator(PromptGenerator):
 
         self._max_prompt_length = max_prompt_length
         self._temperature = float(temperature)
-        
+
 
         if seed is not None:
             set_seed(int(seed))
@@ -79,7 +79,7 @@ class MagicPromptGenerator(PromptGenerator):
             self._generator = self._load_pipeline(model_name)
         else:
             self._generator = MagicPromptGenerator.generator
-    
+
     def generate(self, *args, **kwargs) -> list[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
 

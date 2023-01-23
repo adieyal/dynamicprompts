@@ -1,5 +1,5 @@
 # Dynamic Prompts
-A library that provides tools and a templating language for designing prompts for text-to-image generators such as Stable Diffusion. This is useful if you would like to generate a number of new prompts using a template. 
+A library that provides tools and a templating language for designing prompts for text-to-image generators such as Stable Diffusion. This is useful if you would like to generate a number of new prompts using a template.
 
 The following template
 
@@ -33,7 +33,7 @@ You can also use the same wildcard twice
 
 More complete documentation can be found [below](#syntax).
 
-## Dynamic Prompts in the wild. 
+## Dynamic Prompts in the wild.
 Dynamic Prompts has been used in:
 1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
 2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
@@ -266,7 +266,7 @@ This will randomly combine two of the options for every batch, separated with a 
 
 	{1-3$$opt1|opt2|opt3}
 
-This will use a random number of options between 1 and 3 for each batch. 
+This will use a random number of options between 1 and 3 for each batch.
 
 If the number of combinations chosen is greater than the number of options listed then options may be repeated in the output.
 If the number of combinations chosen is less than or equal to the number of options listed then the same options will not be chosen more than once.
@@ -302,7 +302,7 @@ This will generate 3 photos of a blue ball per every 1 photo of a red ball.
 <img src="images/weighting-colours.png">
 
 	photo of a {blue|0.25::red} ball
-	
+
 Decimals also work as expected: this will generate 4 photos of a blue ball per every 1 photo of a red ball.
 
 	photo portrait of a {59::white|21::latino|14::black|8::asian} {man|woman}
@@ -338,7 +338,7 @@ You can nest inside combinations.
 
 This will then either choose a season from seasons.txt or a time of day from timeofday.txt.
 
-Combinations can also be nested inside other combinations, e.g. 
+Combinations can also be nested inside other combinations, e.g.
 
     {{a|b|c}|d}
 
@@ -385,19 +385,19 @@ In most cases, whitespace is ignored which allows you to create more expressive 
     	woman, __colours__ eyes, braided hair
     	|man using a __war/weapons/swords/european__, red turban
     	|dwarf weilding a warhammer, __colours__ beard
-	}, 
+	},
 	knows the meaning of life, warrior, hyper-realistic, peaceful, dark fantasy, unreal engine, 8k
 
 ## Prompt development
-The flexibility provided in the templating language makes it easy to start developing more sophisticated prompts, e.g,here is a prompt for an engagement ring. 
+The flexibility provided in the templating language makes it easy to start developing more sophisticated prompts, e.g,here is a prompt for an engagement ring.
 
-    Elegant solitaire engagement ring. 
+    Elegant solitaire engagement ring.
     {classic|petite|thin|cigar|tapered|twisted}     # Band design
     {silver|{white|rose|yellow}gold|platinum}       # Band metal
     {round|faceted|honeycomb}                       # Band texture
     band with a
     {round|brilliant|oval|heart-shaped}             # Stone cut
-    __items/materials/gems__                        # Gem type. 
+    __items/materials/gems__                        # Gem type.
 
 Below are some example prompts generated from this pattern:
 > Elegant solitaire engagement ring. tapered rose gold round band with a brilliant anthophyllite<br>

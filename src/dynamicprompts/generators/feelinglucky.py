@@ -40,5 +40,3 @@ class FeelingLuckyGenerator(PromptGenerator):
             return [p["prompt"] for p in selected_prompts]
         except Exception as e:
             raise GeneratorException(f"Error while generating prompt: {e}") from e
-
-

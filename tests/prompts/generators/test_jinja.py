@@ -11,15 +11,17 @@ from dynamicprompts.wildcardmanager import WildcardManager
 def wildcard_manager():
     return WildcardManager(Path("wildcards").absolute())
 
+
 @pytest.fixture
 def generator(wildcard_manager):
     return JinjaGenerator(wildcard_manager)
+
 
 class TestJinjaGenerator:
     def test_literal_prompt(self, generator):
         template = "This is a literal prompt"
         prompts = generator.generate(template)
-        
+
         assert len(prompts) == 1
         assert prompts[0] == template
 
@@ -29,7 +31,7 @@ class TestJinjaGenerator:
             template = "This is a {{ choice('red', 'blue') }} rose"
 
             prompts = generator.generate(template, 3)
-            
+
             assert len(prompts) == 3
             assert prompts[0] == "This is a red rose"
             assert prompts[1] == "This is a blue rose"
@@ -40,7 +42,7 @@ class TestJinjaGenerator:
             mock_choice.side_effect = ["red", "triangle", "blue", "square"]
             template = "This is a {{ choice('red', 'blue') }} {{ choice('triangle', 'square') }}"
             prompts = generator.generate(template, 2)
-            
+
             assert len(prompts) == 2
             assert prompts[0] == "This is a red triangle"
             assert prompts[1] == "This is a blue square"
@@ -205,12 +207,12 @@ class TestJinjaGenerator:
         with patch('random.choices') as mock_choice:
             mock_choice.side_effect = [["yellow"]]
             template = """My favourite colour is {{ weighted_choice(("pink", 0.2), ("yellow", 0.3), ("black", 0.4), ("purple", 0.1)) }}"""
-            
+
             prompts = generator.generate(template)
 
             assert len(prompts) == 1
             assert prompts[0] == "My favourite colour is yellow"
-            
+
             assert mock_choice.call_args[0][0] == ("pink", "yellow", "black", "purple")
             assert mock_choice.call_args[1]["weights"] == (0.2, 0.3, 0.4, 0.1)
 

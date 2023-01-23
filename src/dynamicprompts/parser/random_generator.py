@@ -139,7 +139,7 @@ class RandomGenerator:
             return []
 
         for i in range(num_prompts):
-            
+
 
             prompts = list(tokens[0].prompts())
             if len(prompts) == 0:

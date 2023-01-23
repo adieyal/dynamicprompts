@@ -47,7 +47,7 @@ class TestPermutationExtension:
     def test_permutation(self):
         ext = PermutationExtension(mock.MagicMock())
         res = ext.permutation(["one", "two", "three"], 1, 2)
-        
+
         assert len(res) == 9
         assert res[0] == ("one", )
         assert res[1] == ("two", )
@@ -58,6 +58,3 @@ class TestPermutationExtension:
         assert res[6] == ("two", "three" )
         assert res[7] == ("three", "one" )
         assert res[8] == ("three", "two" )
-
-    
-

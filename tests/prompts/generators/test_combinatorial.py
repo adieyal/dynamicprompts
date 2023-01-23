@@ -62,9 +62,3 @@ class TestCombinatorialGenerator:
         prompts = generator.generate(prompt)
 
         assert len(list(prompts)) == 9
-
-
-        
-        
-
-        

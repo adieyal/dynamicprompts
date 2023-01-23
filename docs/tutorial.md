@@ -38,7 +38,7 @@ Nesting variants can quickly make your prompt template hard to read. Luckily, Dy
 
 Of course, we're not limited to only one variant, we can add a little more variation like this:
 
-    A {diamond|ruby|emerald} ring set on a {classic|thin|thick} 
+    A {diamond|ruby|emerald} ring set on a {classic|thin|thick}
     {
         {rose|yellow|white} gold
         | platinum
@@ -53,7 +53,7 @@ This template could produce any of these prompts:
 
 That second prompt isn't grammatically correct, it doesn't really matter to Stable Diffusion, but if you prefer correct English, you can write something like:
 
-    {A diamond|A ruby|An emerald} ring set on a {classic|thin|thick} 
+    {A diamond|A ruby|An emerald} ring set on a {classic|thin|thick}
     {
         {rose|yellow|white} gold
         | platinum
@@ -74,7 +74,7 @@ We place this file inside the extension's wildcard folder. This can be found in 
 
 Now our prompt changes to:
 
-    A __gems__ ring set on a {classic|thin|thick} 
+    A __gems__ ring set on a {classic|thin|thick}
     {
         {rose|yellow|white} gold
         | platinum
@@ -152,7 +152,7 @@ Here dynamic prompts will choose 2, 3, or 4 artists.
 Magic Prompts
 =============
 
-When you look at prompts that people post online, you will often notice a number of modifiers related to lighting, resolution, camera type etc. When you're starting out, you might feel overwhelmed by these modifiers. The magic prompt functionality is a fun way to automatically add modifiers to your prompt. You can experiment, but a good way to start is to use a very simple prompt, e.g. 
+When you look at prompts that people post online, you will often notice a number of modifiers related to lighting, resolution, camera type etc. When you're starting out, you might feel overwhelmed by these modifiers. The magic prompt functionality is a fun way to automatically add modifiers to your prompt. You can experiment, but a good way to start is to use a very simple prompt, e.g.
 
     A mech-warriour in a post-apocalyptic setting.
 
@@ -172,4 +172,3 @@ Another way of getting inspiration is through the I'm feeling lucky function. In
 
 Attention grabber
 =================
-
