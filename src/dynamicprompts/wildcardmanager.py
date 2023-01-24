@@ -36,6 +36,13 @@ class WildcardManager:
     def __init__(self, path: Path):
         self._path = path
 
+    @property
+    def path(self) -> Path:
+        """
+        The root path of the wildcard manager.
+        """
+        return self._path
+
     def _directory_exists(self) -> bool:
         return self._path.is_dir()
 
