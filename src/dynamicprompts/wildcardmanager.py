@@ -19,8 +19,17 @@ def _is_relative_to(p1: Path, p2: Path) -> bool:
         return False
 
 
-def _normalize_wildcard(wildcard: str):
-    return wildcard.strip("_").replace("/", os.sep).replace("\\", os.sep)
+def _clean_wildcard(wildcard: str):
+    wildcard = (
+        wildcard.strip("_")  # remove wildcard delimiters
+        .replace("/", os.sep).replace("\\", os.sep)  # normalize path separators
+        .rstrip(os.sep)  # remove trailing path separator (likely a typo)
+    )
+    if wildcard.startswith(os.sep):
+        raise ValueError(f"Wildcard {wildcard} cannot start with {os.sep}")
+    if ".." in wildcard:
+        raise ValueError(f"Wildcard can not contain '..': {wildcard}")
+    return wildcard
 
 
 class WildcardManager:
@@ -47,7 +56,12 @@ class WildcardManager:
         return list(files)
 
     def match_files(self, wildcard: str) -> list[WildcardFile]:
-        wildcard = _normalize_wildcard(wildcard)
+        try:
+            wildcard = _clean_wildcard(wildcard)
+        except ValueError:
+            logger.warning(f"Invalid wildcard: {wildcard}", exc_info=True)
+            return []
+
         return [
             WildcardFile(path)
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
@@ -55,7 +69,7 @@ class WildcardManager:
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:
-        return (self._path / _normalize_wildcard(wildcard)).with_suffix(
+        return (self._path / _clean_wildcard(wildcard)).with_suffix(
             f".{constants.WILDCARD_SUFFIX}"
         )
 

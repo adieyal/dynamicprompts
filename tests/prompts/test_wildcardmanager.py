@@ -1,4 +1,5 @@
-from dynamicprompts.wildcardmanager import WildcardManager
+import pytest
+from dynamicprompts.wildcardmanager import WildcardManager, _clean_wildcard
 
 
 def test_is_wildcard(wildcard_manager: WildcardManager):
@@ -61,3 +62,14 @@ def test_backslash_norm(wildcard_manager: WildcardManager):
 def test_directory_traversal(wildcard_manager: WildcardManager):
     assert not wildcard_manager.get_all_values("../cant_touch_this")
     assert not wildcard_manager.get_all_values("..\\cant_touch_this")
+
+
+def test_clean_wildcard():
+    with pytest.raises(ValueError):
+        _clean_wildcard("/foo")
+
+    with pytest.raises(ValueError):
+        _clean_wildcard("\\foo")
+
+    with pytest.raises(ValueError):
+        _clean_wildcard("foo/../bar")
