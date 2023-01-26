@@ -1,3 +1,4 @@
+0.4.0 - Added block regex for magicprompts to remove unwanted modifiers. Many other small improvements, thanks to @akx
 0.3.2 - Added LICENCE, many code improvements,security fix that prevents wildcard searches outside the wildcard directory - thanks to @akx
 0.3.1 - Clean-up with thanks to @akx
 0.3.0 - Added additional models to Magic Prompt
