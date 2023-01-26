@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 from dynamicprompts import constants
 from dynamicprompts.wildcardfile import WildcardFile
@@ -19,7 +20,7 @@ def _is_relative_to(p1: Path, p2: Path) -> bool:
         return False
 
 
-def _clean_wildcard(wildcard: str):
+def _clean_wildcard(wildcard: str) -> str:
     wildcard = (
         wildcard.strip("_")  # remove wildcard delimiters
         .replace("/", os.sep)
@@ -34,7 +35,7 @@ def _clean_wildcard(wildcard: str):
 
 
 class WildcardManager:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         self._path = path
 
     @property
@@ -47,7 +48,7 @@ class WildcardManager:
     def _directory_exists(self) -> bool:
         return self._path.is_dir()
 
-    def ensure_directory(self):
+    def ensure_directory(self) -> None:
         try:
             self._path.mkdir(parents=True, exist_ok=True)
         except Exception:
@@ -57,7 +58,7 @@ class WildcardManager:
         if not self._directory_exists():
             return []
 
-        files = self._path.rglob(f"*.{constants.WILDCARD_SUFFIX}")
+        files = list(self._path.rglob(f"*.{constants.WILDCARD_SUFFIX}"))
         if relative:
             files = [f.relative_to(self._path) for f in files]
 
@@ -93,7 +94,11 @@ class WildcardManager:
         files = self.match_files(wildcard)
         return sorted(set().union(*[f.get_wildcards() for f in files]))
 
-    def get_wildcard_hierarchy(self, path: Path | None = None):
+    # TODO: the return type is actually a recursive type (replace that Any)
+    def get_wildcard_hierarchy(
+        self,
+        path: Path | None = None,
+    ) -> tuple[list[str], dict[str, Any]]:
         if path is None:
             path = self._path
 
