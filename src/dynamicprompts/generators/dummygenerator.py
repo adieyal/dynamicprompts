@@ -4,5 +4,9 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 
 class DummyGenerator(PromptGenerator):
-    def generate(self, template, num_images=1) -> list[str]:
+    def generate(
+        self,
+        template: str,
+        num_images: int = 1,
+    ) -> list[str]:
         return num_images * [template]

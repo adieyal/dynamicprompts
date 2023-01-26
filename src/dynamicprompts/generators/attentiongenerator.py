@@ -12,12 +12,14 @@ MODEL_NAME = "en_core_web_sm"
 
 
 class AttentionGenerator(PromptGenerator):
+    _prompt_generator: PromptGenerator
+
     def __init__(
         self,
         generator: PromptGenerator | None = None,
-        min_attention=0.1,
-        max_attention=0.9,
-    ):
+        min_attention: float = 0.1,
+        max_attention: float = 0.9,
+    ) -> None:
         try:
             import spacy
         except ImportError as ie:
@@ -29,7 +31,9 @@ class AttentionGenerator(PromptGenerator):
             spacy.load(MODEL_NAME)
         except OSError:
             logger.warning("Spacy model not found, downloading...")
-            spacy.cli.download(MODEL_NAME)
+            from spacy.cli.download import download
+
+            download(MODEL_NAME)
 
         self._nlp = spacy.load(MODEL_NAME)
 
@@ -41,7 +45,7 @@ class AttentionGenerator(PromptGenerator):
         m, M = min(min_attention, max_attention), max(min_attention, max_attention)
         self._min_attention, self._max_attention = m, M
 
-    def _add_emphasis(self, prompt):
+    def _add_emphasis(self, prompt: str) -> str:
         doc = self._nlp(prompt)
         keywords = list(doc.noun_chunks)
         if len(keywords) == 0:
