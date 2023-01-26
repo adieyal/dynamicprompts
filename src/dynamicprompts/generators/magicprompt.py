@@ -11,7 +11,13 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator
 logger = logging.getLogger(__name__)
 
 try:
-    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline, set_seed
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        Pipeline,
+        pipeline,
+        set_seed,
+    )
 except ImportError as ie:
     raise ImportError(
         "You need to install the transformers library to use the MagicPrompt generator. "
@@ -64,8 +70,8 @@ def clean_up_magic_prompt(orig_prompt: str, prompt: str) -> str:
 
 
 class MagicPromptGenerator(PromptGenerator):
-    generator = None
-    _model_name = None
+    generator: Pipeline | None = None
+    _model_name: str | None = None
 
     def _load_pipeline(self, model_name: str):
         logger.warning("First load of MagicPrompt may take a while.")
@@ -85,12 +91,13 @@ class MagicPromptGenerator(PromptGenerator):
 
     def __init__(
         self,
-        prompt_generator: PromptGenerator|None=None,
+        prompt_generator: PromptGenerator | None = None,
         model_name: str = DEFAULT_MODEL_NAME,
         device: int = -1,
         max_prompt_length: int = 100,
         temperature: float = 0.7,
         seed: int | None = None,
+        blocklist_regex: str | None = None,
     ):
         self._device = device
         self.set_model(model_name)
@@ -103,6 +110,10 @@ class MagicPromptGenerator(PromptGenerator):
         self._max_prompt_length = max_prompt_length
         self._temperature = float(temperature)
 
+        if blocklist_regex:
+            self._blocklist_regex = re.compile(blocklist_regex, re.IGNORECASE)
+        else:
+            self._blocklist_regex = None
 
         if seed is not None:
             set_seed(int(seed))
@@ -125,14 +136,31 @@ class MagicPromptGenerator(PromptGenerator):
 
         new_prompts = []
         for i in trange(len(prompts), desc="Generating Magic prompts"):
-            orig_prompt = prompts[i]
-            magic_prompt = self._generator(
+            new_prompts.append(self._generate_magic_prompt(prompts[i]))
+
+        return new_prompts
+
+    def _generate_magic_prompt(self, orig_prompt: str, max_attempts: int = 20) -> str:
+        prompt = orig_prompt  # Fallback
+        for attempt in range(max_attempts):
+            prompt = self._generator(
                 orig_prompt,
                 max_length=self._max_prompt_length,
                 temperature=self._temperature,
             )[0]["generated_text"]
-
-            magic_prompt = clean_up_magic_prompt(orig_prompt, magic_prompt)
-            new_prompts.append(magic_prompt)
-
-        return new_prompts
+            prompt = clean_up_magic_prompt(orig_prompt, prompt)
+            if self._blocklist_regex:
+                # TODO(3.8+): use walrus operator
+                match = self._blocklist_regex.search(prompt)
+                if match:
+                    logger.info(
+                        f"Generated magic prompt '{prompt}' blocked: "
+                        f"'{match.group(0)}' matched blocklist regex."
+                    )
+                    continue
+            return prompt
+        logger.warning(
+            f"Failed to generate non-blocked magic prompt for '{orig_prompt}' after {max_attempts} attempts. "
+            f"Will still use last generated magic prompt."
+        )
+        return prompt
