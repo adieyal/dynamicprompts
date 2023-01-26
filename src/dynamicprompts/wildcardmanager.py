@@ -22,7 +22,8 @@ def _is_relative_to(p1: Path, p2: Path) -> bool:
 def _clean_wildcard(wildcard: str):
     wildcard = (
         wildcard.strip("_")  # remove wildcard delimiters
-        .replace("/", os.sep).replace("\\", os.sep)  # normalize path separators
+        .replace("/", os.sep)
+        .replace("\\", os.sep)  # normalize path separators
         .rstrip(os.sep)  # remove trailing path separator (likely a typo)
     )
     if wildcard.startswith(os.sep):

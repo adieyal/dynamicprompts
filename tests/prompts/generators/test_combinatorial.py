@@ -33,7 +33,6 @@ class TestCombinatorialGenerator:
         assert prompts[1] == "I love butter"
         assert prompts[2] == "I love cheese"
 
-
         prompts = list(generator.generate(prompt, 2))
 
         assert len(prompts) == 2

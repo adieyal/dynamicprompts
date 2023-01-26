@@ -13,8 +13,9 @@ from dynamicprompts.generators.promptgenerator import (
 
 logger = logging.getLogger(__name__)
 
+
 class FeelingLuckyGenerator(PromptGenerator):
-    def __init__(self, generator: PromptGenerator|None=None):
+    def __init__(self, generator: PromptGenerator | None = None):
         if generator is None:
             self._generator = DummyGenerator()
         else:

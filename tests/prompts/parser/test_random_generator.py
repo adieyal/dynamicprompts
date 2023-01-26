@@ -21,9 +21,11 @@ def to_seqlit(*args):
 def wildcard_manager():
     return mock.Mock()
 
+
 @pytest.fixture
 def builder(wildcard_manager):
     return RandomActionBuilder(wildcard_manager)
+
 
 @pytest.fixture
 def generator(wildcard_manager):
@@ -207,7 +209,6 @@ class TestVariantCommand:
             [to_seqlit("triangles")],
         ]
 
-
         assert sequence.get_prompt() == "red squares are cool"
         assert sequence.get_prompt() == "green triangles are cool"
 
@@ -219,7 +220,9 @@ class TestWildcardsCommand:
         command._random = mock.Mock()
 
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             command = cast(RandomWildcardCommand, command)
             command._random.choice.side_effect = ["green"]
@@ -235,10 +238,14 @@ class TestWildcardsCommand:
         space = builder.get_literal_action(" ")
         command2 = builder.get_literal_action("are")
         command3 = builder.get_literal_action("cool")
-        sequence = builder.get_sequence_action([command1, space, command2, space, command3])
+        sequence = builder.get_sequence_action(
+            [command1, space, command2, space, command3]
+        )
 
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
 
             random_choices = ["green", "red"]
@@ -258,7 +265,9 @@ class TestWildcardsCommand:
         sequence = builder.get_sequence_action([command1, space, command3])
 
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
 
             command1._random.choice.side_effect = ["red", "blue"]
@@ -358,7 +367,6 @@ class TestRandomGenerator:
 
     def test_weighted_variant(self, generator: RandomGenerator):
         generator._random = mock.Mock()
-
 
         generator._random.choices.return_value = [to_seqlit("green")]
         generator._random.randint.return_value = 1

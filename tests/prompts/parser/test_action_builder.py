@@ -13,9 +13,11 @@ from dynamicprompts.parser.commands import (
 def wildcard_manager():
     return mock.Mock()
 
+
 @pytest.fixture
 def action_builder(wildcard_manager):
     return ActionBuilder(wildcard_manager)
+
 
 class TestActionBuilder:
     def test_literal_action(self, action_builder: ActionBuilder):
@@ -41,7 +43,12 @@ class TestActionBuilder:
     #     assert isinstance(variant_action, VariantCommand)
 
     def test_sequence_action(self, action_builder: ActionBuilder):
-        commands = [LiteralCommand("A"), LiteralCommand("string"), LiteralCommand("of"), LiteralCommand("tokens")]
+        commands = [
+            LiteralCommand("A"),
+            LiteralCommand("string"),
+            LiteralCommand("of"),
+            LiteralCommand("tokens"),
+        ]
         sequence = action_builder.get_sequence_action(commands)
         assert isinstance(sequence, SequenceCommand)
         assert len(sequence) == 4

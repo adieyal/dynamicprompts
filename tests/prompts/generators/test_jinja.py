@@ -5,6 +5,8 @@ from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
 from dynamicprompts.wildcardmanager import WildcardManager
 
+GET_ALL_VALUES = "dynamicprompts.wildcardmanager.WildcardManager.get_all_values"
+
 
 @pytest.fixture
 def generator(wildcard_manager: WildcardManager):
@@ -20,7 +22,7 @@ class TestJinjaGenerator:
         assert prompts[0] == template
 
     def test_choice_prompt(self, generator):
-        with patch('random.choice') as mock_choice:
+        with patch("random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "blue", "red"]
             template = "This is a {{ choice('red', 'blue') }} rose"
 
@@ -32,7 +34,7 @@ class TestJinjaGenerator:
             assert prompts[2] == "This is a red rose"
 
     def test_two_choice_prompt(self, generator):
-        with patch('random.choice') as mock_choice:
+        with patch("random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "triangle", "blue", "square"]
             template = "This is a {{ choice('red', 'blue') }} {{ choice('triangle', 'square') }}"
             prompts = generator.generate(template, 2)
@@ -92,10 +94,10 @@ class TestJinjaGenerator:
         {% endfor %}
         """
 
-        with patch('dynamicprompts.wildcardmanager.WildcardManager.get_all_values') as mock_values:
+        with patch(GET_ALL_VALUES) as mock_values:
             mock_values.side_effect = (
                 ["pink", "yellow", "__blacks__", "purple"],
-                ["black", "grey"]
+                ["black", "grey"],
             )
 
             prompts = generator.generate(template)
@@ -114,12 +116,11 @@ class TestJinjaGenerator:
         {% endfor %}
         """
 
-        with patch('dynamicprompts.wildcardmanager.WildcardManager.get_all_values') as mock_values:
+        with patch(GET_ALL_VALUES) as mock_values:
             mock_values.side_effect = (
                 ["pink", "yellow", "__blacks__", "purple"],
                 ["black", "__greys__"],
                 ["light grey", "dark grey"],
-
             )
 
             prompts = generator.generate(template)
@@ -139,12 +140,10 @@ class TestJinjaGenerator:
         {% endfor %}
         """
 
-        with patch('dynamicprompts.wildcardmanager.WildcardManager.get_all_values') as mock_values:
-            mock_values.side_effect = (
-                ["pink", "yellow", "{white|black}", "purple"],
-            )
+        with patch(GET_ALL_VALUES) as mock_values:
+            mock_values.side_effect = (["pink", "yellow", "{white|black}", "purple"],)
 
-            with patch('random.choice') as mock_choice:
+            with patch("random.choice") as mock_choice:
                 mock_choice.return_value = "white"
 
                 prompts = generator.generate(template)
@@ -160,7 +159,7 @@ class TestJinjaGenerator:
         {% prompt %}My favourite colour is {{ choice(wildcard("__colours__")) }}{% endprompt %}
         """
 
-        with patch('random.choice') as mock_choice:
+        with patch("random.choice") as mock_choice:
             mock_choice.return_value = "yellow"
 
             prompts = generator.generate(template)
@@ -178,7 +177,7 @@ class TestJinjaGenerator:
             generator.generate(template)
 
     def test_random(self, generator):
-        with patch('random.random') as mock_choice:
+        with patch("random.random") as mock_choice:
             mock_choice.return_value = 0.3
             template = """
             {% prompt %}My favourite number is {{ random() }}{% endprompt %}
@@ -190,7 +189,7 @@ class TestJinjaGenerator:
             assert prompts[0] == "My favourite number is 0.3"
 
     def test_weighted_choice(self, generator):
-        with patch('random.choices') as mock_choice:
+        with patch("random.choices") as mock_choice:
             mock_choice.side_effect = [["yellow"]]
             template = """My favourite colour is {{ weighted_choice(("pink", 0.2), ("yellow", 0.3), ("black", 0.4), ("purple", 0.1)) }}"""
 

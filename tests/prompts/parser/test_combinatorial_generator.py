@@ -19,9 +19,11 @@ def wildcard_manager():
 def generator(wildcard_manager) -> CombinatorialGenerator:
     return CombinatorialGenerator(wildcard_manager)
 
+
 @pytest.fixture
 def builder(wildcard_manager) -> CombinatorialActionBuilder:
     return CombinatorialActionBuilder(wildcard_manager)
+
 
 def gen_variant(vals):
     return [{"weight": [1], "val": LiteralCommand(v)} for v in vals]
@@ -172,7 +174,9 @@ class TestVariantCommand:
 class TestWildcardsCommand:
     def test_basic_wildcard(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             command = builder.get_wildcard_action(["colours"])
             prompts = list(command.prompts())
@@ -185,7 +189,9 @@ class TestWildcardsCommand:
 
     def test_wildcard_with_literal(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
             command1 = builder.get_wildcard_action(["colours"])
             command2 = builder.get_literal_action(" are cool")
@@ -200,7 +206,9 @@ class TestWildcardsCommand:
 
     def test_wildcard_with_variant(self, builder: CombinatorialActionBuilder):
         with mock.patch.object(
-            builder._wildcard_manager, "get_all_values", return_value=["red", "green", "blue"]
+            builder._wildcard_manager,
+            "get_all_values",
+            return_value=["red", "green", "blue"],
         ):
 
             command1 = builder.get_wildcard_action("colours")
@@ -344,7 +352,9 @@ class TestCombinatorialGenerator:
     def test_combination_variants_with_separator(
         self, generator: CombinatorialGenerator
     ):
-        prompts = list(generator.generate_prompts("A {2$$ and $$red|green|blue} square", 10))
+        prompts = list(
+            generator.generate_prompts("A {2$$ and $$red|green|blue} square", 10)
+        )
         assert len(prompts) == 6
         assert prompts[0] == "A red and green square"
         assert prompts[1] == "A red and blue square"
@@ -370,7 +380,9 @@ class TestCombinatorialGenerator:
             "get_all_values",
             return_value=["red", "green", "blue"],
         ):
-            prompts = list(generator.generate_prompts("A __colours__ {square|circle}", 6))
+            prompts = list(
+                generator.generate_prompts("A __colours__ {square|circle}", 6)
+            )
             assert len(prompts) == 6
             assert prompts[0] == "A red square"
             assert prompts[1] == "A red circle"

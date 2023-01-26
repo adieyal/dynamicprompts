@@ -13,7 +13,10 @@ MODEL_NAME = "en_core_web_sm"
 
 class AttentionGenerator(PromptGenerator):
     def __init__(
-        self, generator: PromptGenerator | None = None, min_attention=0.1, max_attention=0.9
+        self,
+        generator: PromptGenerator | None = None,
+        min_attention=0.1,
+        max_attention=0.9,
     ):
         try:
             import spacy

@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 re_wildcard = re.compile(r"__(.*?)__")
 re_combinations = re.compile(r"\{([^{}]*)}")
 
+
 class RandomExtension(Extension):
     def __init__(self, environment):
         super().__init__(environment)
@@ -47,7 +48,7 @@ class PermutationExtension(Extension):
         super().__init__(environment)
         environment.globals["permutations"] = self.permutation
 
-    def permutation(self, items, low: int, high: int|None = None):
+    def permutation(self, items, low: int, high: int | None = None):
         vars = []
         if high is None:
             high = low
@@ -98,6 +99,7 @@ class PromptExtension(Extension):
         self.environment.prompt_blocks.append(caller())
         return caller()
 
+
 class JinjaGenerator(PromptGenerator):
     def __init__(self, wildcard_manager=None, context=None):
         self._wildcard_manager = wildcard_manager
@@ -107,14 +109,17 @@ class JinjaGenerator(PromptGenerator):
         else:
             self._context = {}
 
-
-    def generate(self, template: str, num_prompts: int=1) -> list[str]:
+    def generate(self, template: str, num_prompts: int = 1) -> list[str]:
         try:
             env = Environment(
-                extensions=[RandomExtension, PromptExtension, WildcardExtension, PermutationExtension]
+                extensions=[
+                    RandomExtension,
+                    PromptExtension,
+                    WildcardExtension,
+                    PermutationExtension,
+                ]
             )
             env.wildcard_manager = self._wildcard_manager
-
 
             prompts = []
             for i in range(num_prompts):

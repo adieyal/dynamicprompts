@@ -43,17 +43,19 @@ def test_collections(wildcard_manager: WildcardManager):
 
 def test_hierarchy(wildcard_manager: WildcardManager):
     assert wildcard_manager.get_wildcard_hierarchy() == (
-        ['__colors-cold__', '__colors-warm__'],  # Top level
+        ["__colors-cold__", "__colors-warm__"],  # Top level
         {  # child folders
-            'animals': (
-                ['__animals/mystical__'],
-                {'mammals': (
-                    ['__animals/mammals/canine__', '__animals/mammals/feline__'],
-                    {},
-                )},
+            "animals": (
+                ["__animals/mystical__"],
+                {
+                    "mammals": (
+                        ["__animals/mammals/canine__", "__animals/mammals/feline__"],
+                        {},
+                    )
+                },
             ),
-            'flavors': (
-                ['__flavors/sour__', '__flavors/sweet__'],
+            "flavors": (
+                ["__flavors/sour__", "__flavors/sweet__"],
                 {},
             ),
         },
