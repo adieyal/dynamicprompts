@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import logging
-import random
 from random import Random
 
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.parser.random_generator import RandomGenerator
+from dynamicprompts.parser.random_generator import RandomGenerator, DEFAULT_RANDOM
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -23,7 +22,7 @@ class RandomPromptGenerator(PromptGenerator):
         self._unlink_seed_from_prompt = unlink_seed_from_prompt
 
         if self._unlink_seed_from_prompt:
-            self._random = random
+            self._random = DEFAULT_RANDOM
         else:
             self._random = Random()
             if seed is not None:

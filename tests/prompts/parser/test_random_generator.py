@@ -309,7 +309,7 @@ class TestRandomGenerator:
 
     def test_variants(self, generator: RandomGenerator):
         with mock.patch(
-            "dynamicprompts.parser.random_generator.random.choices",
+            "dynamicprompts.parser.random_generator.DEFAULT_RANDOM.choices",
         ) as mock_random:
             random_choices = [
                 [to_seqlit("square")],
@@ -362,7 +362,7 @@ class TestRandomGenerator:
 
     def test_two_variants(self, generator: RandomGenerator):
         with mock.patch(
-            "dynamicprompts.parser.random_generator.random.choices",
+            "dynamicprompts.parser.random_generator.DEFAULT_RANDOM.choices",
         ) as mock_random:
             mock_random.side_effect = [
                 [to_seqlit("green")],

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import random
+from random import Random
 from typing import Iterable, List, cast
 
 from dynamicprompts.parser.commands import (
@@ -13,6 +13,8 @@ from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_RANDOM = Random()
 
 
 class RandomSequenceCommand(SequenceCommand):
@@ -29,12 +31,18 @@ class RandomSequenceCommand(SequenceCommand):
 
 
 class RandomWildcardCommand(Command):
-    def __init__(self, wildcard_manager, builder: ActionBuilder, token: str, rand=None):
+    def __init__(
+        self,
+        wildcard_manager,
+        builder: ActionBuilder,
+        token: str,
+        rand: Random = DEFAULT_RANDOM,
+    ):
         super().__init__(token)
         self._wildcard_manager = wildcard_manager
         self._wildcard = token[0]
         self._builder = builder
-        self._random = rand or random
+        self._random = rand
 
     def prompts(self) -> Iterable[str]:
         generator = self._builder.create_generator()
@@ -52,7 +60,14 @@ class RandomWildcardCommand(Command):
 
 
 class RandomVariantCommand(Command):
-    def __init__(self, variants, min_bound=1, max_bound=1, sep=",", rand=None):
+    def __init__(
+        self,
+        variants,
+        min_bound=1,
+        max_bound=1,
+        sep=",",
+        rand: Random = DEFAULT_RANDOM,
+    ):
         super().__init__(variants)
         self._weights = [p["weight"][0] for p in variants]
         self._values = [p["val"] for p in variants]
@@ -60,7 +75,7 @@ class RandomVariantCommand(Command):
         self.max_bound = max_bound
         self.sep = sep
         self._remaining_values = self._values
-        self._random = rand or random
+        self._random = rand
 
     def _combo_to_prompt(self, combo: list[SequenceCommand]) -> Iterable[list[str]]:
         if len(combo) == 0:
@@ -93,13 +108,13 @@ class RandomActionBuilder(ActionBuilder):
     def __init__(
         self,
         wildcard_manager: WildcardManager,
-        rand=None,
+        rand: Random = DEFAULT_RANDOM,
         seq_sep="",
         ignore_whitespace=False,
     ):
         super().__init__(wildcard_manager, ignore_whitespace=ignore_whitespace)
         self._seq_sep = seq_sep
-        self._random = rand or random
+        self._random = rand
 
     def create_variant_command(self, variants, min_bound=1, max_bound=1, sep=","):
         return RandomVariantCommand(
@@ -132,13 +147,10 @@ class RandomGenerator:
     def __init__(
         self,
         wildcard_manager: WildcardManager,
-        rand=None,
+        rand: Random = DEFAULT_RANDOM,
         ignore_whitespace=False,
     ):
-        if rand is None:
-            self._random = random
-        else:
-            self._random = rand
+        self._random = rand
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
 
