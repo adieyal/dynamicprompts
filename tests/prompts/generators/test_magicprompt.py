@@ -72,6 +72,7 @@ def test_cleanup_magic_prompt(original_prompt: str):
     assert cleaned_prompt == f"{original_prompt} (This is a prompt:1.21) dddd"
 
 
+@pytest.mark.slow
 def test_magic_prompt_blocklist():
     from dynamicprompts.generators.magicprompt import MagicPromptGenerator
     boring_artists = [
