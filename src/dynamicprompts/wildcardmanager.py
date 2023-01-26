@@ -78,7 +78,7 @@ class WildcardManager:
 
     def wildcard_to_path(self, wildcard: str) -> Path:
         return (self._path / _clean_wildcard(wildcard)).with_suffix(
-            f".{constants.WILDCARD_SUFFIX}"
+            f".{constants.WILDCARD_SUFFIX}",
         )
 
     def path_to_wildcard(self, path: Path) -> str:

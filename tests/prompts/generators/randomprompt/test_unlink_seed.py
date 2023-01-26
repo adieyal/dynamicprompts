@@ -11,7 +11,9 @@ class TestUnlinkSeedFromPrompt:
 
         for i in range(5):
             generator = RandomPromptGenerator(
-                wildcard_manager, unlink_seed_from_prompt=False, seed=0
+                wildcard_manager,
+                unlink_seed_from_prompt=False,
+                seed=0,
             )
             prompt = "I love {1-2$$red|green|blue}"
 

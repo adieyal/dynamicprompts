@@ -51,6 +51,7 @@ target-version = "py37"
 select = [
     "B",
     "C",
+    "COM",
     "E",
     "F",
     "I",

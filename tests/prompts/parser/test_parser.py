@@ -179,7 +179,7 @@ class TestParser:
     def test_variant_sequences(self, parser: Parser):
 
         sequence = parser.parse(
-            "{My favourite colour is __colour__ and not __other_colour__|__colour__ is my favourite colour}"
+            "{My favourite colour is __colour__ and not __other_colour__|__colour__ is my favourite colour}",
         )
         assert len(sequence) == 1
         assert type(sequence[0]) == VariantCommand

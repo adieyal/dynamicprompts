@@ -92,7 +92,10 @@ class PromptExtension(Extension):
         lineno = next(parser.stream).lineno
         body = parser.parse_statements(["name:endprompt"], drop_needle=True)
         return jinja2.nodes.CallBlock(
-            self.call_method("_prompt", []), [], [], body
+            self.call_method("_prompt", []),
+            [],
+            [],
+            body,
         ).set_lineno(lineno)
 
     def _prompt(self, caller):
@@ -117,7 +120,7 @@ class JinjaGenerator(PromptGenerator):
                     PromptExtension,
                     WildcardExtension,
                     PermutationExtension,
-                ]
+                ],
             )
             env.wildcard_manager = self._wildcard_manager
 

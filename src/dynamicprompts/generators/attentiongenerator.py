@@ -23,7 +23,7 @@ class AttentionGenerator(PromptGenerator):
         except ImportError as ie:
             raise ImportError(
                 "Could not import spacy, attention generator will not work. "
-                "Install with pip install dynamicprompts[attentiongrabber]"
+                "Install with pip install dynamicprompts[attentiongrabber]",
             ) from ie
         try:
             spacy.load(MODEL_NAME)

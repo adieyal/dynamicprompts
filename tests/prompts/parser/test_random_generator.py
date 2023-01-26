@@ -120,25 +120,33 @@ class TestVariantCommand:
         assert len(prompts) == 1
         assert prompts[0] == "one"
         command1._random.choices.assert_called_with(
-            variant_literals, weights=[1, 1, 1], k=1
+            variant_literals,
+            weights=[1, 1, 1],
+            k=1,
         )
 
         prompts = list(command1.prompts())
         assert prompts[0] == "two,one"
         command1._random.choices.assert_called_with(
-            variant_literals, weights=[1, 1, 1], k=2
+            variant_literals,
+            weights=[1, 1, 1],
+            k=2,
         )
 
         prompts = list(command1.prompts())
         assert prompts[0] == "three"
         command1._random.choices.assert_called_with(
-            variant_literals, weights=[1, 1, 1], k=1
+            variant_literals,
+            weights=[1, 1, 1],
+            k=1,
         )
 
         prompts = list(command1.prompts())
         assert prompts[0] == "three,one"
         command1._random.choices.assert_called_with(
-            variant_literals, weights=[1, 1, 1], k=2
+            variant_literals,
+            weights=[1, 1, 1],
+            k=2,
         )
 
     def test_variant_with_bound_and_sep(self):
@@ -157,7 +165,9 @@ class TestVariantCommand:
         assert len(prompts) == 1
         assert prompts[0] == "two and one"
         command1._random.choices.assert_called_with(
-            variant_literals, weights=[1, 1, 1], k=2
+            variant_literals,
+            weights=[1, 1, 1],
+            k=2,
         )
 
     def test_two_variants(self):
@@ -196,7 +206,7 @@ class TestVariantCommand:
         command6 = LiteralCommand(" ")
         command7 = LiteralCommand("cool")
         sequence = RandomSequenceCommand(
-            [command1, command2, command3, command4, command5, command6, command7]
+            [command1, command2, command3, command4, command5, command6, command7],
         )
 
         command1._random.choices.side_effect = [
@@ -239,7 +249,7 @@ class TestWildcardsCommand:
         command2 = builder.get_literal_action("are")
         command3 = builder.get_literal_action("cool")
         sequence = builder.get_sequence_action(
-            [command1, space, command2, space, command3]
+            [command1, space, command2, space, command3],
         )
 
         with mock.patch.object(
@@ -299,7 +309,7 @@ class TestRandomGenerator:
 
     def test_variants(self, generator: RandomGenerator):
         with mock.patch(
-            "dynamicprompts.parser.random_generator.random.choices"
+            "dynamicprompts.parser.random_generator.random.choices",
         ) as mock_random:
             random_choices = [
                 [to_seqlit("square")],
@@ -352,7 +362,7 @@ class TestRandomGenerator:
 
     def test_two_variants(self, generator: RandomGenerator):
         with mock.patch(
-            "dynamicprompts.parser.random_generator.random.choices"
+            "dynamicprompts.parser.random_generator.random.choices",
         ) as mock_random:
             mock_random.side_effect = [
                 [to_seqlit("green")],
@@ -394,7 +404,9 @@ class TestRandomGenerator:
 
     def test_missing_wildcard(self, generator: RandomGenerator):
         with mock.patch.object(
-            generator._wildcard_manager, "get_all_values", return_value=[]
+            generator._wildcard_manager,
+            "get_all_values",
+            return_value=[],
         ):
             prompts = generator.generate_prompts("A __missing__ wildcard", 1)
             assert len(prompts) == 1

@@ -21,7 +21,7 @@ try:
 except ImportError as ie:
     raise ImportError(
         "You need to install the transformers library to use the MagicPrompt generator. "
-        "You can do this by running `pip install -U dynamicprompts[magicprompt]`."
+        "You can do this by running `pip install -U dynamicprompts[magicprompt]`.",
     ) from ie
 
 DEFAULT_MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
@@ -156,12 +156,12 @@ class MagicPromptGenerator(PromptGenerator):
                 if match:
                     logger.info(
                         f"Generated magic prompt '{prompt}' blocked: "
-                        f"'{match.group(0)}' matched blocklist regex."
+                        f"'{match.group(0)}' matched blocklist regex.",
                     )
                     continue
             return prompt
         logger.warning(
             f"Failed to generate non-blocked magic prompt for '{orig_prompt}' after {max_attempts} attempts. "
-            f"Will still use last generated magic prompt."
+            f"Will still use last generated magic prompt.",
         )
         return prompt

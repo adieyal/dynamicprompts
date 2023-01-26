@@ -11,9 +11,9 @@ class TestFeelingLucky:
     def test_generate(self):
         results = [{"prompt": "ABC"}, {"prompt": "XYZ"}]
         with mock.patch(
-            "dynamicprompts.generators.feelinglucky.requests"
+            "dynamicprompts.generators.feelinglucky.requests",
         ) as mock_response, mock.patch(
-            "dynamicprompts.generators.feelinglucky.random"
+            "dynamicprompts.generators.feelinglucky.random",
         ) as mock_random:
             mock_generator = mock.Mock()
             mock_generator.generate.return_value = ["Prompt"]

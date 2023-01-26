@@ -64,7 +64,8 @@ class ActionBuilder:
         variants = [{"weight": v["weight"], "val": v["val"]} for v in variants]
         if "bound_expr" in parts:
             min_bound, max_bound, sep = parse_bound_expr(
-                parts["bound_expr"], max_options=len(variants)
+                parts["bound_expr"],
+                max_options=len(variants),
             )
             command = self.create_variant_command(variants, min_bound, max_bound, sep)
         else:

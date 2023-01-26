@@ -16,5 +16,8 @@ def seed() -> int:
 @pytest.fixture
 def generator(wildcard_manager: WildcardManager, seed: int) -> RandomPromptGenerator:
     return RandomPromptGenerator(
-        wildcard_manager, "A template", seed=seed, unlink_seed_from_prompt=False
+        wildcard_manager,
+        "A template",
+        seed=seed,
+        unlink_seed_from_prompt=False,
     )

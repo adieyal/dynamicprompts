@@ -44,7 +44,7 @@ class Parser:
         variant_delim = pp.Suppress("$$")
 
         separator = pp.Word(pp.alphanums + " ", exclude_chars="$")(
-            "separator"
+            "separator",
         ).leave_whitespace()
 
         bound = pp.common.integer
@@ -54,12 +54,12 @@ class Parser:
         bound_range4 = bound("lower") + hyphen + bound("upper")
 
         bound_range = pp.Group(
-            bound_range4 | bound_range3 | bound_range2 | bound_range1
+            bound_range4 | bound_range3 | bound_range2 | bound_range1,
         )
         bound_expr = pp.Group(
             bound_range("range")
             + variant_delim
-            + pp.Opt(separator + variant_delim, default=",")("separator")
+            + pp.Opt(separator + variant_delim, default=",")("separator"),
         )
 
         return bound_expr
@@ -77,7 +77,7 @@ class Parser:
             non_literal_chars = r"{}$#"
 
         literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
-            "literal"
+            "literal",
         ).leave_whitespace()
         literal_sequence = pp.OneOrMore(literal)
 
@@ -114,7 +114,7 @@ class Parser:
         wildcard = self._configure_wildcard()
         literal_sequence = self._configure_literal_sequence()
         variant_literal_sequence = self._configure_literal_sequence(
-            is_variant_literal=True
+            is_variant_literal=True,
         )
         variants = self._configure_variants(bound_expr, variant_prompt)
 

@@ -51,7 +51,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
                     "mammals": (
                         ["__animals/mammals/canine__", "__animals/mammals/feline__"],
                         {},
-                    )
+                    ),
                 },
             ),
             "flavors": (

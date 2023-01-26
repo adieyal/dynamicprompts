@@ -94,12 +94,16 @@ class TestVariant:
     def test_range(self):
         literals = ["one", "two", "three"]
         variant_command = VariantCommand(
-            gen_variant(literals), min_bound=-1, max_bound=10
+            gen_variant(literals),
+            min_bound=-1,
+            max_bound=10,
         )
         assert variant_command.min_bound == 1
 
         variant_command = VariantCommand(
-            gen_variant(literals), min_bound=2, max_bound=1
+            gen_variant(literals),
+            min_bound=2,
+            max_bound=1,
         )
         assert variant_command.min_bound == 1
         assert variant_command.max_bound == 2

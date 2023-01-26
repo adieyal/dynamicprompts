@@ -139,7 +139,9 @@ class CombinatorialGenerator:
         return parser
 
     def generate_prompts(
-        self, prompt: str, num_prompts: int | None = None
+        self,
+        prompt: str,
+        num_prompts: int | None = None,
     ) -> Iterable[str]:
         if len(prompt) == 0:
             return []
