@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
-from tqdm import trange
+import tqdm
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator
@@ -133,12 +133,10 @@ class MagicPromptGenerator(PromptGenerator):
 
     def generate(self, *args, **kwargs) -> list[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
-
-        new_prompts = []
-        for i in trange(len(prompts), desc="Generating Magic prompts"):
-            new_prompts.append(self._generate_magic_prompt(prompts[i]))
-
-        return new_prompts
+        return [
+            self._generate_magic_prompt(prompt)
+            for prompt in tqdm.tqdm(prompts, desc="Generating Magic Prompts")
+        ]
 
     def _generate_magic_prompt(self, orig_prompt: str, max_attempts: int = 20) -> str:
         prompt = orig_prompt  # Fallback
