@@ -25,8 +25,8 @@ MAX_SEED = 2 ** 32 - 1
 def clean_up_magic_prompt(orig_prompt: str, prompt: str) -> str:
     # remove the original prompt to keep it out of the MP fixes
     removed_prompt_prefix = False
-    if re.search("^" + re.escape(orig_prompt), prompt):
-        prompt = prompt.replace(orig_prompt, "", 1)
+    if prompt.startswith(orig_prompt):
+        prompt = prompt[len(orig_prompt):]
         removed_prompt_prefix = True
 
     # old-style weight elevation
