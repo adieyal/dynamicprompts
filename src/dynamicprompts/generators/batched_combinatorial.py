@@ -9,11 +9,15 @@ logger = logging.getLogger(__name__)
 
 
 class BatchedCombinatorialPromptGenerator(PromptGenerator):
-    def __init__(self, generator: PromptGenerator, batches=1):
+    def __init__(self, generator: PromptGenerator, batches: int = 1) -> None:
         self._generator = generator
         self._batches = batches
 
-    def generate(self, template, max_prompts=constants.MAX_IMAGES) -> list[str]:
+    def generate(
+        self,
+        template: str,
+        max_prompts: int = constants.MAX_IMAGES,
+    ) -> list[str]:
         images = []
 
         for _ in range(self._batches):

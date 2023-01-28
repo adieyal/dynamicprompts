@@ -71,9 +71,13 @@ def clean_up_magic_prompt(orig_prompt: str, prompt: str) -> str:
 
 class MagicPromptGenerator(PromptGenerator):
     generator: Pipeline | None = None
+    tokenizer: AutoTokenizer | None = None
+    model: AutoModelForCausalLM | None = None
     _model_name: str | None = None
+    _prompt_generator: PromptGenerator
+    _blocklist_regex: re.Pattern | None = None
 
-    def _load_pipeline(self, model_name: str):
+    def _load_pipeline(self, model_name: str) -> Pipeline:
         logger.warning("First load of MagicPrompt may take a while.")
 
         if MagicPromptGenerator.generator is None:
@@ -101,7 +105,7 @@ class MagicPromptGenerator(PromptGenerator):
         temperature: float = 0.7,
         seed: int | None = None,
         blocklist_regex: str | None = None,
-    ):
+    ) -> None:
         self._device = device
         self.set_model(model_name)
 
@@ -122,10 +126,11 @@ class MagicPromptGenerator(PromptGenerator):
             set_seed(int(seed))
 
     @property
-    def model_name(self):
+    def model_name(self) -> str:
+        assert self._model_name
         return self._model_name
 
-    def set_model(self, model_name: str):
+    def set_model(self, model_name: str) -> None:
         if model_name != MagicPromptGenerator._model_name:
             MagicPromptGenerator._model_name = model_name
             MagicPromptGenerator.generator = None

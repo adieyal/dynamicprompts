@@ -15,17 +15,19 @@ logger = logging.getLogger(__name__)
 
 
 class FeelingLuckyGenerator(PromptGenerator):
-    def __init__(self, generator: PromptGenerator | None = None):
+    _generator: PromptGenerator
+
+    def __init__(self, generator: PromptGenerator | None = None) -> None:
         if generator is None:
             self._generator = DummyGenerator()
         else:
             self._generator = generator
 
-    def generate(self, search_query, num_prompts: int) -> list[str]:
+    def generate(self, search_query: str, num_prompts: int) -> list[str]:
         search_query = self._generator.generate(search_query, 1)[0]
 
         if search_query.strip() == "":
-            query = random.randint(0, 10000000)
+            query = str(random.randint(0, 10000000))
         else:
             query = search_query
 

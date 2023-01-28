@@ -369,7 +369,9 @@ class TestCombinatorialGenerator:
         generator: CombinatorialGenerator,
     ):
         shapes = ["square", "circle"]
-        with mock.patch("dynamicprompts.parser.random_generator.random") as mock_random:
+        with mock.patch(
+            "dynamicprompts.parser.random_generator.DEFAULT_RANDOM",
+        ) as mock_random:
             mock_random.randint.return_value = 3
             mock_random.choices.side_effect = [shapes]
             prompts = list(generator.generate_prompts("A red {3$$square|circle}", 1))

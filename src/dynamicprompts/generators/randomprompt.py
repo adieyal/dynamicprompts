@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import logging
-import random
 from random import Random
 
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.parser.random_generator import RandomGenerator
+from dynamicprompts.parser.random_generator import DEFAULT_RANDOM, RandomGenerator
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -17,13 +16,13 @@ class RandomPromptGenerator(PromptGenerator):
         wildcard_manager: WildcardManager,
         seed: int | None = None,
         unlink_seed_from_prompt: bool = False,
-        ignore_whitespace=False,
-    ):
+        ignore_whitespace: bool = False,
+    ) -> None:
         self._wildcard_manager = wildcard_manager
         self._unlink_seed_from_prompt = unlink_seed_from_prompt
 
         if self._unlink_seed_from_prompt:
-            self._random = random
+            self._random = DEFAULT_RANDOM
         else:
             self._random = Random()
             if seed is not None:
@@ -35,7 +34,11 @@ class RandomPromptGenerator(PromptGenerator):
             ignore_whitespace=ignore_whitespace,
         )
 
-    def generate(self, template, num_images=1) -> list[str]:
+    def generate(
+        self,
+        template: str | None,
+        num_images: int = 1,
+    ) -> list[str]:
         if template is None or len(template) == 0:
             return [""]
         prompts = self._generator.generate_prompts(template, num_images)
