@@ -43,7 +43,7 @@ class Parser:
         hyphen = pp.Suppress("-")
         variant_delim = pp.Suppress("$$")
 
-        separator = pp.Word(pp.alphanums + " ", exclude_chars="$")(
+        separator = pp.Word(pp.printables + " ", exclude_chars="$")(
             "separator",
         ).leave_whitespace()
 

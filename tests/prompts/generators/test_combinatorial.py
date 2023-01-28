@@ -39,6 +39,35 @@ class TestCombinatorialGenerator:
         assert prompts[0] == "I love bread"
         assert prompts[1] == "I love butter"
 
+    def test_generate_variant_with_separator(self, wildcard_manager):
+        prompt = "{2$$ and $$A|B|C}"
+        generator = CombinatorialPromptGenerator(wildcard_manager)
+
+        prompts = list(generator.generate(prompt, 9))
+        assert len(prompts) == 6
+
+        assert prompts[0] == "A and B"
+        assert prompts[1] == "A and C"
+        assert prompts[2] == "B and A"
+        assert prompts[3] == "B and C"
+        assert prompts[4] == "C and A"
+        assert prompts[5] == "C and B"
+
+    def test_generate_variant_with_pipe_separator(self, wildcard_manager):
+        prompt = "{2$$|$$A|B|C}"
+        generator = CombinatorialPromptGenerator(wildcard_manager)
+
+        prompts = list(generator.generate(prompt, 9))
+        assert len(prompts) == 6
+
+        assert prompts[0] == "A|B"
+        assert prompts[1] == "A|C"
+        assert prompts[2] == "B|A"
+        assert prompts[3] == "B|C"
+        assert prompts[4] == "C|A"
+        assert prompts[5] == "C|B"
+
+
     def test_all_generations(self, wildcard_manager):
         prompt = "I love __food__ and __drink__"
 

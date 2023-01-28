@@ -293,6 +293,7 @@ class TestParser:
         assert variant.min_bound == 1
         assert variant.max_bound == 2
 
+    def test_variant_delimiter(self, parser: Parser):
         sequence = parser.parse("{2$$ and $$cat|dog|bird}")
         variant = cast(VariantCommand, sequence[0])
 
@@ -300,6 +301,20 @@ class TestParser:
         assert variant.max_bound == 2
 
         assert variant.sep == " and "
+
+        sequence = parser.parse("I love {2$$|$$green|yellow|blue} roses")
+        variant = cast(VariantCommand, sequence[1])
+        assert len(variant) == 3
+        assert variant[0][0] == "green"
+        assert variant[1][0] == "yellow"
+        assert variant[2][0] == "blue"
+
+        assert variant.sep == "|"
+
+        with pytest.raises(ParseException):
+            sequence = parser.parse("{2$$ $ $$cat|dog|bird}")
+
+        sequence = parser.parse("{2$$  $$cat|dog|bird}")
 
     def test_comments(self, parser: Parser):
 

@@ -360,6 +360,17 @@ class TestRandomGenerator:
         assert len(prompts) == 1
         assert prompts[0] == "A red square,circle"
 
+    def test_variants_with_pipe_separator(self, generator: RandomGenerator):
+        generator._random = mock.Mock()
+        shapes = [to_seqlit("square"), to_seqlit("circle")]
+        generator._random.randint.return_value = 3
+        generator._random.choices.side_effect = [shapes]
+        prompts = generator.generate_prompts("A red {3$$|$$square|circle}", 1)
+
+        assert len(prompts) == 1
+        assert prompts[0] == "A red square|circle"
+        print(prompts[0])
+
     def test_two_variants(self, generator: RandomGenerator):
         with mock.patch(
             "dynamicprompts.parser.random_generator.random.choices",
