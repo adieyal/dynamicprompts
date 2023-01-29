@@ -1,397 +1,283 @@
-from typing import cast
 from unittest import mock
 
 import pytest
-from dynamicprompts.parser.commands import LiteralCommand
-from dynamicprompts.parser.random_generator import (
-    RandomActionBuilder,
-    RandomGenerator,
-    RandomSequenceCommand,
-    RandomVariantCommand,
-    RandomWildcardCommand,
+from dynamicprompts.commands import (
+    LiteralCommand,
+    SequenceCommand,
+    VariantCommand,
+    WildcardCommand,
 )
+from dynamicprompts.parser.random_generator import RandomGenerator
 
-
-def to_seqlit(*args):
-    args = [LiteralCommand(a) for a in args]
-    return RandomSequenceCommand(args)
-
-
-@pytest.fixture
-def wildcard_manager():
-    return mock.Mock()
+from tests.prompts.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
 
 
 @pytest.fixture
-def builder(wildcard_manager):
-    return RandomActionBuilder(wildcard_manager)
-
-
-@pytest.fixture
-def generator(wildcard_manager):
-    return RandomGenerator(wildcard_manager)
-
-
-def gen_variant(vals, weights=None):
-    vals = [to_seqlit(v) for v in vals]
-    if weights is None:
-        weights = [1] * len(vals)
-    return [{"weight": [w], "val": v} for (w, v) in zip(weights, vals)]
+def generator(wildcard_manager) -> RandomGenerator:
+    return RandomGenerator(wildcard_manager=wildcard_manager)
 
 
 class TestRandomSequenceCommand:
-    def test_prompts(self):
-        sequence = to_seqlit("one", " ", "two", " ", "three")
-        prompts = list(sequence.prompts())
-
-        assert len(prompts) == 1
-        assert prompts[0] == "one two three"
+    def test_prompts(self, generator: RandomGenerator):
+        sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
+        prompt = next(generator.generator_from_command(sequence))
+        assert prompt == "one two three"
 
 
 class TestVariantCommand:
-    def test_empty_variant(self):
-        command = RandomVariantCommand([])
-        prompts = list(command.prompts())
+    def test_empty_variant(self, generator: RandomGenerator):
+        command = VariantCommand([])
+        prompts = list(generator.generator_from_command(command))
         assert len(prompts) == 0
 
-    def test_single_variant(self):
-        command = RandomVariantCommand(gen_variant(["one"]))
+    def test_single_variant(self, generator: RandomGenerator):
+        command = VariantCommand.from_literals_and_weights(["one"])
+        prompt = next(generator.generator_from_command(command))
+        assert prompt == "one"
 
-        prompts = list(command.prompts())
-
-        assert len(prompts) == 1
-        assert prompts[0] == "one"
-
-    def test_multiple_variant(self):
-        variants = gen_variant(["one", "two", "three"])
-        command = RandomVariantCommand(variants)
-        command._random = mock.Mock()
+    def test_multiple_variant(self, generator: RandomGenerator):
+        command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
+        generator._random = mock.Mock()
         random_choices = [
-            [to_seqlit("one")],
-            [to_seqlit("three")],
-            [to_seqlit("two")],
-            [to_seqlit("one")],
+            [LiteralCommand("one")],
+            [LiteralCommand("three")],
+            [LiteralCommand("two")],
+            [LiteralCommand("one")],
         ]
-        command._random.choices.side_effect = random_choices
+        generator._random.choices.side_effect = random_choices
 
         for c in random_choices:
-            prompts = list(command.prompts())
-            assert len(prompts) == 1
-            assert prompts[0] == c[0][0]
+            prompt = next(generator.generator_from_command(command))
+            assert prompt == c[0].literal
 
-    def test_variant_with_literal(self):
-        variants = gen_variant(["one", "two", "three"])
-        command1 = RandomVariantCommand(variants)
+    def test_variant_with_literal(self, generator: RandomGenerator):
+        command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
         command2 = LiteralCommand(" ")
         command3 = LiteralCommand("circles")
-        sequence = RandomSequenceCommand([command1, command2, command3])
-        command1._random = mock.Mock()
+        sequence = SequenceCommand([command1, command2, command3])
+        generator._random = mock.Mock()
 
         random_choices = [
-            [to_seqlit("one")],
-            [to_seqlit("three")],
-            [to_seqlit("two")],
-            [to_seqlit("one")],
+            [LiteralCommand("one")],
+            [LiteralCommand("three")],
+            [LiteralCommand("two")],
+            [LiteralCommand("one")],
         ]
-        command1._random.choices.side_effect = random_choices
+        generator._random.choices.side_effect = random_choices
         for c in random_choices:
-            prompts = list(sequence.prompts())
-            assert len(prompts) == 1
-            assert prompts[0] == f"{c[0][0]} circles"
+            prompt = next(generator.generator_from_command(sequence))
+            assert prompt == f"{c[0].literal} circles"
 
-    def test_variant_with_bound(self):
-        variant_values = ["one", "two", "three"]
-        variants = gen_variant(variant_values)
-        variant_literals = [to_seqlit(v) for v in variant_values]
-
-        command1 = RandomVariantCommand(variants, min_bound=1, max_bound=2)
-        command1._random = mock.Mock()
+    def test_variant_with_bound(self, generator: RandomGenerator):
+        variant_values = ONE_TWO_THREE
+        command1 = VariantCommand.from_literals_and_weights(
+            variant_values,
+            min_bound=1,
+            max_bound=2,
+        )
+        generator._random = mock.Mock()
 
         random_choices = [
-            [to_seqlit("one")],
-            [to_seqlit("two"), to_seqlit("one")],
-            [to_seqlit("three")],
-            [to_seqlit("three"), to_seqlit("one")],
+            [LiteralCommand("one")],
+            [LiteralCommand("two"), LiteralCommand("one")],
+            [LiteralCommand("three")],
+            [LiteralCommand("three"), LiteralCommand("one")],
         ]
-        command1._random.choices.side_effect = random_choices
-        command1._random.randint.side_effect = [1, 2, 1, 2]
+        generator._random.choices.side_effect = random_choices
+        generator._random.randint.side_effect = [1, 2, 1, 2]
 
-        prompts = list(command1.prompts())
-        assert len(prompts) == 1
-        assert prompts[0] == "one"
-        command1._random.choices.assert_called_with(
-            variant_literals,
-            weights=[1, 1, 1],
-            k=1,
+        gen = generator.generator_from_command(command1)
+        for c in random_choices:
+            assert next(gen) == ",".join([v.literal for v in c])
+
+    def test_variant_with_bound_and_sep(self, generator: RandomGenerator):
+        command1 = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            min_bound=1,
+            max_bound=2,
+            separator=" and ",
         )
+        generator._random = mock.Mock()
 
-        prompts = list(command1.prompts())
-        assert prompts[0] == "two,one"
-        command1._random.choices.assert_called_with(
-            variant_literals,
-            weights=[1, 1, 1],
-            k=2,
-        )
+        random_choices = [LiteralCommand("two"), LiteralCommand("one")]
+        generator._random.choices.return_value = random_choices
+        generator._random.randint.side_effect = [2]
 
-        prompts = list(command1.prompts())
-        assert prompts[0] == "three"
-        command1._random.choices.assert_called_with(
-            variant_literals,
-            weights=[1, 1, 1],
-            k=1,
-        )
+        prompt = next(generator.generator_from_command(command1))
+        assert prompt == "two and one"
 
-        prompts = list(command1.prompts())
-        assert prompts[0] == "three,one"
-        command1._random.choices.assert_called_with(
-            variant_literals,
-            weights=[1, 1, 1],
-            k=2,
-        )
-
-    def test_variant_with_bound_and_sep(self):
-        variant_values = ["one", "two", "three"]
-        variants = gen_variant(variant_values)
-        variant_literals = [to_seqlit(v) for v in variant_values]
-
-        command1 = RandomVariantCommand(variants, min_bound=1, max_bound=2, sep=" and ")
-        command1._random = mock.Mock()
-
-        random_choices = [to_seqlit("two"), to_seqlit("one")]
-        command1._random.choices.return_value = random_choices
-        command1._random.randint.side_effect = [2]
-
-        prompts = list(command1.prompts())
-        assert len(prompts) == 1
-        assert prompts[0] == "two and one"
-        command1._random.choices.assert_called_with(
-            variant_literals,
-            weights=[1, 1, 1],
-            k=2,
-        )
-
-    def test_two_variants(self):
-        variants1 = gen_variant(["red", "green"])
-        variants2 = gen_variant(["circles", "squares", "triangles"])
-
-        command1 = RandomVariantCommand(variants1)
-        command1._random = mock.Mock()
+    def test_two_variants(self, generator: RandomGenerator):
+        command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
         command2 = LiteralCommand(" ")
-        command3 = RandomVariantCommand(variants2)
-        command3._random = mock.Mock()
-        sequence = RandomSequenceCommand([command1, command2, command3])
+        command3 = VariantCommand.from_literals_and_weights(SHAPES)
+        sequence = SequenceCommand([command1, command2, command3])
+        expected_combos = {
+            f"{color} {shape}" for color in RED_AND_GREEN for shape in SHAPES
+        }
+        generated_combos = set()
+        gen = generator.generator_from_command(sequence)
+        # This could technically loop forever if the underlying RNG is broken,
+        # but we'll take our chances.
+        while generated_combos != expected_combos:
+            generated_combos.add(next(gen))
 
-        command1._random.choices.side_effect = [
-            [to_seqlit("red")],
-            [to_seqlit("green")],
-        ]
-        command3._random.choices.side_effect = [
-            [to_seqlit("squares")],
-            [to_seqlit("triangles")],
-        ]
-        assert sequence.get_prompt() == "red squares"
-        assert sequence.get_prompt() == "green triangles"
-
-    def test_varied_prompt(self):
-        variants1 = gen_variant(["red", "green"])
-        variants2 = gen_variant(["circles", "squares", "triangles"])
-
-        command1 = RandomVariantCommand(variants1)
-        command1._random = mock.Mock()
-        command2 = LiteralCommand(" ")
-        command3 = RandomVariantCommand(variants2)
-        command3._random = mock.Mock()
-        command4 = LiteralCommand(" ")
-        command5 = LiteralCommand("are")
-        command6 = LiteralCommand(" ")
-        command7 = LiteralCommand("cool")
-        sequence = RandomSequenceCommand(
-            [command1, command2, command3, command4, command5, command6, command7],
+    def test_varied_prompt(self, generator: RandomGenerator):
+        command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
+        command3 = VariantCommand.from_literals_and_weights(SHAPES)
+        sequence = SequenceCommand.from_literals(
+            [command1, " ", command3, " ", "are", " ", "cool"],
         )
 
-        command1._random.choices.side_effect = [
-            [to_seqlit("red")],
-            [to_seqlit("green")],
+        generator._random = mock.Mock()
+        generator._random.choices.side_effect = [
+            [LiteralCommand("red")],
+            [LiteralCommand("squares")],
+            [LiteralCommand("green")],
+            [LiteralCommand("triangles")],
         ]
+        gen = generator.generator_from_command(sequence)
 
-        command3._random.choices.side_effect = [
-            [to_seqlit("squares")],
-            [to_seqlit("triangles")],
-        ]
-
-        assert sequence.get_prompt() == "red squares are cool"
-        assert sequence.get_prompt() == "green triangles are cool"
+        assert next(gen) == "red squares are cool"
+        assert next(gen) == "green triangles are cool"
 
 
 class TestWildcardsCommand:
-    def test_basic_wildcard(self, builder: RandomActionBuilder):
-        command = builder.get_wildcard_action("colours")
-        command = cast(RandomWildcardCommand, command)
-        command._random = mock.Mock()
-
-        with mock.patch.object(
-            builder._wildcard_manager,
-            "get_all_values",
-            return_value=["red", "green", "blue"],
-        ):
-            command = cast(RandomWildcardCommand, command)
-            command._random.choice.side_effect = ["green"]
-
-            prompts = list(command.prompts())
-            assert len(prompts) == 1
-            assert prompts[0] == "green"
-
-    def test_wildcard_with_literal(self, builder: RandomActionBuilder):
-        command1 = builder.get_wildcard_action("colours")
-        command1 = cast(RandomWildcardCommand, command1)
-        command1._random = mock.Mock()
-        space = builder.get_literal_action(" ")
-        command2 = builder.get_literal_action("are")
-        command3 = builder.get_literal_action("cool")
-        sequence = builder.get_sequence_action(
-            [command1, space, command2, space, command3],
+    def test_basic_wildcard(self, generator: RandomGenerator):
+        command = WildcardCommand("colors*")
+        wildcard_colors = set(
+            generator._wildcard_manager.get_all_values(command.wildcard),
         )
+        generated_values = set()
+        gen = generator.generator_from_command(command)
+        # This could technically loop forever if the underlying RNG is broken,
+        # but we'll take our chances.
+        while generated_values != wildcard_colors:
+            generated_values.add(next(gen))
 
-        with mock.patch.object(
-            builder._wildcard_manager,
-            "get_all_values",
-            return_value=["red", "green", "blue"],
-        ):
+    def test_wildcard_with_literal(self, generator: RandomGenerator):
+        command = WildcardCommand("colors*")
+        sequence = SequenceCommand.from_literals(
+            [command, " ", "are", " ", LiteralCommand("cool")],
+        )
+        wildcard_colors = set(
+            generator._wildcard_manager.get_all_values(command.wildcard),
+        )
+        generated_values = set()
+        gen = generator.generator_from_command(sequence)
+        # This could technically loop forever if the underlying RNG is broken,
+        # but we'll take our chances.
+        while len(generated_values) < len(wildcard_colors):
+            prompt = next(gen)
+            color, _, rest = prompt.partition(" ")
+            assert color in wildcard_colors
+            assert rest == "are cool"
+            generated_values.add(prompt)
 
-            random_choices = ["green", "red"]
-            command1._random.choice.side_effect = random_choices
-
-            for c in random_choices:
-                assert sequence.get_prompt() == f"{c} are cool"
-
-    def test_wildcard_with_variant(self, builder: RandomActionBuilder):
-        command1 = builder.get_wildcard_action("colours")
-        command1 = cast(RandomWildcardCommand, command1)
-        command1._random = mock.Mock()
-
-        space = builder.get_literal_action(" ")
-        command3 = RandomVariantCommand(gen_variant(["circles", "squares"]))
+    def test_wildcard_with_variant(self, generator: RandomGenerator):
+        command1 = WildcardCommand("colors*")
+        wildcard_colors = set(
+            generator._wildcard_manager.get_all_values(command1.wildcard),
+        )
+        total_count = len(wildcard_colors) * len(SHAPES)
+        command3 = VariantCommand.from_literals_and_weights(SHAPES)
         command3._random = mock.Mock()
-        sequence = builder.get_sequence_action([command1, space, command3])
-
-        with mock.patch.object(
-            builder._wildcard_manager,
-            "get_all_values",
-            return_value=["red", "green", "blue"],
-        ):
-
-            command1._random.choice.side_effect = ["red", "blue"]
-            command3._random.choices.side_effect = [
-                [to_seqlit("circles")],
-                [to_seqlit("squares")],
-            ]
-
-            assert sequence.get_prompt() == "red circles"
-            assert sequence.get_prompt() == "blue squares"
+        sequence = SequenceCommand.from_literals([command1, " ", command3])
+        generated_values = set()
+        gen = generator.generator_from_command(sequence)
+        # This could technically loop forever if the underlying RNG is broken,
+        # but we'll take our chances.
+        while len(generated_values) < total_count:
+            prompt = next(gen)
+            color, _, shape = prompt.partition(" ")
+            assert color in wildcard_colors
+            assert shape in SHAPES
+            generated_values.add(prompt)
 
 
 class TestRandomGenerator:
     def test_empty(self, generator: RandomGenerator):
-        prompts = generator.generate_prompts("", 5)
+        prompts = list(generator.generate_prompts("", 5))
         assert len(prompts) == 0
 
     def test_literals(self, generator: RandomGenerator):
-        prompts = generator.generate_prompts("A literal sentence", 5)
-        assert len(prompts) == 5
-
-        for p in prompts:
-            assert p == "A literal sentence"
+        sentence = "A literal sentence"
+        assert list(generator.generate_prompts(sentence, 5)) == [sentence] * 5
 
     def test_literal_with_square_brackets(self, generator: RandomGenerator):
-        prompts = generator.generate_prompts("Test [low emphasis]", 1)
+        prompts = list(generator.generate_prompts("Test [low emphasis]", 1))
         assert len(prompts) == 1
         assert prompts[0] == "Test [low emphasis]"
 
     def test_variants(self, generator: RandomGenerator):
-        with mock.patch(
-            "dynamicprompts.parser.random_generator.DEFAULT_RANDOM.choices",
-        ) as mock_random:
-            random_choices = [
-                [to_seqlit("square")],
-                [to_seqlit("square")],
-                [to_seqlit("circle")],
-                [to_seqlit("square")],
-                [to_seqlit("circle")],
-            ]
-            mock_random.side_effect = random_choices
-            prompts = generator.generate_prompts("A red {square|circle}", 5)
-
-            assert len(prompts) == 5
-            for prompt, choice in zip(prompts, random_choices):
-                assert prompt == f"A red {choice[0][0]}"
+        expected_prompts = {"A red square", "A red circle"}
+        generated_prompts = set()
+        while generated_prompts != expected_prompts:
+            prompts = list(generator.generate_prompts("A red {square|circle}", 5))
+            assert len(prompts) == 5  # should generate 5 prompts when asked to
+            assert all(p in expected_prompts for p in prompts)
+            generated_prompts.update(prompts)
 
     def test_variant_with_blank(self, generator: RandomGenerator):
-        generator._random = mock.Mock()
-        generator._random.choices.side_effect = [
-            [RandomSequenceCommand([])],
-            [to_seqlit("red")],
-            [to_seqlit("blue")],
-        ]
-        prompts = generator.generate_prompts("A {|red|blue} rose", 3)
-
-        assert len(prompts) == 3
-        assert prompts[0] == "A  rose"
-        assert prompts[1] == "A red rose"
-        assert prompts[2] == "A blue rose"
+        expected_prompts = {"A  rose", "A red rose", "A blue rose"}
+        generated_prompts = set()
+        while generated_prompts != expected_prompts:
+            prompts = list(generator.generate_prompts("A {red|blue|} rose", 5))
+            assert len(prompts) == 5
+            assert all(p in expected_prompts for p in prompts)
+            generated_prompts.update(prompts)
 
     def test_variants_with_bounds(self, generator: RandomGenerator):
         generator._random = mock.Mock()
-        shapes = [to_seqlit("square"), to_seqlit("circle")]
+        shapes = [LiteralCommand("square"), LiteralCommand("circle")]
 
         generator._random.randint.return_value = 2
         generator._random.choices.side_effect = [shapes]
-        prompts = generator.generate_prompts("A red {2$$square|circle}", 1)
-
-        assert len(prompts) == 1
-        assert prompts[0] == "A red square,circle"
+        assert list(generator.generate_prompts("A red {2$$square|circle}", 1)) == [
+            "A red square,circle",
+        ]
 
     def test_variants_with_larger_bounds_than_choices(self, generator: RandomGenerator):
         generator._random = mock.Mock()
-        shapes = [to_seqlit("square"), to_seqlit("circle")]
+        shapes = [LiteralCommand("square"), LiteralCommand("circle")]
         generator._random.randint.return_value = 3
         generator._random.choices.side_effect = [shapes]
-        prompts = generator.generate_prompts("A red {3$$square|circle}", 1)
+        prompts = list(generator.generate_prompts("A red {3$$square|circle}", 1))
 
         assert len(prompts) == 1
         assert prompts[0] == "A red square,circle"
 
     def test_variants_with_pipe_separator(self, generator: RandomGenerator):
         generator._random = mock.Mock()
-        shapes = [to_seqlit("square"), to_seqlit("circle")]
+        shapes = [LiteralCommand("square"), LiteralCommand("circle")]
         generator._random.randint.return_value = 3
         generator._random.choices.side_effect = [shapes]
-        prompts = generator.generate_prompts("A red {3$$|$$square|circle}", 1)
-
-        assert len(prompts) == 1
-        assert prompts[0] == "A red square|circle"
-        print(prompts[0])
+        assert list(generator.generate_prompts("A red {3$$|$$square|circle}", 1)) == [
+            "A red square|circle",
+        ]
 
     def test_two_variants(self, generator: RandomGenerator):
         with mock.patch(
             "dynamicprompts.parser.random_generator.DEFAULT_RANDOM.choices",
         ) as mock_random:
             mock_random.side_effect = [
-                [to_seqlit("green")],
-                [to_seqlit("square")],
-                [to_seqlit("green")],
-                [to_seqlit("circle")],
+                [LiteralCommand("green")],
+                [LiteralCommand("square")],
+                [LiteralCommand("green")],
+                [LiteralCommand("circle")],
             ]
-            prompts = generator.generate_prompts("A {red|green} {square|circle}", 2)
-            assert len(prompts) == 2
-            assert prompts[0] == "A green square"
-            assert prompts[1] == "A green circle"
+            assert list(
+                generator.generate_prompts("A {red|green} {square|circle}", 2),
+            ) == [
+                "A green square",
+                "A green circle",
+            ]
 
     def test_weighted_variant(self, generator: RandomGenerator):
         generator._random = mock.Mock()
 
-        generator._random.choices.return_value = [to_seqlit("green")]
+        generator._random.choices.return_value = [LiteralCommand("green")]
         generator._random.randint.return_value = 1
-        prompts = generator.generate_prompts("A {1::red|2::green|3::blue}", 1)
+        prompts = list(generator.generate_prompts("A {1::red|2::green|3::blue}", 1))
 
         assert len(prompts) == 1
         assert prompts[0] == "A green"
@@ -401,17 +287,19 @@ class TestRandomGenerator:
         with mock.patch.object(
             generator._wildcard_manager,
             "get_all_values",
-            return_value=to_seqlit("red", "green", "blue"),
+            return_value=SequenceCommand.from_literals(RED_GREEN_BLUE),
         ):
-            generator._random.choice.side_effect = ["red", "green"]
+            generator._random.choice.side_effect = RED_AND_GREEN
             generator._random.choices.side_effect = [
-                [to_seqlit("square")],
-                [to_seqlit("circle")],
+                [LiteralCommand("square")],
+                [LiteralCommand("circle")],
             ]
-            prompts = generator.generate_prompts("A __colours__ {square|circle}", 2)
-            assert len(prompts) == 2
-            assert prompts[0] == "A red square"
-            assert prompts[1] == "A green circle"
+            assert list(
+                generator.generate_prompts("A __colours__ {square|circle}", 2),
+            ) == [
+                "A red square",
+                "A green circle",
+            ]
 
     def test_missing_wildcard(self, generator: RandomGenerator):
         with mock.patch.object(
@@ -419,18 +307,18 @@ class TestRandomGenerator:
             "get_all_values",
             return_value=[],
         ):
-            prompts = generator.generate_prompts("A __missing__ wildcard", 1)
-            assert len(prompts) == 1
-            assert prompts[0] == "A __missing__ wildcard"
+            assert list(generator.generate_prompts("A __missing__ wildcard", 1)) == [
+                "A __missing__ wildcard",
+            ]
 
     def test_nospace_before_or_after_wildcard(self, generator: RandomGenerator):
         generator._random = mock.Mock()
         with mock.patch.object(
             generator._wildcard_manager,
             "get_all_values",
-            return_value=to_seqlit("red", "green", "blue"),
+            return_value=SequenceCommand.from_literals(RED_GREEN_BLUE),
         ):
-
-            generator._random.choice.side_effect = ["red", "green"]
-            prompts = generator.generate_prompts("(__colours__:2.3) ", 1)
-            assert prompts[0] == "(red:2.3) "
+            generator._random.choice.side_effect = RED_AND_GREEN
+            assert list(generator.generate_prompts("(__colours__:2.3) ", 1)) == [
+                "(red:2.3) ",
+            ]

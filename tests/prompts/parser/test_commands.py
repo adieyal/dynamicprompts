@@ -1,8 +1,8 @@
+import itertools
 from typing import List
-from unittest import mock
 
 import pytest
-from dynamicprompts.parser.commands import (
+from dynamicprompts.commands import (
     Command,
     LiteralCommand,
     SequenceCommand,
@@ -10,9 +10,7 @@ from dynamicprompts.parser.commands import (
     WildcardCommand,
 )
 
-
-def gen_variant(vals):
-    return [{"weight": [1], "val": LiteralCommand(v)} for v in vals]
+from tests.prompts.consts import ONE_TWO_THREE
 
 
 @pytest.fixture
@@ -30,34 +28,21 @@ class TestSequence:
         assert sequence[0] == literals[0]
         assert sequence[1] == literals[1]
 
-    def test_equality(self, literals: List[Command]):
-        sequence = SequenceCommand(literals)
-        assert sequence == literals
-
 
 class TestLiteral:
     def test_prompts(self):
         command = LiteralCommand("test")
-        prompts = list(command.prompts())
-        assert len(prompts) == 1
-        assert prompts[0] == "test"
-
-    def test_equality(self, literals):
-        l1 = LiteralCommand("hello")
-        l2 = LiteralCommand("XXX")
-
-        assert l1 == literals[0]
-        assert l1 == "hello"
-        assert l1 != l2
-        assert l1 != "XXX"
+        assert command.literal == "test"
 
     def test_combine_literal_commands(self, literals):
         l3 = literals[0] + literals[1]
-        assert l3 == "hello world"
+        assert l3.literal == "hello world"
 
     def test_error_combining_incompatible_commands(self):
         with pytest.raises(TypeError):
-            _ = LiteralCommand("Hello") + VariantCommand([LiteralCommand("world")])
+            _ = LiteralCommand("Hello") + VariantCommand.from_literals_and_weights(
+                ["world"],
+            )
 
 
 class TestVariant:
@@ -71,37 +56,25 @@ class TestVariant:
         assert variant_command[1] == literals[1]
 
     def test_combinations(self):
-        literals = ["one", "two", "three"]
-        variant_command = VariantCommand(gen_variant(literals))
-        combinations = list(variant_command._combinations(1))
-        assert len(combinations) == 3
-        assert combinations[0] == ["one"]
-        assert combinations[1] == ["two"]
-        assert combinations[2] == ["three"]
-
-        combinations = list(variant_command._combinations(2))
-        assert len(combinations) == 9
-        assert combinations[0] == ["one", "one"]
-        assert combinations[1] == ["one", "two"]
-        assert combinations[2] == ["one", "three"]
-        assert combinations[3] == ["two", "one"]
-        assert combinations[4] == ["two", "two"]
-        assert combinations[5] == ["two", "three"]
-        assert combinations[6] == ["three", "one"]
-        assert combinations[7] == ["three", "two"]
-        assert combinations[8] == ["three", "three"]
+        variant_command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
+        assert [
+            v.literal for v, in variant_command.get_value_combinations(1)
+        ] == ONE_TWO_THREE
+        assert [
+            (a.literal, b.literal)
+            for (a, b) in variant_command.get_value_combinations(2)
+        ] == list(itertools.product(ONE_TWO_THREE, ONE_TWO_THREE))
 
     def test_range(self):
-        literals = ["one", "two", "three"]
-        variant_command = VariantCommand(
-            gen_variant(literals),
+        variant_command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
             min_bound=-1,
             max_bound=10,
         )
         assert variant_command.min_bound == 0  # check that negative values are clamped
 
-        variant_command = VariantCommand(
-            gen_variant(literals),
+        variant_command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
             min_bound=2,
             max_bound=1,
         )
@@ -111,18 +84,5 @@ class TestVariant:
 
 class TestWildcard:
     def test_init_with_str(self):
-        l1 = WildcardCommand(mock.Mock(), "hello")
+        l1 = WildcardCommand("hello")
         assert l1.wildcard == "hello"
-
-    def test_init_with_list(self):
-        l1 = WildcardCommand(mock.Mock(), ["hello"])
-        assert l1.wildcard == "hello"
-
-    def test_equality(self):
-        l1 = WildcardCommand(mock.Mock(), ["hello"])
-        l2 = WildcardCommand(mock.Mock(), ["XXX"])
-
-        assert l1 == "hello"
-        assert l2 == "XXX"
-        assert l1 != l2
-        assert l1 != "XXX"

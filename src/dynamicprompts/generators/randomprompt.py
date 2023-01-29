@@ -29,7 +29,7 @@ class RandomPromptGenerator(PromptGenerator):
                 self._random.seed(seed)
 
         self._generator = RandomGenerator(
-            wildcard_manager,
+            wildcard_manager=wildcard_manager,
             rand=self._random,
             ignore_whitespace=ignore_whitespace,
         )

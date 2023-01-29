@@ -19,7 +19,7 @@ class CombinatorialPromptGenerator(PromptGenerator):
     ) -> None:
         self._wildcard_manager = wildcard_manager
         self._generator = CombinatorialGenerator(
-            wildcard_manager,
+            wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
         )
 

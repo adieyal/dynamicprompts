@@ -23,7 +23,7 @@ test_cases = [
     ),
     SmokeTestCase(
         r"foo {a|b|c|d}",
-        must_generate=False,
+        must_generate=True,
         expected_combinatorial_count=4,
     ),
 ]
@@ -39,7 +39,10 @@ gen_class = [
 def test_generator(gen, case: SmokeTestCase, wildcard_manager: WildcardManager):
     generator = gen(wildcard_manager=wildcard_manager)
     gen_count = 0
-    for result in generator.generate_prompts(case.input):
+    for result in generator.generate_prompts(
+        case.input,
+        num_prompts=(1 if gen is RandomGenerator else None),
+    ):
         assert result
         gen_count += 1
     if case.must_generate:

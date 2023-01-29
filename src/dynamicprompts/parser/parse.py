@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-import logging
+import warnings
 from typing import cast
 
 import pyparsing as pp
 
+from dynamicprompts.commands import (
+    Command,
+    LiteralCommand,
+    SequenceCommand,
+    VariantCommand,
+    VariantOption,
+    WildcardCommand,
+)
 from dynamicprompts.parser.action_builder import ActionBuilder
-from dynamicprompts.parser.commands import SequenceCommand
-
-logger = logging.getLogger(__name__)
 
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
 real_num2 = pp.Combine(pp.Word(pp.nums) + ".")
@@ -22,9 +27,13 @@ wildcard_enclosure = pp.Suppress(double_underscore)
 
 class Parser:
     def __init__(self, builder: ActionBuilder):
+        warnings.warn(
+            f"{self.__class__.__qualname__} is deprecated and will be removed in a future version. "
+            "Instead, directly call `parse(prompt)`.",
+            DeprecationWarning,
+        )
         self._builder = builder
-        prompt = self._configure_parser(self._builder)
-        self._prompt = prompt
+        self._prompt = create_parser()
 
     @property
     def prompt(self):
@@ -34,103 +43,186 @@ class Parser:
         tokens = self.prompt.parse_string(prompt, parse_all=True)
         return cast(SequenceCommand, tokens[0])
 
-    def _enable_comments(self, prompt):
-        prompt.ignore("#" + pp.restOfLine)
-        prompt.ignore("//" + pp.restOfLine)
-        prompt.ignore(pp.c_style_comment)
 
-    def _configure_range(self):
-        hyphen = pp.Suppress("-")
-        variant_delim = pp.Suppress("$$")
+def _configure_range() -> pp.ParserElement:
+    hyphen = pp.Suppress("-")
+    variant_delim = pp.Suppress("$$")
 
-        separator = pp.Word(pp.printables + " ", exclude_chars="$")(
-            "separator",
-        ).leave_whitespace()
+    separator = pp.Word(pp.printables + " ", exclude_chars="$")(
+        "separator",
+    ).leave_whitespace()
 
-        bound = pp.common.integer
-        bound_range1 = bound("exact")
-        bound_range2 = bound("lower") + hyphen
-        bound_range3 = hyphen + bound("upper")
-        bound_range4 = bound("lower") + hyphen + bound("upper")
+    bound = pp.common.integer
+    bound_range1 = bound("exact")
+    bound_range2 = bound("lower") + hyphen
+    bound_range3 = hyphen + bound("upper")
+    bound_range4 = bound("lower") + hyphen + bound("upper")
 
-        bound_range = pp.Group(
-            bound_range4 | bound_range3 | bound_range2 | bound_range1,
+    bound_range = pp.Group(
+        bound_range4 | bound_range3 | bound_range2 | bound_range1,
+    )
+    bound_expr = pp.Group(
+        bound_range("range")
+        + variant_delim
+        + pp.Opt(separator + variant_delim, default=",")("separator"),
+    )
+
+    return bound_expr
+
+
+def _configure_wildcard() -> pp.ParserElement:
+    wildcard = wildcard_enclosure + ... + wildcard_enclosure
+
+    return wildcard("wildcard").leave_whitespace()
+
+
+def _configure_literal_sequence(is_variant_literal: bool = False) -> pp.ParserElement:
+    if is_variant_literal:
+        non_literal_chars = r"{}|$#"
+    else:
+        non_literal_chars = r"{}$#"
+
+    literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
+        "literal",
+    ).leave_whitespace()
+    literal_sequence = pp.OneOrMore(literal)
+
+    return literal_sequence("literal_sequence")
+
+
+def _create_weight_parser() -> pp.ParserElement:
+    weight_delim = pp.Suppress("::")
+    weight = (pp.common.real | pp.common.integer) + weight_delim
+
+    return weight
+
+
+def _configure_variants(
+    bound_expr: pp.ParserElement,
+    prompt: pp.ParserElement,
+) -> pp.ParserElement:
+    left_brace, right_brace = map(pp.Suppress, "{}")
+    weight = _create_weight_parser()
+
+    variant_option = prompt
+    variant = pp.Group(pp.Opt(weight, default=1)("weight") + variant_option("val"))
+    variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
+
+    variants = (
+        left_brace
+        + pp.Group(pp.Opt(bound_expr)("bound_expr") + variants_list("variants"))
+        + right_brace
+    )
+
+    return variants.leave_whitespace()
+
+
+def _parse_literal_command(parse_result: pp.ParseResults) -> LiteralCommand:
+    s = " ".join(parse_result)
+    return LiteralCommand(s)
+
+
+def _parse_sequence_command(parse_result: pp.ParseResults) -> SequenceCommand:
+    children = list(parse_result)
+    assert all(isinstance(c, Command) for c in children)
+    return SequenceCommand(tokens=children)
+
+
+def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
+    assert len(parse_result) == 1
+    parts = parse_result[0].as_dict()
+    variants = [
+        VariantOption(value=v["val"], weight=float(v["weight"][0]))
+        for v in parts["variants"]
+    ]
+    if "bound_expr" in parts:
+        min_bound, max_bound, separator = _parse_bound_expr(
+            parts["bound_expr"],
+            max_options=len(variants),
         )
-        bound_expr = pp.Group(
-            bound_range("range")
-            + variant_delim
-            + pp.Opt(separator + variant_delim, default=",")("separator"),
-        )
+    else:
+        min_bound = max_bound = 1
+        separator = ","
+    return VariantCommand(
+        variants,
+        min_bound=min_bound,
+        max_bound=max_bound,
+        separator=separator,
+    )
 
-        return bound_expr
 
-    def _configure_wildcard(self):
-        wildcard = wildcard_enclosure + ... + wildcard_enclosure
+def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
+    wildcard = parse_result[0]
+    assert isinstance(wildcard, str)
+    return WildcardCommand(wildcard=wildcard)
 
-        return wildcard("wildcard").leave_whitespace()
 
-    def _configure_literal_sequence(self, is_variant_literal=False):
+def _parse_bound_expr(expr, max_options):
+    lbound = 1
+    ubound = max_options
+    separator = ","
 
-        if is_variant_literal:
-            non_literal_chars = r"{}|$#"
+    expr = expr[0]
+
+    if "range" in expr:
+        rng = expr["range"]
+        if "exact" in rng:
+            lbound = ubound = rng["exact"]
         else:
-            non_literal_chars = r"{}$#"
+            if "lower" in expr["range"]:
+                lbound = int(expr["range"]["lower"])
+            if "upper" in expr["range"]:
+                ubound = int(expr["range"]["upper"])
 
-        literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
-            "literal",
-        ).leave_whitespace()
-        literal_sequence = pp.OneOrMore(literal)
+    if "separator" in expr:
+        separator = expr["separator"][0]
 
-        return literal_sequence("literal_sequence")
+    return lbound, ubound, separator
 
-    def _configure_weight(self):
-        weight_delim = pp.Suppress("::")
-        weight = (pp.common.real | pp.common.integer) + weight_delim
 
-        return weight
+def create_parser() -> pp.ParserElement:
+    bound_expr = _configure_range()
 
-    def _configure_variants(self, bound_expr, prompt):
-        left_brace, right_brace = map(pp.Suppress, "{}")
-        weight = self._configure_weight()
+    prompt = pp.Forward()
+    variant_prompt = pp.Forward()
 
-        variant_option = prompt
-        variant = pp.Group(pp.Opt(weight, default=1)("weight") + variant_option("val"))
-        variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
+    wildcard = _configure_wildcard()
+    literal_sequence = _configure_literal_sequence()
+    variant_literal_sequence = _configure_literal_sequence(
+        is_variant_literal=True,
+    )
+    variants = _configure_variants(bound_expr, variant_prompt)
 
-        variants = (
-            left_brace
-            + pp.Group(pp.Opt(bound_expr)("bound_expr") + variants_list("variants"))
-            + right_brace
-        )
+    chunk = variants | wildcard | literal_sequence
+    variant_chunk = variants | wildcard | variant_literal_sequence
 
-        return variants.leave_whitespace()
+    prompt <<= pp.ZeroOrMore(chunk)("prompt")
+    variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
 
-    def _configure_parser(self, builder: ActionBuilder):
-        bound_expr = self._configure_range()
+    # Configure comments
+    prompt.ignore("#" + pp.restOfLine)
+    prompt.ignore("//" + pp.restOfLine)
+    prompt.ignore(pp.c_style_comment)
 
-        prompt = pp.Forward()
-        variant_prompt = pp.Forward()
+    wildcard.set_parse_action(_parse_wildcard_command)
+    variants.set_parse_action(_parse_variant_command)
+    literal_sequence.set_parse_action(_parse_literal_command)
+    variant_literal_sequence.set_parse_action(_parse_literal_command)
+    prompt.set_parse_action(_parse_sequence_command)
+    variant_prompt.set_parse_action(_parse_sequence_command)
+    return prompt
 
-        wildcard = self._configure_wildcard()
-        literal_sequence = self._configure_literal_sequence()
-        variant_literal_sequence = self._configure_literal_sequence(
-            is_variant_literal=True,
-        )
-        variants = self._configure_variants(bound_expr, variant_prompt)
 
-        chunk = variants | wildcard | literal_sequence
-        variant_chunk = variants | wildcard | variant_literal_sequence
-
-        prompt <<= pp.ZeroOrMore(chunk)("prompt")
-        variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
-
-        self._enable_comments(prompt)
-        wildcard.set_parse_action(builder.get_wildcard_action)
-        variants.set_parse_action(builder.get_variant_action)
-        literal_sequence.set_parse_action(builder.get_literal_action)
-        variant_literal_sequence.set_parse_action(builder.get_literal_action)
-
-        prompt.set_parse_action(builder.get_sequence_action)
-        variant_prompt.set_parse_action(builder.get_sequence_action)
-
-        return prompt
+def parse(prompt: str) -> SequenceCommand:
+    """
+    Parse a prompt string into a sequence of commands.
+    :param prompt: The prompt string to parse.
+    :return: A SequenceCommand representing the parsed prompt.
+    """
+    tokens = create_parser().parse_string(prompt, parse_all=True)
+    assert (
+        tokens and len(tokens) == 1
+    )  # If we have more than one token, the prompt is invalid...
+    tok = tokens[0]
+    assert isinstance(tok, SequenceCommand)
+    return tok

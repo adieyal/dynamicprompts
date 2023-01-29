@@ -1,16 +1,11 @@
-from unittest import mock
+from unittest.mock import Mock
 
-import pytest
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
-
-
-@pytest.fixture
-def wildcard_manager():
-    return mock.Mock()
+from dynamicprompts.wildcardmanager import WildcardManager
 
 
 class TestCombinatorialGenerator:
-    def test_literal_template(self, wildcard_manager):
+    def test_literal_template(self, wildcard_manager: WildcardManager):
         prompt = "I love bread"
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
@@ -20,12 +15,14 @@ class TestCombinatorialGenerator:
         assert len(prompts) == 1
         assert prompts[0] == prompt
 
-    def test_generate_with_wildcard(self, wildcard_manager):
+    def test_generate_with_wildcard(self, wildcard_manager: WildcardManager):
         prompt = "I love __food__"
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        wildcard_manager.get_all_values.return_value = ["bread", "butter", "cheese"]
+        wildcard_manager.get_all_values = Mock(
+            return_value=["bread", "butter", "cheese"],
+        )
         prompts = list(generator.generate(prompt, 10))
 
         assert len(prompts) == 3
@@ -39,11 +36,11 @@ class TestCombinatorialGenerator:
         assert prompts[0] == "I love bread"
         assert prompts[1] == "I love butter"
 
-    def test_generate_variant_with_separator(self, wildcard_manager):
+    def test_generate_variant_with_separator(self, wildcard_manager: WildcardManager):
         prompt = "{2$$ and $$A|B|C}"
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        prompts = list(generator.generate(prompt, 9))
+        prompts = list(generator.generate(prompt))
         assert len(prompts) == 6
 
         assert prompts[0] == "A and B"
@@ -53,7 +50,10 @@ class TestCombinatorialGenerator:
         assert prompts[4] == "C and A"
         assert prompts[5] == "C and B"
 
-    def test_generate_variant_with_pipe_separator(self, wildcard_manager):
+    def test_generate_variant_with_pipe_separator(
+        self,
+        wildcard_manager: WildcardManager,
+    ):
         prompt = "{2$$|$$A|B|C}"
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
@@ -67,12 +67,14 @@ class TestCombinatorialGenerator:
         assert prompts[4] == "C|A"
         assert prompts[5] == "C|B"
 
-    def test_all_generations(self, wildcard_manager):
+    def test_all_generations(self, wildcard_manager: WildcardManager):
         prompt = "I love __food__ and __drink__"
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        wildcard_manager.get_all_values.return_value = ["bread", "butter", "cheese"]
+        wildcard_manager.get_all_values = Mock(
+            return_value=["bread", "butter", "cheese"],
+        )
         prompts = list(generator.generate(prompt, None))
 
         assert len(prompts) == 9

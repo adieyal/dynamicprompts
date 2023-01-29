@@ -1,28 +1,14 @@
-from typing import cast
-from unittest import mock
+from __future__ import annotations
 
 import pytest
-from dynamicprompts.parser.commands import (
+from dynamicprompts.commands import (
     LiteralCommand,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.parse import (
-    ActionBuilder,
-    Parser,
-)
+from dynamicprompts.parser.parse import _create_weight_parser, parse
 from pyparsing import ParseException
-
-
-@pytest.fixture
-def wildcard_manager():
-    return mock.Mock()
-
-
-@pytest.fixture
-def parser(wildcard_manager) -> Parser:
-    return Parser(ActionBuilder(wildcard_manager))
 
 
 class TestParser:
@@ -40,9 +26,9 @@ class TestParser:
             "Test (high emphasis:0.4)",  # round brackets with weight
         ],
     )
-    def test_literal_characters(self, parser: Parser, input: str):
-        sequence = parser.parse(input)
-        assert len(sequence) == 1
+    def test_literal_characters(self, input: str):
+        sequence = parse(input)
+        assert isinstance(sequence, SequenceCommand)
         (literal,) = sequence  # will fail if len != 1
         assert literal.literal == input
 
@@ -54,247 +40,188 @@ class TestParser:
             "änder",
         ],
     )
-    def test_wildcard(self, parser: Parser, input: str):
-        sequence = parser.parse(f"__{input}__")
+    def test_wildcard(self, input: str):
+        sequence = parse(f"__{input}__")
         (wildcard_command,) = sequence
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == input
 
-    def test_two_wildcards_adjancent(self, parser: Parser):
-        sequence = parser.parse("__colours__ __colours__")
+    def test_two_wildcards_adjacent(self):
+        sequence = parse("__colours__ __colours__")
         assert len(sequence) == 3
 
-    def test_wildcard_adjactent_to_literal(self, parser: Parser):
-        sequence = parser.parse(",__colours__")
-
-        assert len(sequence) == 2
-        assert sequence[0] == ","
-        wildcard_command = cast(WildcardCommand, sequence[1])
+    def test_wildcard_adjactent_to_literal(self):
+        literal, wildcard_command = parse(",__colours__")
+        assert literal.literal == ","
+        assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == "colours"
 
-        sequence = parser.parse("__colours__ world")
-        assert len(sequence) == 2
-        wildcard_command = cast(WildcardCommand, sequence[0])
+        wildcard_command, literal = parse("__colours__ world")
         assert wildcard_command.wildcard == "colours"
+        assert literal.literal == " world"
 
-        assert sequence[1] == " world"
-
-    def test_weight(self, parser: Parser):
-        weight = parser._configure_weight()
+    def test_weight(self):
+        weight = _create_weight_parser()
         with pytest.raises(ParseException):
             weight.parse_string("1")
 
         assert weight.parse_string("1::")[0] == 1.0
         assert weight.parse_string("0.25::")[0] == 0.25
 
-    def test_basic_variant(self, parser: Parser):
-        sequence = parser.parse("{cat|dog}")
-
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-
-        variant = cast(VariantCommand, sequence[0])
+    def test_basic_variant(self):
+        (variant,) = parse("{cat|dog}")
+        assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
-        assert type(variant[0]) == SequenceCommand
+        assert variant.weights == [1.0, 1.0]
+        # TODO: we could optimize this to not create a sequence of a single literal
+        values = variant.values
+        assert all(isinstance(v, SequenceCommand) for v in values)
+        assert values[0].tokens[0].literal == "cat"
+        assert values[1].tokens[0].literal == "dog"
 
-        sequence1 = cast(SequenceCommand, variant[0])
-        assert len(sequence1) == 1
-        assert sequence1[0] == LiteralCommand("cat")
+    def test_variant_with_different_characters(self):
+        (variant,) = parse("{new york|washing-ton!|änder}")
+        assert isinstance(variant, VariantCommand)
+        assert [v.tokens[0].literal for v in variant.values] == [
+            "new york",
+            "washing-ton!",
+            "änder",
+        ]
 
-        sequence2 = cast(SequenceCommand, variant[1])
-        assert len(sequence2) == 1
-        assert sequence2[0] == LiteralCommand("dog")
+    def test_variant_with_blank(self):
+        (variant,) = parse("{|red|blue}")
+        assert isinstance(variant, VariantCommand)
+        a, b, c = variant.values
+        assert len(a) == 0
+        assert b.tokens[0].literal == "red"
+        assert c.tokens[0].literal == "blue"
 
-    def test_variant_with_different_characters(self, parser: Parser):
-        sequence = parser.parse("{new york|washing-ton!|änder}")
-
-        variant = cast(VariantCommand, sequence[0])
-        assert len(variant) == 3
-        assert variant[0][0] == "new york"
-        assert variant[1][0] == "washing-ton!"
-        assert variant[2][0] == "änder"
-
-    def test_variant_with_blank(self, parser: Parser):
-        sequence = parser.parse("{|red|blue}")
-        variant = cast(VariantCommand, sequence[0])
-        assert len(variant) == 3
-        assert len(variant[0]) == 0
-
-        assert variant[1][0] == "red"
-        assert variant[2][0] == "blue"
-
-    def test_variant_breaks_without_closing_bracket(self, parser: Parser):
-
+    def test_variant_breaks_without_closing_bracket(self):
         with pytest.raises(ParseException):
-            parser.parse("{cat|dog")
+            parse("{cat|dog")
 
-    def test_variant_breaks_without_opening_bracket(self, parser: Parser):
+    def test_variant_breaks_without_opening_bracket(self):
         with pytest.raises(ParseException):
-            parser.parse("cat|dog}")
+            parse("cat|dog}")
 
-    def test_variant_with_wildcard(self, parser: Parser):
-        sequence = parser.parse("{__test/colours__|washington}")
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-        variant = cast(VariantCommand, sequence[0])
-
-        wildcard_command = cast(WildcardCommand, variant[0][0])
+    def test_variant_with_wildcard(self):
+        (variant,) = parse("{__test/colours__|washington}")
+        assert isinstance(variant, VariantCommand)
+        # TODO: we could optimize these to not create a sequence of a single literal
+        wildcard_command, washington = (s[0] for s in variant.values)
+        assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == "test/colours"
-        assert variant[1][0] == "washington"
+        assert isinstance(washington, LiteralCommand)
+        assert washington.literal == "washington"
 
-    def test_variant_sequences(self, parser: Parser):
-
-        sequence = parser.parse(
+    def test_variant_sequences(self):
+        (variant,) = parse(
             "{My favourite colour is __colour__ and not __other_colour__|__colour__ is my favourite colour}",
         )
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-        variant = cast(VariantCommand, sequence[0])
-
+        assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
+        sequence1, sequence2 = variant.values
 
-        sequence1 = variant[0]
         assert len(sequence1) == 4
-        assert type(sequence1[0]) == LiteralCommand
+        literal1, wildcard1, literal2, wildcard2 = sequence1
+        assert isinstance(literal1, LiteralCommand)
+        assert literal1.literal == "My favourite colour is "
+        assert isinstance(wildcard1, WildcardCommand)
+        assert wildcard1.wildcard == "colour"
+        assert isinstance(literal2, LiteralCommand)
+        assert literal2.literal == " and not "
+        assert isinstance(wildcard2, WildcardCommand)
+        assert wildcard2.wildcard == "other_colour"
 
-        assert sequence1[0] == "My favourite colour is "
+        wildcard3, literal3 = sequence2
+        assert isinstance(wildcard3, WildcardCommand)
+        assert wildcard3.wildcard == "colour"
+        assert isinstance(literal3, LiteralCommand)
+        assert literal3.literal == " is my favourite colour"
 
-        assert type(sequence1[1]) == WildcardCommand
-        wildcard_command = cast(WildcardCommand, sequence1[1])
-        assert wildcard_command.wildcard == "colour"
-
-        assert type(sequence1[2]) == LiteralCommand
-
-        assert sequence1[2] == " and not "
-
-        assert type(sequence1[3]) == WildcardCommand
-        wildcard_command = cast(WildcardCommand, sequence1[3])
-        assert wildcard_command.wildcard == "other_colour"
-
-        sequence2 = variant[1]
-        assert len(sequence2) == 2
-
-        assert type(sequence2[0]) == WildcardCommand
-        wildcard_command = cast(WildcardCommand, sequence2[0])
-        assert wildcard_command.wildcard == "colour"
-
-        assert type(sequence2[1]) == LiteralCommand
-
-        assert sequence2[1] == " is my favourite colour"
-
-    def test_variant_with_nested_variant(self, parser: Parser):
-        sequence = parser.parse("{__test/colours__|{__test/colours__|washington}}")
-        assert len(sequence) == 1
-        assert type(sequence[0]) == VariantCommand
-        variant = cast(VariantCommand, sequence[0])
-
+    def test_variant_with_nested_variant(self):
+        (variant,) = parse("{__test/colours__|{__test/shapes__|washington}}")
+        assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
-
-        assert type(variant[0][0]) == WildcardCommand
-        assert type(variant[1][0]) == VariantCommand
-
-        nested_variant = cast(VariantCommand, variant[1][0])
+        (
+            wildcard_seq,
+            nested_variant_seq,
+        ) = variant.values  # TODO: should not emit single-element sequences
+        (wildcard,) = wildcard_seq
+        assert isinstance(wildcard, WildcardCommand)
+        assert wildcard.wildcard == "test/colours"
+        (nested_variant,) = nested_variant_seq
+        assert isinstance(nested_variant, VariantCommand)
         assert len(nested_variant) == 2
-        assert type(nested_variant[0][0]) == WildcardCommand
-        assert nested_variant[0][0].wildcard == "test/colours"
+        (
+            nested_wildcard_seq,
+            literal_seq,
+        ) = nested_variant.values  # TODO: should not emit single-element sequences
+        (nested_wildcard,) = nested_wildcard_seq
+        assert isinstance(nested_wildcard, WildcardCommand)
+        assert nested_wildcard.wildcard == "test/shapes"
+        (literal,) = literal_seq
+        assert isinstance(literal, LiteralCommand)
+        assert literal.literal == "washington"
 
-        assert type(nested_variant[1][0]) == LiteralCommand
-        assert nested_variant[1][0] == "washington"
+    @pytest.mark.parametrize(
+        "input, weights",
+        [
+            ("{1::cat|2::dog|3::bird} test", [1, 2, 3]),
+            ("{0.2::cat|0.3::dog|0.4::bird} test", [0.2, 0.3, 0.4]),
+            ("{1::cat|dog|3::bird} test", [1, 1, 3]),  # default weight
+        ],
+    )
+    def test_variant_with_weights(self, input, weights):
+        variant, literal = parse(input)
+        assert isinstance(variant, VariantCommand)
+        assert variant.weights == weights
+        assert [v.tokens[0].literal for v in variant.values] == ["cat", "dog", "bird"]
 
-    def test_variant_with_weights(self, parser: Parser):
+    @pytest.mark.parametrize(
+        "input, min_bound, max_bound",
+        [
+            ("{2$$cat|dog|bird}", 2, 2),
+            ("{1-2$$cat|dog|bird}", 1, 2),
+            ("{1-3$$cat|dog|bird}", 1, 3),
+            ("{-2$$cat|dog|bird}", 1, 2),
+            (
+                "{0-1$$a|b|c|d}",
+                0,
+                1,
+            ),  # https://github.com/adieyal/sd-dynamic-prompts/issues/223
+        ],
+    )
+    def test_range(self, input, min_bound, max_bound):
+        (variant,) = parse(input)
+        assert isinstance(variant, VariantCommand)
+        assert variant.min_bound == min_bound
+        assert variant.max_bound == max_bound
+        assert variant.separator == ","
 
-        sequence = parser.parse("{1::cat|2::dog|3::bird} test")
-
-        variant = cast(VariantCommand, sequence[0])
-        assert variant.weights[0] == 1
-        assert variant.weights[1] == 2
-        assert variant.weights[2] == 3
-
-        assert variant[0][0] == "cat"
-        assert variant[1][0] == "dog"
-        assert variant[2][0] == "bird"
-
-        sequence = parser.parse("{0.2::cat|0.3::dog|0.4::bird} test")
-
-        variant = cast(VariantCommand, sequence[0])
-        assert variant.weights[0] == 0.2
-        assert variant.weights[1] == 0.3
-        assert variant.weights[2] == 0.4
-
-        assert variant[0][0] == "cat"
-        assert variant[1][0] == "dog"
-        assert variant[2][0] == "bird"
-
-    def test_variant_with_defaultweights(self, parser: Parser):
-        sequence = parser.parse("{1::cat|dog|3::bird} test")
-
-        variant = cast(VariantCommand, sequence[0])
-        assert variant.weights[0] == 1
-        assert variant.weights[1] == 1
-        assert variant.weights[2] == 3
-
-    def test_range(self, parser: Parser):
-        sequence = parser.parse("{2$$cat|dog|bird}")
-        variant = cast(VariantCommand, sequence[0])
-
-        assert variant.min_bound == 2
-        assert variant.max_bound == 2
-        assert variant.sep == ","
-
-        sequence = parser.parse("{1-2$$cat|dog|bird}")
-        variant = cast(VariantCommand, sequence[0])
-
-        assert variant.min_bound == 1
-        assert variant.max_bound == 2
-
-        sequence = parser.parse("{1-$$cat|dog|bird}")
-        variant = cast(VariantCommand, sequence[0])
-
-        assert variant.min_bound == 1
-        assert variant.max_bound == 3
-
-        sequence = parser.parse("{-2$$cat|dog|bird}")
-        variant = cast(VariantCommand, sequence[0])
-
-        assert variant.min_bound == 1
-        assert variant.max_bound == 2
-
-    def test_variant_delimiter(self, parser: Parser):
-        sequence = parser.parse("{2$$ and $$cat|dog|bird}")
-        variant = cast(VariantCommand, sequence[0])
+    def test_variant_delimiter(self):
+        (variant,) = parse("{2$$ and $$cat|dog|bird}")
+        assert isinstance(variant, VariantCommand)
 
         assert variant.min_bound == 2
         assert variant.max_bound == 2
+        assert variant.separator == " and "
 
-        assert variant.sep == " and "
-
-        sequence = parser.parse("I love {2$$|$$green|yellow|blue} roses")
-        variant = cast(VariantCommand, sequence[1])
-        assert len(variant) == 3
-        assert variant[0][0] == "green"
-        assert variant[1][0] == "yellow"
-        assert variant[2][0] == "blue"
-
-        assert variant.sep == "|"
+        proclamation, variant, flower = parse("I love {2$$|$$green|yellow|blue} roses")
+        assert isinstance(variant, VariantCommand)
+        assert [v.tokens[0].literal for v in variant.values] == [
+            "green",
+            "yellow",
+            "blue",
+        ]  # TODO: should not emit single-element sequences
+        assert variant.separator == "|"
 
         with pytest.raises(ParseException):
-            sequence = parser.parse("{2$$ $ $$cat|dog|bird}")
+            parse("{2$$ $ $$cat|dog|bird}")  # A dollar sign is not a valid separator
 
-        sequence = parser.parse("{2$$  $$cat|dog|bird}")
+        parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
 
-    def test_range_sd_issue_223(self, parser: Parser):
-        # > {0-1$$a|b|c|d} would return nothing or one item. 0-1 could also be 0-3 etc.
-        # > Since 2.52, if the random number picker lands on 0, instead of returning an empty set,
-        # > the parser just stops and kicks out whatever it has, which results in a broken prompt.
-        # https://github.com/adieyal/sd-dynamic-prompts/issues/223
-        sequence = parser.parse(r"{0-1$$a|b|c|d}")
-        var = sequence[0]
-        assert isinstance(var, VariantCommand)
-        assert var.min_bound == 0
-        assert var.max_bound == 1
-
-    def test_comments(self, parser: Parser):
-
+    def test_comments(self):
         prompt = """
         one
         two
@@ -305,35 +232,28 @@ class TestParser:
         five
         """
 
-        sequence = parser.parse(prompt)
+        sequence = parse(prompt)
         assert len(sequence) == 5
+        one_two_three, variant, whitespace, wildcard, five = sequence
 
-        assert sequence[0] == "\n        one\n        two\n        three  \n        "
-
-        assert isinstance(sequence[1], VariantCommand)
-        variant = cast(VariantCommand, sequence[1])
-        assert len(variant) == 3
-        assert variant[0][0] == "cat"
-        assert variant[1][0] == "dog"
-        assert variant[2][0] == "bird"
-
-        assert isinstance(sequence[2], LiteralCommand)
-        assert sequence[2] == "\n        "
-        assert isinstance(sequence[3], WildcardCommand)
-        wildcard = cast(WildcardCommand, sequence[3])
+        assert (
+            one_two_three.literal
+            == "\n        one\n        two\n        three  \n        "
+        )
+        assert isinstance(variant, VariantCommand)
+        assert [v.tokens[0].literal for v in variant.values] == ["cat", "dog", "bird"]
+        assert whitespace.literal == "\n        "
+        assert isinstance(wildcard, WildcardCommand)
         assert wildcard.wildcard == "wildcard_comment"
+        assert five.literal == "\n        five\n        "
 
-        assert sequence[4] == "\n        five\n        "
-
-    def test_alternating_words(self, parser: Parser):
-
-        sequence = parser.parse("[cat|dog]")
-        assert len(sequence) == 1
-        assert sequence[0] == "[cat|dog]"
-
-    def test_prompt_editing(self, parser: Parser):
-
-        prompt = "[cat:dog:0.25]"
-        sequence = parser.parse(prompt)
-        assert len(sequence) == 1
-        assert sequence[0] == prompt
+    @pytest.mark.parametrize(
+        "input",
+        [
+            "[cat|dog]",  # alternating words
+            "[cat:dog:0.25]",  # prompt editing
+        ],
+    )
+    def test_a1111_special_syntax_intact(self, input):
+        (literal,) = parse(input)
+        assert literal.literal == input
