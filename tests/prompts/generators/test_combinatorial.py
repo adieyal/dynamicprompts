@@ -67,7 +67,6 @@ class TestCombinatorialGenerator:
         assert prompts[4] == "C|A"
         assert prompts[5] == "C|B"
 
-
     def test_all_generations(self, wildcard_manager):
         prompt = "I love __food__ and __drink__"
 
