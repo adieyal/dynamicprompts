@@ -1,5 +1,6 @@
+0.4.3 - Allow zero repetitions in sequence commands, e.g. `{0-3$$A|B|C}`
 0.4.2 - Added type information
-0.4.1 - Variant separator can now be most printables e.g. {2$$|$$A|B|C}. This addresses [#211](https://github.com/adieyal/sd-dynamic-prompts/issues/211).
+0.4.1 - Variant separator can now be most printables e.g. `{2$$|$$A|B|C}`. This addresses [#211](https://github.com/adieyal/sd-dynamic-prompts/issues/211).
 0.4.0 - Added block regex for magicprompts to remove unwanted modifiers. Many other small improvements, thanks to @akx
 0.3.2 - Added LICENCE, many code improvements,security fix that prevents wildcard searches outside the wildcard directory - thanks to @akx
 0.3.1 - Clean-up with thanks to @akx
