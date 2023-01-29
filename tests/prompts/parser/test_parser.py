@@ -316,6 +316,17 @@ class TestParser:
 
         sequence = parser.parse("{2$$  $$cat|dog|bird}")
 
+    def test_range_sd_issue_223(self, parser: Parser):
+        # > {0-1$$a|b|c|d} would return nothing or one item. 0-1 could also be 0-3 etc.
+        # > Since 2.52, if the random number picker lands on 0, instead of returning an empty set,
+        # > the parser just stops and kicks out whatever it has, which results in a broken prompt.
+        # https://github.com/adieyal/sd-dynamic-prompts/issues/223
+        sequence = parser.parse(r"{0-1$$a|b|c|d}")
+        var = sequence[0]
+        assert isinstance(var, VariantCommand)
+        assert var.min_bound == 0
+        assert var.max_bound == 1
+
     def test_comments(self, parser: Parser):
 
         prompt = """
