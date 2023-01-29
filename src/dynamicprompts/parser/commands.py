@@ -84,8 +84,8 @@ class VariantCommand(Command):
     def __init__(self, variants, min_bound=1, max_bound=1, sep=","):
         super().__init__(variants)
 
-        min_bound, max_bound = min(min_bound, max_bound), max(min_bound, max_bound)
-        self.min_bound = max(1, min_bound)
+        min_bound, max_bound = sorted((min_bound, max_bound))
+        self.min_bound = max(0, min_bound)
         self.max_bound = max_bound
         self.sep = sep
         self._weights = self._get_weights(variants)

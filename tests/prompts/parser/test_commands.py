@@ -98,7 +98,7 @@ class TestVariant:
             min_bound=-1,
             max_bound=10,
         )
-        assert variant_command.min_bound == 1
+        assert variant_command.min_bound == 0  # check that negative values are clamped
 
         variant_command = VariantCommand(
             gen_variant(literals),
