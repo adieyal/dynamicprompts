@@ -70,7 +70,6 @@ class TestParser:
         assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
         assert variant.weights == [1.0, 1.0]
-        # TODO: we could optimize this to not create a sequence of a single literal
         values = variant.values
         assert all(isinstance(v, LiteralCommand) for v in values)
         assert values[0].literal == "cat"
@@ -199,7 +198,7 @@ class TestParser:
             "green",
             "yellow",
             "blue",
-        ]  # TODO: should not emit single-element sequences
+        ]
         assert variant.separator == "|"
 
         with pytest.raises(ParseException):
