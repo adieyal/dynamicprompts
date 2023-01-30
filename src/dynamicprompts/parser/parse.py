@@ -82,10 +82,17 @@ def _configure_wildcard() -> pp.ParserElement:
 
 
 def _configure_literal_sequence(is_variant_literal: bool = False) -> pp.ParserElement:
+    # Characters that are not allowed in a literal
+    # - { denotes the start of a variant
+    # - # denotes the start of a comment
+    non_literal_chars = r"{#"
+
     if is_variant_literal:
-        non_literal_chars = r"{}|$#"
-    else:
-        non_literal_chars = r"{}$#"
+        # Inside a variant the following characters are also not allowed
+        # - } denotes the end of a variant
+        # - | denotes the end of a variant option
+        # - $ denotes the end of a bound expression
+        non_literal_chars += r"}|$"
 
     literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
         "literal",
