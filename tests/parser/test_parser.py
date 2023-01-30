@@ -206,6 +206,23 @@ class TestParser:
 
         parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
 
+    def test_variants_adjacent(self):
+        sequence = parse("{2$$cat|dog|bird}{3$$red|blue|green}")
+        assert len(sequence) == 2
+        assert isinstance(sequence[0], VariantCommand)
+        assert isinstance(sequence[1], VariantCommand)
+        variant1, variant2 = sequence
+
+        assert variant1.min_bound == 2
+        assert variant1.max_bound == 2
+        assert variant1.separator == ","
+        assert [v.literal for v in variant1.values] == ["cat", "dog", "bird"]
+
+        assert variant2.min_bound == 3
+        assert variant2.max_bound == 3
+        assert variant2.separator == ","
+        assert [v.literal for v in variant2.values] == ["red", "blue", "green"]
+
     def test_comments(self):
         prompt = """
         one
