@@ -71,3 +71,11 @@ ban-relative-imports = "all"
 [[tool.mypy.overrides]]
 module = "transformers"
 ignore_missing_imports = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
