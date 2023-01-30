@@ -10,7 +10,7 @@ from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
-class Generator(metaclass=ABCMeta):  # TODO: fix overloaded name
+class Sampler(metaclass=ABCMeta):
     def __init__(
         self,
         *,

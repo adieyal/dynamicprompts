@@ -9,11 +9,11 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.generator import Generator
+from dynamicprompts.samplers.base import Sampler
 
 
 def _get_combinatorial_sequence(
-    generator: Generator,
+    generator: Sampler,
     tokens: list[Command],
     *,
     separator: str,
@@ -43,7 +43,7 @@ def _dedupe(arr: list[str]) -> tuple[str, ...]:
 
 
 def _combo_to_prompt(
-    generator: Generator,
+    generator: Sampler,
     combo: list[Command],
 ) -> typing.Iterable[list[str]]:
     if len(combo) == 0:
@@ -60,7 +60,7 @@ def _combo_to_prompt(
 
 
 def _get_combinatorial_variant(
-    generator: Generator,
+    generator: Sampler,
     variant_command: VariantCommand,
 ) -> typing.Iterable[str]:
     if len(variant_command.variants) == 0:
@@ -78,7 +78,7 @@ def _get_combinatorial_variant(
                     yield variant_command.separator.join(deduped_arr)
 
 
-class CombinatorialGenerator(Generator):
+class CombinatorialSampler(Sampler):
     def generator_from_command(
         self,
         command: Command,

@@ -11,7 +11,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.generator import Generator
+from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ DEFAULT_RANDOM = Random()
 
 
 def _get_random_variant(
-    generator: Generator,
+    generator: Sampler,
     variant_command: VariantCommand,
     random: Random,
 ) -> typing.Generator[str, None, None]:
@@ -47,7 +47,7 @@ def _get_random_variant(
             )
 
 
-class RandomGenerator(Generator):
+class RandomSampler(Sampler):
     def __init__(
         self,
         *,

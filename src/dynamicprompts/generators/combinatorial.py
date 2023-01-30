@@ -5,7 +5,7 @@ from typing import Iterable
 
 from dynamicprompts import constants
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.parser.combinatorial_generator import CombinatorialGenerator
+from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class CombinatorialPromptGenerator(PromptGenerator):
         ignore_whitespace: bool = False,
     ) -> None:
         self._wildcard_manager = wildcard_manager
-        self._generator = CombinatorialGenerator(
+        self._sampler = CombinatorialSampler(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
         )
@@ -30,6 +30,6 @@ class CombinatorialPromptGenerator(PromptGenerator):
     ) -> Iterable[str]:
         if template is None or len(template) == 0:
             return [""]
-        prompts = self._generator.generate_prompts(template, max_prompts)
+        prompts = self._sampler.generate_prompts(template, max_prompts)
 
         return prompts
