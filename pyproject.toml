@@ -57,12 +57,16 @@ select = [
     "I",
     "UP",
     "TID252",
+    "T2",
 ]
 ignore = [
     "B007",
     "B905",
     "C901", # Complexity
     "E501", # Line length
+]
+unfixable = [
+    "T2",  # don't automatically remove prints
 ]
 
 [tool.ruff.flake8-tidy-imports]
