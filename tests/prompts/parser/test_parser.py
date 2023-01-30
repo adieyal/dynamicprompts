@@ -26,77 +26,43 @@ def parser(wildcard_manager) -> Parser:
 
 
 class TestParser:
-    def test_basic_parser(self, parser: Parser):
-        sequence = parser.parse("hello world")
-
-        assert type(sequence) == SequenceCommand
+    @pytest.mark.parametrize(
+        "input",
+        [
+            "hello world",
+            "good-bye world",
+            "good_bye world",
+            "I, love. punctuation",
+            "Test änderō",  # accents
+            "Test [low emphasis]",  # square brackets
+            "Test [low emphasis:0.4]",  # square brackets with weight
+            "Test (high emphasis)",  # round brackets
+            "Test (high emphasis:0.4)",  # round brackets with weight
+        ],
+    )
+    def test_literal_characters(self, parser: Parser, input: str):
+        sequence = parser.parse(input)
         assert len(sequence) == 1
-        assert type(sequence[0]) == LiteralCommand
-        assert sequence[0] == "hello world"
+        (literal,) = sequence  # will fail if len != 1
+        assert literal.literal == input
 
-    def test_literal_characters(self, parser: Parser):
-        sequence = parser.parse("good-bye world")
-        assert len(sequence) == 1
-        assert sequence[0] == "good-bye world"
-
-        sequence = parser.parse("good_bye world")
-        assert len(sequence) == 1
-        assert sequence[0] == "good_bye world"
-
-        sequence = parser.parse("I, love. punctuation")
-        assert len(sequence) == 1
-        variant = cast(VariantCommand, sequence)
-        assert variant[0] == "I, love. punctuation"
-
-    def test_literal_with_accents(self, parser: Parser):
-        sequence = parser.parse("Test änderō")
-        assert len(sequence) == 1
-        assert sequence[0] == "Test änderō"
-
-    def test_literal_with_square_brackets(self, parser: Parser):
-        sequence = parser.parse("Test [low emphasis]")
-        assert len(sequence) == 1
-        assert sequence[0] == "Test [low emphasis]"
-
-        sequence = parser.parse("Test [low emphasis:0.4]")
-        assert len(sequence) == 1
-        assert sequence[0] == "Test [low emphasis:0.4]"
-
-    def test_literal_with_round_brackets(self, parser: Parser):
-        sequence = parser.parse("Test (high emphasis)")
-        assert len(sequence) == 1
-        assert sequence[0] == "Test (high emphasis)"
-
-        sequence = parser.parse("Test (high emphasis:0.4)")
-        assert len(sequence) == 1
-        assert sequence[0] == "Test (high emphasis:0.4)"
-
-    def test_wildcard(self, parser: Parser):
-        sequence = parser.parse("__colours__")
-        assert len(sequence) == 1
-
-        wildcard_command = sequence[0]
-        assert type(wildcard_command) == WildcardCommand
-        wildcard_command = cast(WildcardCommand, wildcard_command)
-        assert wildcard_command.wildcard == "colours"
-
-        sequence = parser.parse("__path/to/colours__")
-        assert len(sequence) == 1
-
-        wildcard_command = sequence[0]
-        assert type(wildcard_command) == WildcardCommand
-        wildcard_command = cast(WildcardCommand, wildcard_command)
-        assert wildcard_command.wildcard == "path/to/colours"
+    @pytest.mark.parametrize(
+        "input",
+        [
+            "colours",
+            "path/to/colours",
+            "änder",
+        ],
+    )
+    def test_wildcard(self, parser: Parser, input: str):
+        sequence = parser.parse(f"__{input}__")
+        (wildcard_command,) = sequence
+        assert isinstance(wildcard_command, WildcardCommand)
+        assert wildcard_command.wildcard == input
 
     def test_two_wildcards_adjancent(self, parser: Parser):
         sequence = parser.parse("__colours__ __colours__")
         assert len(sequence) == 3
-
-    def test_wildcard_with_accents(self, parser: Parser):
-        sequence = parser.parse("__änder__")
-        assert len(sequence) == 1
-        wildcard_command = cast(WildcardCommand, sequence[0])
-        assert wildcard_command.wildcard == "änder"
 
     def test_wildcard_adjactent_to_literal(self, parser: Parser):
         sequence = parser.parse(",__colours__")
