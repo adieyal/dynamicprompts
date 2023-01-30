@@ -29,3 +29,5 @@ jobs:
       - name: Install dependencies
         run: python -m pip install pytest-cov -e .[attentiongrabber,magicprompt]
       - run: pytest --cov --cov-report=term-missing .
+        env:
+          PYPARSINGENABLEALLWARNINGS: 1
