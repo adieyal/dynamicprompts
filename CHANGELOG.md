@@ -1,3 +1,4 @@
+0.5.0 - A major re-organisation of the parsing machinary.
 0.4.3 - Allow zero repetitions in sequence commands, e.g. `{0-3$$A|B|C}`
 0.4.2 - Added type information
 0.4.1 - Variant separator can now be most printables e.g. `{2$$|$$A|B|C}`. This addresses [#211](https://github.com/adieyal/sd-dynamic-prompts/issues/211).
