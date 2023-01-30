@@ -48,7 +48,12 @@ def _configure_range() -> pp.ParserElement:
     hyphen = pp.Suppress("-")
     variant_delim = pp.Suppress("$$")
 
-    separator = pp.Word(pp.printables + " ", exclude_chars="$")(
+    # Exclude:
+    # - $, which is used to indicate the end of the separator definition i.e. {1$$ and $$X|Y|Z}
+    # - }, which is used to indicate the end of a variant
+    # Allowed:
+    # - | is allowed as a separator
+    separator = pp.Word(pp.printables + " ", exclude_chars="$}")(
         "separator",
     ).leave_whitespace()
 
