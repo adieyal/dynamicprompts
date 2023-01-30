@@ -122,9 +122,11 @@ def _parse_literal_command(parse_result: pp.ParseResults) -> LiteralCommand:
     return LiteralCommand(s)
 
 
-def _parse_sequence_command(parse_result: pp.ParseResults) -> SequenceCommand:
+def _parse_sequence_or_single_command(parse_result: pp.ParseResults) -> Command:
     children = list(parse_result)
     assert all(isinstance(c, Command) for c in children)
+    if len(children) == 1:  # If there is only one child, return it directly
+        return children[0]
     return SequenceCommand(tokens=children)
 
 
@@ -208,21 +210,21 @@ def create_parser() -> pp.ParserElement:
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
-    prompt.set_parse_action(_parse_sequence_command)
-    variant_prompt.set_parse_action(_parse_sequence_command)
+    prompt.set_parse_action(_parse_sequence_or_single_command)
+    variant_prompt.set_parse_action(_parse_sequence_or_single_command)
     return prompt
 
 
-def parse(prompt: str) -> SequenceCommand:
+def parse(prompt: str) -> Command:
     """
-    Parse a prompt string into a sequence of commands.
+    Parse a prompt string into a commands.
     :param prompt: The prompt string to parse.
-    :return: A SequenceCommand representing the parsed prompt.
+    :return: A command representing the parsed prompt.
     """
     tokens = create_parser().parse_string(prompt, parse_all=True)
     assert (
         tokens and len(tokens) == 1
     )  # If we have more than one token, the prompt is invalid...
     tok = tokens[0]
-    assert isinstance(tok, SequenceCommand)
+    assert isinstance(tok, Command)
     return tok
