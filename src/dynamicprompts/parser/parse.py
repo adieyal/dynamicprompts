@@ -87,7 +87,7 @@ def _configure_literal_sequence(is_variant_literal: bool = False) -> pp.ParserEl
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
 
-    return literal_sequence("literal_sequence")
+    return literal_sequence
 
 
 def _create_weight_parser() -> pp.ParserElement:
@@ -101,11 +101,11 @@ def _configure_variants(
     bound_expr: pp.ParserElement,
     prompt: pp.ParserElement,
 ) -> pp.ParserElement:
-    left_brace, right_brace = map(pp.Suppress, "{}")
+    left_brace = pp.Suppress("{")
+    right_brace = pp.Suppress("}")
     weight = _create_weight_parser()
 
-    variant_option = prompt
-    variant = pp.Group(pp.Opt(weight, default=1)("weight") + variant_option("val"))
+    variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
     variants = (
