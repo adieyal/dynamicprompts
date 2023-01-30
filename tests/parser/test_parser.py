@@ -23,6 +23,8 @@ class TestParser:
             "Test [low emphasis:0.4]",  # square brackets with weight
             "Test (high emphasis)",  # round brackets
             "Test (high emphasis:0.4)",  # round brackets with weight
+            "Unmatched } bracket",
+            "$$ are fine outside of variants",
         ],
     )
     def test_literal_characters(self, input: str):
@@ -95,10 +97,6 @@ class TestParser:
     def test_variant_breaks_without_closing_bracket(self):
         with pytest.raises(ParseException):
             parse("{cat|dog")
-
-    def test_variant_breaks_without_opening_bracket(self):
-        with pytest.raises(ParseException):
-            parse("cat|dog}")
 
     def test_variant_with_wildcard(self):
         variant = parse("{__test/colours__|washington}")
