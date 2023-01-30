@@ -10,7 +10,7 @@ from dynamicprompts.commands import (
 from dynamicprompts.samplers.random import RandomSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
-from tests.prompts.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
+from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
 
 
 @pytest.fixture

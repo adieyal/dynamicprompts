@@ -10,7 +10,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 
-from tests.prompts.consts import ONE_TWO_THREE
+from tests.consts import ONE_TWO_THREE
 
 
 @pytest.fixture
