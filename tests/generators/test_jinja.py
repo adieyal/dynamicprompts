@@ -188,6 +188,14 @@ class TestJinjaGenerator:
             assert len(prompts) == 1
             assert prompts[0] == "My favourite number is 0.3"
 
+    def test_choice(self, generator):
+        with patch("random.choice") as mock_choice:
+            mock_choice.return_value = "red"
+            template = """
+            {% prompt %}My favourite color is {{ choice("red", "green", "orange") }}{% endprompt %}
+            """
+            assert generator.generate(template) == ["My favourite color is red"]
+
     def test_weighted_choice(self, generator):
         with patch("random.choices") as mock_choice:
             mock_choice.side_effect = [["yellow"]]
