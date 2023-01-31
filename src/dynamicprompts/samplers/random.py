@@ -29,7 +29,8 @@ def _get_random_variant(
 
     if variant_command.sampling_method == SamplingMethod.COMBINATORIAL:
         new_sampler = CombinatorialSampler(wildcard_manager=sampler._wildcard_manager)
-        yield from new_sampler.generate_prompts(variant_command)
+        while True:
+            yield from new_sampler.generate_prompts(variant_command)
     else:
         if len(variant_command.values) == 0:
             return
@@ -62,9 +63,10 @@ def _get_random_wildcard(
     from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 
     if command.sampling_method == SamplingMethod.COMBINATORIAL:
-        yield from CombinatorialSampler(
-            wildcard_manager=sampler._wildcard_manager,
-        ).generate_prompts(command)
+        while True:
+            yield from CombinatorialSampler(
+                wildcard_manager=sampler._wildcard_manager,
+            ).generate_prompts(command)
     else:
         values = sampler._wildcard_manager.get_all_values(command.wildcard)
         while True:

@@ -52,30 +52,47 @@ class TestVariantCommand:
             prompt = next(sampler.generator_from_command(command))
             assert prompt == c[0].literal
 
-    def test_sampling_method(self, sampler: RandomSampler):
+    def test_combinatorial_sampling_method(self, sampler: RandomSampler):
         command = VariantCommand.from_literals_and_weights(
             ONE_TWO_THREE,
             sampling_method=SamplingMethod.COMBINATORIAL,
         )
-        sampler._random = mock.Mock()
-        random_choices = [
-            [LiteralCommand("one")],
-            [LiteralCommand("three")],
-            [LiteralCommand("two")],
-            [LiteralCommand("one")],
-        ]
-        sampler._random.choices.side_effect = random_choices
-        prompts = list(sampler.generate_prompts(command))
+
+        prompts = list(sampler.generate_prompts(command, 3))
         assert prompts == ONE_TWO_THREE
 
+    def test_combinatorial_sampling_method_with_sequence(self, sampler: RandomSampler):
+        command = SequenceCommand(
+            [
+                LiteralCommand("XXX"),
+                VariantCommand.from_literals_and_weights(
+                    ONE_TWO_THREE,
+                    sampling_method=SamplingMethod.COMBINATORIAL,
+                ),
+            ],
+        )
+
+        prompts = list(sampler.generate_prompts(command, 5))
+        assert prompts == ["XXXone", "XXXtwo", "XXXthree", "XXXone", "XXXtwo"]
+
+    def test_random_sampling_method(self, sampler: RandomSampler):
         command = VariantCommand.from_literals_and_weights(
             ONE_TWO_THREE,
             sampling_method=SamplingMethod.RANDOM,
         )
-        prompts = sampler.generate_prompts(command)
-        for c in random_choices:
-            prompt = next(sampler.generator_from_command(command))
-            assert prompt == c[0].literal
+
+        with mock.patch.object(sampler._random, "choices") as mock_choices:
+            random_choices = [
+                [LiteralCommand("one")],
+                [LiteralCommand("three")],
+                [LiteralCommand("two")],
+                [LiteralCommand("one")],
+            ]
+            mock_choices.side_effect = random_choices
+
+            for c in random_choices:
+                prompt = next(sampler.generator_from_command(command))
+                assert prompt == c[0].literal
 
     def test_variant_with_literal(self, sampler: RandomSampler):
         command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
@@ -181,16 +198,18 @@ class TestWildcardsCommand:
         while generated_values != wildcard_colors:
             generated_values.add(next(gen))
 
-    def test_sampling_method(self, sampler: RandomSampler):
+    def test_combinatorial_sampling_method(self, sampler: RandomSampler):
         command = WildcardCommand(
-            "colors*",
+            "colors",
             sampling_method=SamplingMethod.COMBINATORIAL,
         )
         wildcard_colors = sampler._wildcard_manager.get_all_values(command.wildcard)
         gen = sampler.generator_from_command(command)
 
-        assert list(gen) == list(wildcard_colors)
+        for color in wildcard_colors:
+            assert next(gen) == color
 
+    def test_random_sampling_method(self, sampler: RandomSampler):
         command = WildcardCommand("colors*", sampling_method=SamplingMethod.RANDOM)
 
         sampler._random = mock.Mock()
@@ -206,6 +225,20 @@ class TestWildcardsCommand:
         prompts = [next(gen) for _ in range(4)]
         for c, prompt in zip(random_choices, prompts):
             assert c.literal == prompt
+
+    def test_combinatorial_sampling_method_with_sequence(self, sampler: RandomSampler):
+        command = SequenceCommand(
+            [
+                LiteralCommand("XXX"),
+                WildcardCommand(
+                    "colors*",
+                    sampling_method=SamplingMethod.COMBINATORIAL,
+                ),
+            ],
+        )
+
+        prompts = list(sampler.generate_prompts(command, 5))
+        assert prompts == ["XXXblue", "XXXgreen", "XXXred", "XXXyellow", "XXXblue"]
 
     def test_wildcard_with_literal(self, sampler: RandomSampler):
         command = WildcardCommand("colors*")
