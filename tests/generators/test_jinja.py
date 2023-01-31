@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
+from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS
 from dynamicprompts.wildcardmanager import WildcardManager
 
 GET_ALL_VALUES = "dynamicprompts.wildcardmanager.WildcardManager.get_all_values"
@@ -176,17 +177,16 @@ class TestJinjaGenerator:
         with pytest.raises(GeneratorException):
             generator.generate(template)
 
-    def test_random(self, generator):
-        with patch("random.random") as mock_choice:
-            mock_choice.return_value = 0.3
-            template = """
-            {% prompt %}My favourite number is {{ random() }}{% endprompt %}
-            """
+    def test_random(self, generator, monkeypatch):
+        monkeypatch.setitem(DYNAMICPROMPTS_FUNCTIONS, "random", lambda: 0.3)
+        template = """
+        {% prompt %}My favourite number is {{ random() }}{% endprompt %}
+        """
 
-            prompts = generator.generate(template)
+        prompts = generator.generate(template)
 
-            assert len(prompts) == 1
-            assert prompts[0] == "My favourite number is 0.3"
+        assert len(prompts) == 1
+        assert prompts[0] == "My favourite number is 0.3"
 
     def test_choice(self, generator):
         with patch("random.choice") as mock_choice:
