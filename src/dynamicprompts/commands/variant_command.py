@@ -4,7 +4,7 @@ import dataclasses
 import logging
 from typing import Iterable
 
-from dynamicprompts.commands import Command, LiteralCommand
+from dynamicprompts.commands import Command, LiteralCommand, SamplingMethod
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class VariantCommand(Command):
     min_bound: int = 1
     max_bound: int = 1
     separator: str = ","
+    sampling_method: SamplingMethod = SamplingMethod.DEFAULT
 
     def __post_init__(self):
         min_bound, max_bound = sorted((self.min_bound, self.max_bound))
@@ -52,6 +53,7 @@ class VariantCommand(Command):
         min_bound: int = 1,
         max_bound: int = 1,
         separator: str = ",",
+        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
     ) -> VariantCommand:
         vals = [LiteralCommand(str(v)) for v in literals]
         if weights is None:
@@ -62,6 +64,7 @@ class VariantCommand(Command):
             min_bound=min_bound,
             max_bound=max_bound,
             separator=separator,
+            sampling_method=sampling_method,
         )
 
     def get_value_combinations(self, k: int) -> Iterable[list[Command]]:

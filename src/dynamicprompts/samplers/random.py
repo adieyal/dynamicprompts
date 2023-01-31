@@ -7,6 +7,7 @@ from random import Random
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
@@ -20,31 +21,60 @@ DEFAULT_RANDOM = Random()
 
 
 def _get_random_variant(
-    generator: Sampler,
+    sampler: Sampler,
     variant_command: VariantCommand,
     random: Random,
 ) -> typing.Generator[str, None, None]:
-    if len(variant_command.values) == 0:
-        return
-    elif len(variant_command.values) == 1:
-        yield from generator.generator_from_command(variant_command.values[0])
+    from dynamicprompts.samplers.combinatorial import CombinatorialSampler
+
+    if variant_command.sampling_method == SamplingMethod.COMBINATORIAL:
+        new_sampler = CombinatorialSampler(wildcard_manager=sampler._wildcard_manager)
+        yield from new_sampler.generate_prompts(variant_command)
     else:
+        if len(variant_command.values) == 0:
+            return
+        elif len(variant_command.values) == 1:
+            yield from sampler.generator_from_command(variant_command.values[0])
+        else:
+            while True:
+                num_choices = random.randint(
+                    variant_command.min_bound,
+                    variant_command.max_bound,
+                )
+                selected_commands = random.choices(
+                    variant_command.values,
+                    weights=variant_command.weights,
+                    k=num_choices,
+                )
+                sub_generators = [
+                    sampler.generator_from_command(c) for c in selected_commands
+                ]
+                yield variant_command.separator.join(
+                    next(subgen) for subgen in sub_generators
+                )
+
+
+def _get_random_wildcard(
+    sampler: RandomSampler,
+    command: WildcardCommand,
+    random: Random,
+) -> typing.Generator[str, None, None]:
+    from dynamicprompts.samplers.combinatorial import CombinatorialSampler
+
+    if command.sampling_method == SamplingMethod.COMBINATORIAL:
+        yield from CombinatorialSampler(
+            wildcard_manager=sampler._wildcard_manager,
+        ).generate_prompts(command)
+    else:
+        values = sampler._wildcard_manager.get_all_values(command.wildcard)
         while True:
-            num_choices = random.randint(
-                variant_command.min_bound,
-                variant_command.max_bound,
-            )
-            selected_commands = random.choices(
-                variant_command.values,
-                weights=variant_command.weights,
-                k=num_choices,
-            )
-            sub_generators = [
-                generator.generator_from_command(c) for c in selected_commands
-            ]
-            yield variant_command.separator.join(
-                next(subgen) for subgen in sub_generators
-            )
+            if len(values) == 0:
+                logger.warning(f"No values found for wildcard {command.wildcard}")
+                yield f"__{command.wildcard}__"
+            else:
+                value = sampler._random.choice(values)
+                # Parse and generate prompts from wildcard value
+                yield from sampler.generate_prompts(value, 1)
 
 
 class RandomSampler(Sampler):
@@ -75,15 +105,7 @@ class RandomSampler(Sampler):
         elif isinstance(command, VariantCommand):
             yield from _get_random_variant(self, command, self._random)
         elif isinstance(command, WildcardCommand):
-            values = self._wildcard_manager.get_all_values(command.wildcard)
-            while True:
-                if len(values) == 0:
-                    logger.warning(f"No values found for wildcard {command.wildcard}")
-                    yield f"__{command.wildcard}__"
-                else:
-                    value = self._random.choice(values)
-                    # Parse and generate prompts from wildcard value
-                    yield from self.generate_prompts(value, 1)
+            yield from _get_random_wildcard(self, command, self._random)
         else:
             raise NotImplementedError(
                 f"{self.__class__.__qualname__}: Not implemented: {command}",

@@ -5,11 +5,13 @@ import typing
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler
+from dynamicprompts.samplers.random import RandomSampler
 
 
 def _get_combinatorial_sequence(
@@ -63,19 +65,39 @@ def _get_combinatorial_variant(
     generator: Sampler,
     variant_command: VariantCommand,
 ) -> typing.Iterable[str]:
+    from dynamicprompts.samplers.random import RandomSampler
+
     if len(variant_command.variants) == 0:
         return
 
     seen = set()
 
-    for bound in range(variant_command.min_bound, variant_command.max_bound + 1):
-        for combo in variant_command.get_value_combinations(bound):
-            for prompt_arr in _combo_to_prompt(generator, combo):
-                deduped_arr = _dedupe(prompt_arr)
-                correct_size = len(deduped_arr) == bound
-                if correct_size and deduped_arr not in seen:
-                    seen.add(deduped_arr)
-                    yield variant_command.separator.join(deduped_arr)
+    if variant_command.sampling_method == SamplingMethod.RANDOM:
+        new_sampler = RandomSampler(wildcard_manager=generator._wildcard_manager)
+        yield from new_sampler.generate_prompts(variant_command)
+    else:
+        for bound in range(variant_command.min_bound, variant_command.max_bound + 1):
+            for combo in variant_command.get_value_combinations(bound):
+                for prompt_arr in _combo_to_prompt(generator, combo):
+                    deduped_arr = _dedupe(prompt_arr)
+                    correct_size = len(deduped_arr) == bound
+                    if correct_size and deduped_arr not in seen:
+                        seen.add(deduped_arr)
+                        yield variant_command.separator.join(deduped_arr)
+
+
+def _get_combinatorial_wildcard(
+    sampler: CombinatorialSampler,
+    command: WildcardCommand,
+):
+    if command.sampling_method == SamplingMethod.RANDOM:
+        yield from RandomSampler(
+            wildcard_manager=sampler._wildcard_manager,
+        ).generate_prompts(command)
+    else:
+        for val in sampler._wildcard_manager.get_all_values(command.wildcard):
+            # Parse and generate prompts from wildcard value
+            yield from sampler.generate_prompts(val)
 
 
 class CombinatorialSampler(Sampler):
@@ -94,9 +116,7 @@ class CombinatorialSampler(Sampler):
         elif isinstance(command, VariantCommand):
             yield from _get_combinatorial_variant(self, command)
         elif isinstance(command, WildcardCommand):
-            for val in self._wildcard_manager.get_all_values(command.wildcard):
-                # Parse and generate prompts from wildcard value
-                yield from self.generate_prompts(val)
+            yield from _get_combinatorial_wildcard(self, command)
         else:
             raise NotImplementedError(
                 f"{self.__class__.__name__} does not support {command.__class__.__name__}",

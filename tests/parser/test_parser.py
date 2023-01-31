@@ -6,6 +6,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.parser.parse import _create_weight_parser, parse
 from pyparsing import ParseException
 
@@ -44,6 +45,26 @@ class TestParser:
         wildcard_command = parse(f"__{input}__")
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == input
+        assert wildcard_command.sampling_method == SamplingMethod.DEFAULT
+
+    @pytest.mark.parametrize(
+        "input, sampling_method, wildcard",
+        [
+            ("colours", SamplingMethod.DEFAULT, "colours"),
+            ("~path/to/colours", SamplingMethod.RANDOM, "path/to/colours"),
+            ("!änder", SamplingMethod.COMBINATORIAL, "änder"),
+        ],
+    )
+    def test_sampling_method(
+        self,
+        input: str,
+        sampling_method: SamplingMethod,
+        wildcard: str,
+    ):
+        wildcard_command = parse(f"__{input}__")
+        assert isinstance(wildcard_command, WildcardCommand)
+        assert wildcard_command.wildcard == wildcard
+        assert wildcard_command.sampling_method == sampling_method
 
     def test_two_wildcards_adjacent(self):
         sequence = parse("__colours__ __colours__")
@@ -76,6 +97,22 @@ class TestParser:
         assert all(isinstance(v, LiteralCommand) for v in values)
         assert values[0].literal == "cat"
         assert values[1].literal == "dog"
+
+    @pytest.mark.parametrize(
+        "input, sampling_method",
+        [
+            ("{red|green|blue}", SamplingMethod.DEFAULT),
+            ("{~red|green|blue}", SamplingMethod.RANDOM),
+            ("{!red|green|blue}", SamplingMethod.COMBINATORIAL),
+            ("{!__test/colours__}", SamplingMethod.COMBINATORIAL),
+            ("{~1-3$$ and $$red|green|blue}", SamplingMethod.RANDOM),
+            ("{~0.2::red|0.4::green|0.6::blue}", SamplingMethod.RANDOM),
+        ],
+    )
+    def test_variant_with_sampling_method(self, input, sampling_method):
+        variant = parse(input)
+        assert isinstance(variant, VariantCommand)
+        assert variant.sampling_method == sampling_method
 
     def test_variant_with_different_characters(self):
         variant = parse("{new york|washing-ton!|änder}")
@@ -173,6 +210,8 @@ class TestParser:
                 0,
                 1,
             ),  # https://github.com/adieyal/sd-dynamic-prompts/issues/223
+            ("{!1-2$$cat|dog|bird}", 1, 2),
+            ("{~1-2$$cat|dog|bird}", 1, 2),
         ],
     )
     def test_range(self, input, min_bound, max_bound):

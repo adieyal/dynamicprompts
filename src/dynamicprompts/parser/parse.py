@@ -8,6 +8,7 @@ import pyparsing as pp
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     VariantOption,
@@ -23,6 +24,9 @@ real_num4 = pp.Word(pp.nums)
 real_num = real_num1 | real_num2 | real_num3 | real_num4
 double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
+sampler_random = pp.Char("~")
+sampler_combinatorial = pp.Char("!")
+sampler_symbol = sampler_random | sampler_combinatorial
 
 
 class Parser:
@@ -76,7 +80,13 @@ def _configure_range() -> pp.ParserElement:
 
 
 def _configure_wildcard() -> pp.ParserElement:
-    wildcard = wildcard_enclosure + ... + wildcard_enclosure
+    wildcard_path = pp.Regex(r"((?!__)[^{}#])+")("path").leave_whitespace()
+    wildcard = (
+        wildcard_enclosure
+        + pp.Optional(sampler_symbol)("sampling_method")
+        + wildcard_path
+        + wildcard_enclosure
+    )
 
     return wildcard("wildcard").leave_whitespace()
 
@@ -120,10 +130,12 @@ def _configure_variants(
     variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
-    variants = (
+    variants = pp.Group(
         left_brace
-        + pp.Group(pp.Opt(bound_expr)("bound_expr") + variants_list("variants"))
-        + right_brace
+        + pp.Optional(sampler_symbol)("sampling_method")
+        + pp.Opt(bound_expr)("bound_expr")
+        + variants_list("variants")
+        + right_brace,
     )
 
     return variants.leave_whitespace()
@@ -145,6 +157,10 @@ def _parse_sequence_or_single_command(parse_result: pp.ParseResults) -> Command:
 def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
     assert len(parse_result) == 1
     parts = parse_result[0].as_dict()
+
+    sampling_method_symbol = parts.get("sampling_method")
+    sampling_method = _parse_sampling_method(sampling_method_symbol)
+
     variants = [
         VariantOption(value=v["val"], weight=float(v["weight"][0]))
         for v in parts["variants"]
@@ -162,13 +178,32 @@ def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
         min_bound=min_bound,
         max_bound=max_bound,
         separator=separator,
+        sampling_method=sampling_method,
     )
 
 
+def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod:
+    if sampling_method_symbol == sampler_random:
+        sampling_method = SamplingMethod.RANDOM
+    elif sampling_method_symbol == sampler_combinatorial:
+        sampling_method = SamplingMethod.COMBINATORIAL
+    elif sampling_method_symbol is None:
+        sampling_method = SamplingMethod.DEFAULT
+    else:
+        raise ValueError(f"Unexpected sampling method: {sampling_method_symbol}.")
+
+    return sampling_method
+
+
 def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
-    wildcard = parse_result[0]
+    parts = parse_result.as_dict()
+    wildcard = parts.get("path")
+
+    sampling_method_symbol = parts.get("sampling_method")
+    sampling_method = _parse_sampling_method(sampling_method_symbol)
+
     assert isinstance(wildcard, str)
-    return WildcardCommand(wildcard=wildcard)
+    return WildcardCommand(wildcard=wildcard, sampling_method=sampling_method)
 
 
 def _parse_bound_expr(expr, max_options):

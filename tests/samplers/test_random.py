@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 from dynamicprompts.commands import (
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
@@ -47,6 +48,31 @@ class TestVariantCommand:
         ]
         sampler._random.choices.side_effect = random_choices
 
+        for c in random_choices:
+            prompt = next(sampler.generator_from_command(command))
+            assert prompt == c[0].literal
+
+    def test_sampling_method(self, sampler: RandomSampler):
+        command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.COMBINATORIAL,
+        )
+        sampler._random = mock.Mock()
+        random_choices = [
+            [LiteralCommand("one")],
+            [LiteralCommand("three")],
+            [LiteralCommand("two")],
+            [LiteralCommand("one")],
+        ]
+        sampler._random.choices.side_effect = random_choices
+        prompts = list(sampler.generate_prompts(command))
+        assert prompts == ONE_TWO_THREE
+
+        command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.RANDOM,
+        )
+        prompts = sampler.generate_prompts(command)
         for c in random_choices:
             prompt = next(sampler.generator_from_command(command))
             assert prompt == c[0].literal
@@ -154,6 +180,32 @@ class TestWildcardsCommand:
         # but we'll take our chances.
         while generated_values != wildcard_colors:
             generated_values.add(next(gen))
+
+    def test_sampling_method(self, sampler: RandomSampler):
+        command = WildcardCommand(
+            "colors*",
+            sampling_method=SamplingMethod.COMBINATORIAL,
+        )
+        wildcard_colors = sampler._wildcard_manager.get_all_values(command.wildcard)
+        gen = sampler.generator_from_command(command)
+
+        assert list(gen) == list(wildcard_colors)
+
+        command = WildcardCommand("colors*", sampling_method=SamplingMethod.RANDOM)
+
+        sampler._random = mock.Mock()
+        gen = sampler.generator_from_command(command)
+        random_choices = [
+            LiteralCommand("red"),
+            LiteralCommand("red"),
+            LiteralCommand("yellow"),
+            LiteralCommand("green"),
+        ]
+
+        sampler._random.choice.side_effect = random_choices
+        prompts = [next(gen) for _ in range(4)]
+        for c, prompt in zip(random_choices, prompts):
+            assert c.literal == prompt
 
     def test_wildcard_with_literal(self, sampler: RandomSampler):
         command = WildcardCommand("colors*")

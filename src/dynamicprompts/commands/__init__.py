@@ -1,4 +1,4 @@
-from dynamicprompts.commands.base import Command
+from dynamicprompts.commands.base import Command, SamplingMethod
 from dynamicprompts.commands.literal_command import LiteralCommand
 from dynamicprompts.commands.sequence_command import SequenceCommand
 from dynamicprompts.commands.variant_command import VariantCommand, VariantOption
@@ -11,4 +11,5 @@ __all__ = [
     "VariantCommand",
     "VariantOption",
     "WildcardCommand",
+    "SamplingMethod",
 ]

@@ -5,11 +5,13 @@ from unittest import mock
 import pytest
 from dynamicprompts.commands import (
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
+from dynamicprompts.samplers.random import RandomSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
 from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
@@ -58,6 +60,38 @@ class TestVariantCommand:
         assert prompts[0] == "one"
         assert prompts[1] == "two"
         assert prompts[2] == "three"
+
+    def test_sampling_method(self, sampler: CombinatorialSampler):
+        command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.COMBINATORIAL,
+        )
+        prompts = list(sampler.generate_prompts(command))
+        assert prompts == ONE_TWO_THREE
+
+        command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.RANDOM,
+        )
+        mock_rand = mock.Mock()
+        defaults = {"ignore_whitespace": False, "rand": mock_rand}
+        with mock.patch.object(
+            RandomSampler.__init__,
+            "__kwdefaults__",
+            defaults,
+        ):
+            random_choices = [
+                [LiteralCommand("one")],
+                [LiteralCommand("three")],
+                [LiteralCommand("two")],
+                [LiteralCommand("one")],
+            ]
+            mock_rand.choices.side_effect = random_choices
+            prompts = sampler.generate_prompts(command)
+
+            for c in random_choices:
+                prompt = next(sampler.generator_from_command(command))
+                assert prompt == c[0].literal
 
     def test_variant_with_literal(self, sampler: CombinatorialSampler):
         command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
@@ -169,6 +203,41 @@ class TestWildcardsCommand:
             sampler._wildcard_manager.get_all_values.assert_called_once_with(
                 "colours",
             )
+
+    def test_sampling_method(self, sampler: CombinatorialSampler):
+        with mock.patch.object(
+            sampler._wildcard_manager,
+            "get_all_values",
+            return_value=RED_GREEN_BLUE,
+        ):
+            command = WildcardCommand(
+                "colours",
+                sampling_method=SamplingMethod.COMBINATORIAL,
+            )
+            prompts = list(sampler.generate_prompts(command))
+
+            assert prompts == RED_GREEN_BLUE
+
+            command = WildcardCommand("colours", sampling_method=SamplingMethod.RANDOM)
+            mock_rand = mock.Mock()
+            defaults = {"ignore_whitespace": False, "rand": mock_rand}
+            with mock.patch.object(
+                RandomSampler.__init__,
+                "__kwdefaults__",
+                defaults,
+            ):
+                random_choices = [
+                    LiteralCommand("red"),
+                    LiteralCommand("red"),
+                    LiteralCommand("green"),
+                    LiteralCommand("blue"),
+                ]
+                mock_rand.choice.side_effect = random_choices
+                prompts = sampler.generate_prompts(command)
+
+                for c in random_choices:
+                    prompt = next(sampler.generator_from_command(command))
+                    assert prompt == c.literal
 
     def test_wildcard_with_literal(self, sampler: CombinatorialSampler):
         with mock.patch.object(

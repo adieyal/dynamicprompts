@@ -5,6 +5,7 @@ import pytest
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
@@ -81,8 +82,37 @@ class TestVariant:
         assert variant_command.min_bound == 1
         assert variant_command.max_bound == 2
 
+    def test_sampling_method(self, literals: List[LiteralCommand]):
+        variant_command = VariantCommand(literals)
+        assert variant_command.sampling_method == SamplingMethod.DEFAULT
+
+        variant_command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
+        assert variant_command.sampling_method == SamplingMethod.DEFAULT
+
+        variant_command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.RANDOM,
+        )
+        assert variant_command.sampling_method == SamplingMethod.RANDOM
+
+        variant_command = VariantCommand.from_literals_and_weights(
+            ONE_TWO_THREE,
+            sampling_method=SamplingMethod.COMBINATORIAL,
+        )
+        assert variant_command.sampling_method == SamplingMethod.COMBINATORIAL
+
 
 class TestWildcard:
     def test_init_with_str(self):
         l1 = WildcardCommand("hello")
         assert l1.wildcard == "hello"
+
+    def test_sampling_method(self):
+        l1 = WildcardCommand("hello")
+        assert l1.sampling_method == SamplingMethod.DEFAULT
+
+        l2 = WildcardCommand("hello", sampling_method=SamplingMethod.RANDOM)
+        assert l2.sampling_method == SamplingMethod.RANDOM
+
+        l3 = WildcardCommand("hello", sampling_method=SamplingMethod.COMBINATORIAL)
+        assert l3.sampling_method == SamplingMethod.COMBINATORIAL
