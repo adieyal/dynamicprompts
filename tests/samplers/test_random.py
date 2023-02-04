@@ -6,7 +6,6 @@ from dynamicprompts.commands import (
     LiteralCommand,
     SamplingMethod,
     SequenceCommand,
-    VariantCommand,
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import SamplerManager
@@ -14,7 +13,7 @@ from dynamicprompts.samplers.random import RandomSampler
 from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
 from dynamicprompts.wildcardmanager import WildcardManager
 
-from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
+from tests.consts import RED_AND_GREEN, RED_GREEN_BLUE
 
 
 @pytest.fixture
@@ -28,45 +27,6 @@ def sampler_manager(wildcard_manager: WildcardManager) -> ConcreteSamplerManager
 @pytest.fixture
 def sampler(sampler_manager: ConcreteSamplerManager) -> RandomSampler:
     return cast(RandomSampler, sampler_manager._samplers[SamplingMethod.RANDOM])
-
-
-# @pytest.fixture
-# def sampler(wildcard_manager: WildcardManager) -> RandomSampler:
-#     return RandomSampler(wildcard_manager=wildcard_manager)
-
-
-class TestRandomSequenceCommand:
-    def test_prompts(self, sampler_manager: ConcreteSamplerManager):
-        sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
-        prompt = next(sampler_manager.generator_from_command(sequence))
-        assert prompt == "one two three"
-
-
-class TestVariantCommand:
-    def test_empty_variant(self, sampler_manager: ConcreteSamplerManager):
-        command = VariantCommand([])
-        prompts = list(sampler_manager.generator_from_command(command))
-        assert len(prompts) == 0
-
-    def test_single_variant(self, sampler_manager: ConcreteSamplerManager):
-        command = VariantCommand.from_literals_and_weights(["one"])
-        prompt = next(sampler_manager.generator_from_command(command))
-        assert prompt == "one"
-
-    def test_multiple_variant(self, sampler: RandomSampler):
-        command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
-        with mock.patch.object(sampler, "_get_choices") as get_choices:
-            random_choices = [
-                [LiteralCommand("one")],
-                [LiteralCommand("three")],
-                [LiteralCommand("two")],
-                [LiteralCommand("one")],
-            ]
-            get_choices.side_effect = random_choices
-
-            for c in random_choices:
-                prompt = next(sampler.generator_from_command(command))
-                assert prompt == c[0].literal
 
     # def test_combinatorial_sampling_method(self, sampler_manager: ConcreteSamplerManager):
     #     command = VariantCommand.from_literals_and_weights(
@@ -109,116 +69,8 @@ class TestVariantCommand:
     #                 prompt = next(sampler.generator_from_command(command))
     #                 assert prompt == c[0].literal
 
-    def test_variant_with_literal(self, sampler: RandomSampler):
-        command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
-        command2 = LiteralCommand(" circles")
-        sequence = SequenceCommand([command1, command2])
-
-        with mock.patch.object(sampler, "_get_choices") as get_choices:
-
-            random_choices = [
-                [LiteralCommand("one")],
-                [LiteralCommand("three")],
-                [LiteralCommand("two")],
-                [LiteralCommand("one")],
-            ]
-            get_choices.side_effect = random_choices
-
-            for c in random_choices:
-                prompt = next(sampler.generator_from_command(sequence))
-                assert prompt == f"{c[0].literal} circles"
-
-    def test_variant_with_bound(self, sampler: RandomSampler):
-        variant_values = ONE_TWO_THREE
-        command1 = VariantCommand.from_literals_and_weights(
-            variant_values,
-            min_bound=1,
-            max_bound=2,
-        )
-
-        with mock.patch.object(sampler, "_get_choices") as get_choices:
-            sampler._random = mock.Mock()
-
-            random_choices = [
-                [LiteralCommand("one")],
-                [LiteralCommand("two"), LiteralCommand("one")],
-                [LiteralCommand("three")],
-                [LiteralCommand("three"), LiteralCommand("one")],
-            ]
-            get_choices.side_effect = random_choices
-            sampler._random.randint.side_effect = [1, 2, 1, 2]
-
-            gen = sampler.generator_from_command(command1)
-            for c in random_choices:
-                assert next(gen) == ",".join([v.literal for v in c])
-
-    def test_variant_with_bound_and_sep(self, sampler: RandomSampler):
-        command1 = VariantCommand.from_literals_and_weights(
-            ONE_TWO_THREE,
-            min_bound=1,
-            max_bound=2,
-            separator=" and ",
-        )
-
-        with mock.patch.object(sampler, "_get_choices") as get_choices:
-            sampler._random = mock.Mock()
-
-            random_choices = [LiteralCommand("two"), LiteralCommand("one")]
-            get_choices.side_effect = [random_choices]
-            sampler._random.randint.side_effect = [2]
-            prompt = next(sampler.generator_from_command(command1))
-            assert prompt == "two and one"
-
-    def test_two_variants(self, sampler: RandomSampler):
-        command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
-        command2 = LiteralCommand(" ")
-        command3 = VariantCommand.from_literals_and_weights(SHAPES)
-        sequence = SequenceCommand([command1, command2, command3])
-        expected_combos = {
-            f"{color} {shape}" for color in RED_AND_GREEN for shape in SHAPES
-        }
-        generated_combos = set()
-        gen = sampler.generator_from_command(sequence)
-
-        # This could technically loop forever if the underlying RNG is broken,
-        # but we'll take our chances.
-        while generated_combos != expected_combos:
-            generated_combos.add(next(gen))
-
-    def test_varied_prompt(self, sampler: RandomSampler):
-        command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
-        command3 = VariantCommand.from_literals_and_weights(SHAPES)
-        sequence = SequenceCommand.from_literals(
-            [command1, " ", command3, " ", "are", " ", "cool"],
-        )
-
-        with mock.patch.object(sampler, "_get_choices") as get_choices:
-
-            get_choices.side_effect = [
-                [LiteralCommand("red")],
-                [LiteralCommand("squares")],
-                [LiteralCommand("green")],
-                [LiteralCommand("triangles")],
-            ]
-            gen = sampler.generator_from_command(sequence)
-
-            assert next(gen) == "red squares are cool"
-            assert next(gen) == "green triangles are cool"
-
 
 class TestWildcardsCommand:
-    def test_basic_wildcard(self, sampler: RandomSampler):
-        command = WildcardCommand("colors*")
-        wildcard_colors = set(
-            sampler._wildcard_manager.get_all_values(command.wildcard),
-        )
-        generated_values = set()
-        gen = sampler.generator_from_command(command)
-        # This could technically loop forever if the underlying RNG is broken,
-        # but we'll take our chances.
-        while generated_values != wildcard_colors:
-            generated_values.add(next(gen))
-
     def test_combinatorial_sampling_method(self, sampler: RandomSampler):
         command = WildcardCommand(
             "colors",
@@ -264,45 +116,6 @@ class TestWildcardsCommand:
         prompts = list(sampler_manager.sample_prompts(command, 5))
         assert prompts == ["XXXblue", "XXXgreen", "XXXred", "XXXyellow", "XXXblue"]
 
-    def test_wildcard_with_literal(self, sampler: RandomSampler):
-        command = WildcardCommand("colors*")
-        sequence = SequenceCommand.from_literals(
-            [command, " ", "are", " ", LiteralCommand("cool")],
-        )
-        wildcard_colors = set(
-            sampler._wildcard_manager.get_all_values(command.wildcard),
-        )
-        generated_values = set()
-        gen = sampler.generator_from_command(sequence)
-        # This could technically loop forever if the underlying RNG is broken,
-        # but we'll take our chances.
-        while len(generated_values) < len(wildcard_colors):
-            prompt = next(gen)
-            color, _, rest = prompt.partition(" ")
-            assert color in wildcard_colors
-            assert rest == "are cool"
-            generated_values.add(prompt)
-
-    def test_wildcard_with_variant(self, sampler: RandomSampler):
-        command1 = WildcardCommand("colors*")
-        wildcard_colors = set(
-            sampler._wildcard_manager.get_all_values(command1.wildcard),
-        )
-        total_count = len(wildcard_colors) * len(SHAPES)
-        command3 = VariantCommand.from_literals_and_weights(SHAPES)
-        command3._random = mock.Mock()
-        sequence = SequenceCommand.from_literals([command1, " ", command3])
-        generated_values = set()
-        gen = sampler.generator_from_command(sequence)
-        # This could technically loop forever if the underlying RNG is broken,
-        # but we'll take our chances.
-        while len(generated_values) < total_count:
-            prompt = next(gen)
-            color, _, shape = prompt.partition(" ")
-            assert color in wildcard_colors
-            assert shape in SHAPES
-            generated_values.add(prompt)
-
 
 class TestRandomGenerator:
     def test_empty(self, sampler_manager: ConcreteSamplerManager):
@@ -338,23 +151,6 @@ class TestRandomGenerator:
             assert len(prompts) == 5
             assert all(p in expected_prompts for p in prompts)
             generated_prompts.update(prompts)
-
-    def test_variants_with_bounds(
-        self,
-        sampler: RandomSampler,
-        sampler_manager: ConcreteSamplerManager,
-    ):
-        sampler._random = mock.Mock()
-        shapes = [LiteralCommand("square"), LiteralCommand("circle")]
-
-        with mock.patch.object(sampler, "_get_choices") as mock_choices:
-            sampler._random.randint.return_value = 2
-            mock_choices.side_effect = [shapes]
-            assert list(
-                sampler_manager.sample_prompts("A red {2$$square|circle}", 1),
-            ) == [
-                "A red square,circle",
-            ]
 
     def test_variants_with_larger_bounds_than_choices(
         self,

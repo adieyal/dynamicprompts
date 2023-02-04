@@ -58,6 +58,9 @@ class CyclicalSampler(Sampler):
         variant_command: VariantCommand,
     ) -> StringGen:
 
+        if len(variant_command.values) == 0:
+            return
+
         combinations = (
             combo
             for bound in range(variant_command.min_bound, variant_command.max_bound + 1)

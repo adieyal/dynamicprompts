@@ -57,25 +57,18 @@ class CombinatorialSampler(Sampler):
         )
         self._sampler_manager = sampler_manager
 
-    def _get_combinatorial_sequence(
-        self,
-        tokens: list[Command],
-        *,
-        separator: str,
-    ) -> typing.Iterable[str]:
+    def _get_sequence(self, command: SequenceCommand) -> StringGen:
+        def get_sequence(tokens: list[Command]) -> typing.Iterable[list[str]]:
+            if not tokens:
+                yield []
+            else:
+                for prompt in self._sampler_manager.generator_from_command(tokens[0]):
+                    for next_prompts in get_sequence(tokens[1:]):
+                        yield [prompt] + next_prompts
 
-        if not tokens:
-            yield ""
-            return
-
-        token = tokens[0]
-        for prompt in self._sampler_manager.generator_from_command(token):
-            for next_prompts in self._get_combinatorial_sequence(
-                tokens[1:],
-                separator=separator,
-            ):
-                res = prompt + separator + next_prompts
-                yield res
+        word_arrays = get_sequence(command.tokens)
+        for word_arr in word_arrays:
+            yield command.separator.join(word_arr)
 
     def _get_combinatorial_variant(
         self,
@@ -108,10 +101,7 @@ class CombinatorialSampler(Sampler):
         if isinstance(command, LiteralCommand):
             yield command.literal
         elif isinstance(command, SequenceCommand):
-            yield from self._get_combinatorial_sequence(
-                command.tokens,
-                separator=command.separator,
-            )
+            yield from self._get_sequence(command)
         elif isinstance(command, VariantCommand):
             yield from self._get_combinatorial_variant(command)
         elif isinstance(command, WildcardCommand):

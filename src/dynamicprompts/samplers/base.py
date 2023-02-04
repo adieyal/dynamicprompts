@@ -24,9 +24,7 @@ class SamplerManager(metaclass=ABCMeta):
         prompt: str | Command,
         num_prompts: int | None = None,
     ) -> typing.Iterable[str]:
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not implement sample_prompts",
-        )
+        ...
 
     def get_combination_generator(
         self,

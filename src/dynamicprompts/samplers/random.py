@@ -78,10 +78,14 @@ class RandomSampler(Sampler):
                     self._sampler_manager.generator_from_command(c)
                     for c in selected_commands
                 ]
-                yield rotate_and_join(
-                    sub_generators,
-                    separator=variant_command.separator,
-                )
+
+                if len(sub_generators) == 0:
+                    yield ""
+                else:
+                    yield rotate_and_join(
+                        sub_generators,
+                        separator=variant_command.separator,
+                    )
 
     def _get_random_wildcard(self, command: WildcardCommand):
         values = self._wildcard_manager.get_all_values(command.wildcard)
