@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-from typing import Iterable
+from typing import Generator, Iterable
 
 from dynamicprompts.commands import Command, LiteralCommand, SamplingMethod
 
@@ -26,7 +26,9 @@ class VariantCommand(Command):
     def __post_init__(self):
         min_bound, max_bound = sorted((self.min_bound, self.max_bound))
         self.min_bound = max(0, min_bound)
-        self.max_bound = max_bound
+        self.max_bound = min(len(self.variants), max_bound)
+
+        self.min_bound = min(self.min_bound, self.max_bound)
 
     def __len__(self) -> int:
         return len(self.variants)
@@ -67,10 +69,17 @@ class VariantCommand(Command):
             sampling_method=sampling_method,
         )
 
-    def get_value_combinations(self, k: int) -> Iterable[list[Command]]:
+    def get_value_combinations(
+        self,
+        k: int,
+        values=None,
+    ) -> Generator[list[Command], None, None]:
+        if values is None:
+            values = self.values
         if k <= 0:
             yield []
         else:
-            for variant in self.values:
-                for item in self.get_value_combinations(k - 1):
-                    yield [variant] + item
+            for value in values:
+                other_values = [v for v in values if v != value]
+                for item in self.get_value_combinations(k - 1, values=other_values):
+                    yield [value] + item

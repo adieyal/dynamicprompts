@@ -3,16 +3,14 @@ from __future__ import annotations
 import dataclasses
 from typing import Iterable
 
-from dynamicprompts.commands import (
-    Command,
-    LiteralCommand,
-)
+from dynamicprompts.commands import Command, LiteralCommand, SamplingMethod
 
 
 @dataclasses.dataclass
 class SequenceCommand(Command):
     tokens: list[Command]
     separator: str = ""
+    sampling_method: SamplingMethod = SamplingMethod.DEFAULT
 
     def __len__(self) -> int:
         return len(self.tokens)
@@ -34,10 +32,15 @@ class SequenceCommand(Command):
         values: list[str | Command],
         *,
         separator: str = "",
+        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
     ) -> SequenceCommand:
         return SequenceCommand(
             tokens=[
-                v if isinstance(v, Command) else LiteralCommand(str(v)) for v in values
+                v
+                if isinstance(v, Command)
+                else LiteralCommand(str(v), sampling_method=sampling_method)
+                for v in values
             ],
             separator=separator,
+            sampling_method=sampling_method,
         )
