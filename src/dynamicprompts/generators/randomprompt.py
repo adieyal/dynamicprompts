@@ -3,8 +3,10 @@ from __future__ import annotations
 import logging
 from random import Random
 
+from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.samplers.random import DEFAULT_RANDOM, RandomSampler
+from dynamicprompts.samplers.random import DEFAULT_RANDOM
+from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -28,9 +30,9 @@ class RandomPromptGenerator(PromptGenerator):
             if seed is not None:
                 self._random.seed(seed)
 
-        self._sampler = RandomSampler(
+        self._sampler = ConcreteSamplerManager(
             wildcard_manager=wildcard_manager,
-            rand=self._random,
+            default_sampling_method=SamplingMethod.RANDOM,
             ignore_whitespace=ignore_whitespace,
         )
 
@@ -41,4 +43,4 @@ class RandomPromptGenerator(PromptGenerator):
     ) -> list[str]:
         if template is None or len(template) == 0:
             return [""]
-        return list(self._sampler.generate_prompts(template, num_images))
+        return list(self._sampler.sample_prompts(template, num_images))

@@ -11,13 +11,14 @@ from dynamicprompts.samplers.cycle import CyclicalSampler
 from dynamicprompts.samplers.random import RandomSampler
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import squash_whitespace
+from dynamicprompts.wildcardmanager import WildcardManager
 
 
 class ConcreteSamplerManager(SamplerManager):
     def __init__(
         self,
         *,
-        wildcard_manager,
+        wildcard_manager: WildcardManager,
         default_sampling_method: SamplingMethod,
         ignore_whitespace=False,
     ):
