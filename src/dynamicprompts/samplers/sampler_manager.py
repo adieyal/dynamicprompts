@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from itertools import islice
 
@@ -7,6 +9,7 @@ from dynamicprompts.samplers.base import Sampler, SamplerManager
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 from dynamicprompts.samplers.cycle import CyclicalSampler
 from dynamicprompts.samplers.random import RandomSampler
+from dynamicprompts.types import StringGen
 from dynamicprompts.utils import squash_whitespace
 
 
@@ -52,7 +55,7 @@ class ConcreteSamplerManager(SamplerManager):
             SamplingMethod.DEFAULT: default_sampler,
         }
 
-    def generator_from_command(self, command) -> typing.Generator[str, None, None]:
+    def generator_from_command(self, command) -> StringGen:
         return self._samplers[command.sampling_method].generator_from_command(command)
 
     def sample_prompts(

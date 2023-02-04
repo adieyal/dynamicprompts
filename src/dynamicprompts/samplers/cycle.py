@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from itertools import cycle
-from typing import Generator, Iterable
+from typing import Generator
 
 from dynamicprompts.commands import (
     Command,
@@ -11,25 +12,11 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler, SamplerManager
+from dynamicprompts.types import StringGen
+from dynamicprompts.utils import next_sampler_next_value
 from dynamicprompts.wildcardmanager import WildcardManager
 
-
-def rotate_all(generators: list[Generator[str, None, None]]) -> list[str]:
-    return [next(gen) for gen in generators]
-
-
-def rotate_and_join(
-    generators: list[Generator[str, None, None]],
-    *,
-    separator: str,
-) -> str:
-    return separator.join(rotate_all(generators))
-
-
-def next_sampler_next_value(
-    samplers: Iterable[Generator[str, None, None]],
-) -> Generator[str, None, None]:
-    yield from (next(iter(sampler)) for sampler in cycle(samplers))
+logger = logging.getLogger(__name__)
 
 
 def _get_combination_samples(
@@ -61,28 +48,15 @@ class CyclicalSampler(Sampler):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
+            sampler_manager=sampler_manager,
         )
-        self._sampler_manager = sampler_manager
+        # self._sampler_manager = sampler_manager
         self._already_looping = False
-
-    def _get_cyclical_sequence(
-        self,
-        tokens: list[Command],
-        *,
-        separator: str,
-    ) -> Generator[str, None, None]:
-
-        generators = [
-            self._sampler_manager.generator_from_command(token) for token in tokens
-        ]
-
-        while True:
-            yield rotate_and_join(generators, separator="")
 
     def _get_cyclical_variant(
         self,
         variant_command: VariantCommand,
-    ) -> Generator[str, None, None]:
+    ) -> StringGen:
 
         combinations = (
             combo
@@ -105,25 +79,24 @@ class CyclicalSampler(Sampler):
         values = self._wildcard_manager.get_all_values(command.wildcard)
         value_samplers = (self._sampler_manager.sample_prompts(val) for val in values)
 
-        while True:
-            yield from next_sampler_next_value(value_samplers)
+        if len(values) == 0:
+            logger.warning(f"No values found for wildcard {command.wildcard}")
 
-    def _get_cyclical_literal(self, command: LiteralCommand):
         while True:
-            yield command.literal
+            if len(values) == 0:
+                yield f"__{command.wildcard}__"
+            else:
+                yield from next_sampler_next_value(value_samplers)
 
     def generator_from_command(
         self,
         command: Command,
-    ) -> Generator[str, None, None]:
+    ) -> StringGen:
 
         if isinstance(command, LiteralCommand):
-            yield from self._get_cyclical_literal(command)
+            yield from self._get_literal(command)
         elif isinstance(command, SequenceCommand):
-            yield from self._get_cyclical_sequence(
-                command.tokens,
-                separator=command.separator,
-            )
+            yield from self._get_sequence(command)
         elif isinstance(command, VariantCommand):
             yield from self._get_cyclical_variant(command)
         elif isinstance(command, WildcardCommand):
