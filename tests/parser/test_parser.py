@@ -53,6 +53,7 @@ class TestParser:
             ("colours", SamplingMethod.DEFAULT, "colours"),
             ("~path/to/colours", SamplingMethod.RANDOM, "path/to/colours"),
             ("!änder", SamplingMethod.COMBINATORIAL, "änder"),
+            ("@änder", SamplingMethod.CYCLICAL, "änder"),
         ],
     )
     def test_sampling_method(
@@ -107,6 +108,7 @@ class TestParser:
             ("{!__test/colours__}", SamplingMethod.COMBINATORIAL),
             ("{~1-3$$ and $$red|green|blue}", SamplingMethod.RANDOM),
             ("{~0.2::red|0.4::green|0.6::blue}", SamplingMethod.RANDOM),
+            ("{@0.2::red|0.4::green|0.6::blue}", SamplingMethod.CYCLICAL),
         ],
     )
     def test_variant_with_sampling_method(self, input, sampling_method):

@@ -26,7 +26,8 @@ double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
 sampler_random = pp.Char("~")
 sampler_combinatorial = pp.Char("!")
-sampler_symbol = sampler_random | sampler_combinatorial
+sampler_cyclical = pp.Char("@")
+sampler_symbol = sampler_random | sampler_combinatorial | sampler_cyclical
 
 
 class Parser:
@@ -187,6 +188,8 @@ def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod
         sampling_method = SamplingMethod.RANDOM
     elif sampling_method_symbol == sampler_combinatorial:
         sampling_method = SamplingMethod.COMBINATORIAL
+    elif sampling_method_symbol == sampler_cyclical:
+        sampling_method = SamplingMethod.CYCLICAL
     elif sampling_method_symbol is None:
         sampling_method = SamplingMethod.DEFAULT
     else:
