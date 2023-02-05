@@ -6,7 +6,7 @@ from random import Random
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.samplers.random import DEFAULT_RANDOM
-from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class RandomPromptGenerator(PromptGenerator):
             if seed is not None:
                 self._random.seed(seed)
 
-        self._sampler = ConcreteSamplerManager(
+        self._sampler = ConcreteSamplerRouter(
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.RANDOM,
             ignore_whitespace=ignore_whitespace,

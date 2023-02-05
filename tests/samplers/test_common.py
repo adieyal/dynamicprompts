@@ -11,8 +11,8 @@ from dynamicprompts.commands import (
 )
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
-from dynamicprompts.samplers.base import SamplerManager
-from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.samplers.base import SamplerRouter
+from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 from pytest import FixtureRequest
 
@@ -51,7 +51,7 @@ class TestSequenceCommand:
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
         prompt = next(manager.generator_from_command(sequence))
         assert prompt == expected
@@ -70,7 +70,7 @@ class TestSequenceCommand:
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         command1 = LiteralCommand("A")
         command2 = LiteralCommand("sentence")
@@ -94,7 +94,7 @@ class TestLiteralCommand:
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         literal = LiteralCommand("one")
         gen = manager.generator_from_command(literal)
@@ -114,7 +114,7 @@ class TestLiteralCommand:
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
         prompts = manager.generator_from_command(sequence)
@@ -132,7 +132,7 @@ class TestVariantCommand:
         ],
     )
     def test_empty_variant(self, sampler_manager: str, request: FixtureRequest):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         command = VariantCommand([])
         prompts = manager.generator_from_command(command)
@@ -152,7 +152,7 @@ class TestVariantCommand:
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         command = VariantCommand.from_literals_and_weights(["one"])
 
@@ -173,7 +173,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
 
         command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
@@ -206,7 +206,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
@@ -240,7 +240,7 @@ class TestVariantCommand:
         sampler_manager: str,
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
 
         command1 = VariantCommand.from_literals_and_weights(
             ONE_TWO_THREE,
@@ -268,7 +268,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         variant_values = ONE_TWO_THREE
@@ -314,7 +314,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(
@@ -355,7 +355,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(RED_GREEN_BLUE)
@@ -395,7 +395,7 @@ class TestVariantCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
@@ -447,7 +447,7 @@ class TestWildcardsCommand:
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command = WildcardCommand("colors*")
@@ -484,7 +484,7 @@ class TestWildcardsCommand:
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command = WildcardCommand("colors*")
@@ -524,7 +524,7 @@ class TestWildcardsCommand:
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         command1 = WildcardCommand("colors*")
@@ -586,7 +586,7 @@ class TestWildcardsCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
 
         with mock.patch.object(
             manager._wildcard_manager,
@@ -632,7 +632,7 @@ class TestWildcardsCommand:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
 
         test_colours = [
             ["__other_colours__", "green", "blue"],

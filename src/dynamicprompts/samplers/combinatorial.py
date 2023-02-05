@@ -13,7 +13,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.commands.command_collection import CommandCollection
-from dynamicprompts.samplers.base import Sampler, SamplerManager
+from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.types import StringGen
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -31,7 +31,7 @@ def _dedupe(arr: list[str]) -> tuple[str, ...]:
 
 
 def _combo_to_prompt(
-    sampler_manager: SamplerManager,
+    sampler_manager: SamplerRouter,
     combo: list[Command],
 ) -> typing.Iterable[list[str]]:
     if len(combo) == 0:
@@ -54,7 +54,7 @@ class CombinatorialSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerManager,
+        sampler_manager: SamplerRouter,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,

@@ -1,11 +1,11 @@
 from typing import Iterable
 
 from dynamicprompts.commands import Command
-from dynamicprompts.samplers.base import SamplerManager
+from dynamicprompts.samplers.base import SamplerRouter
 
 
 class CommandCollection:
-    def __init__(self, commands: Iterable[Command], sampler_manager: SamplerManager):
+    def __init__(self, commands: Iterable[Command], sampler_manager: SamplerRouter):
         self._sampler_manager = sampler_manager
         self._commands = list(commands)
         self._generators = [

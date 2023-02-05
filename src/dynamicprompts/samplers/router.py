@@ -5,7 +5,7 @@ from itertools import islice
 
 from dynamicprompts.commands.base import Command, SamplingMethod
 from dynamicprompts.parser.parse import parse
-from dynamicprompts.samplers.base import Sampler, SamplerManager
+from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 from dynamicprompts.samplers.cycle import CyclicalSampler
 from dynamicprompts.samplers.random import RandomSampler
@@ -14,7 +14,7 @@ from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
-class ConcreteSamplerManager(SamplerManager):
+class ConcreteSamplerRouter(SamplerRouter):
     def __init__(
         self,
         *,

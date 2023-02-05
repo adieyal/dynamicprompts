@@ -10,7 +10,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.samplers.base import Sampler, SamplerManager
+from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -26,7 +26,7 @@ class RandomSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerManager,
+        sampler_manager: SamplerRouter,
         rand: Random = DEFAULT_RANDOM,
     ):
         super().__init__(

@@ -12,7 +12,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 logger = logging.getLogger(__name__)
 
 
-class SamplerManager(metaclass=ABCMeta):
+class SamplerRouter(metaclass=ABCMeta):
     def generator_from_command(self, command) -> typing.Generator[str, None, None]:
         raise NotImplementedError(
             f"{self.__class__.__name__} does not implement generator_from_command",
@@ -49,7 +49,7 @@ class Sampler(metaclass=ABCMeta):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerManager,
+        sampler_manager: SamplerRouter,
     ):
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace

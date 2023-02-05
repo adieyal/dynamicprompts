@@ -1,12 +1,12 @@
 import pytest
 from dynamicprompts.commands.base import SamplingMethod
-from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
 @pytest.fixture
-def random_sampler_manager(wildcard_manager: WildcardManager) -> ConcreteSamplerManager:
-    return ConcreteSamplerManager(
+def random_sampler_manager(wildcard_manager: WildcardManager) -> ConcreteSamplerRouter:
+    return ConcreteSamplerRouter(
         wildcard_manager=wildcard_manager,
         default_sampling_method=SamplingMethod.RANDOM,
     )
@@ -15,8 +15,8 @@ def random_sampler_manager(wildcard_manager: WildcardManager) -> ConcreteSampler
 @pytest.fixture
 def cyclical_sampler_manager(
     wildcard_manager: WildcardManager,
-) -> ConcreteSamplerManager:
-    return ConcreteSamplerManager(
+) -> ConcreteSamplerRouter:
+    return ConcreteSamplerRouter(
         wildcard_manager=wildcard_manager,
         default_sampling_method=SamplingMethod.CYCLICAL,
     )
@@ -25,8 +25,8 @@ def cyclical_sampler_manager(
 @pytest.fixture
 def combinatorial_sampler_manager(
     wildcard_manager: WildcardManager,
-) -> ConcreteSamplerManager:
-    return ConcreteSamplerManager(
+) -> ConcreteSamplerRouter:
+    return ConcreteSamplerRouter(
         wildcard_manager=wildcard_manager,
         default_sampling_method=SamplingMethod.COMBINATORIAL,
     )

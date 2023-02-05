@@ -10,8 +10,8 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
-from dynamicprompts.samplers.base import SamplerManager
-from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.samplers.base import SamplerRouter
+from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 from pytest import FixtureRequest
 
@@ -41,7 +41,7 @@ class TestPrompts:
         ],
     )
     def test_empty(self, sampler_manager: str, request: FixtureRequest):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         prompts = list(manager.sample_prompts("", 5))
         assert prompts == []
@@ -60,7 +60,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         template = "A literal sentence"
         assert list(manager.sample_prompts(template, 5)) == expected
@@ -79,7 +79,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: SamplerManager = request.getfixturevalue(sampler_manager)
+        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
 
         template = "Test [low emphasis]"
         assert list(manager.sample_prompts(template, 5)) == expected
@@ -104,7 +104,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A red {square|circle}"
@@ -149,7 +149,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|blue|} rose"
@@ -204,7 +204,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|green} {square|circle}"
@@ -269,7 +269,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {2$$red|green} {square|circle}"
@@ -339,7 +339,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {1-2$$red|green|blue} square"
@@ -396,7 +396,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {2$$|$$red|green|blue} square"
@@ -443,7 +443,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {1::red|2::green|3::blue} square"
@@ -487,7 +487,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|green {square|circle}}"
@@ -528,7 +528,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A __colours__ square"
@@ -573,7 +573,7 @@ class TestPrompts:
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         template = "A __missing__ wildcard"
 
         prompts = manager.sample_prompts(template, len(expected))
@@ -595,7 +595,7 @@ class TestPrompts:
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
         template = "{__colors*__}"
 
@@ -632,7 +632,7 @@ class TestPrompts:
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "{2$$__colors*__|black}"
@@ -690,7 +690,7 @@ class TestPrompts:
         sampler_manager: str,
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
 
         template = "A red {3$$square|circle}"
         prompts = manager.sample_prompts(template, 10)
@@ -711,7 +711,7 @@ class TestPrompts:
         sampler_manager: str,
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         template = "(__colors*__:2.3) "
 
         prompts = list(manager.sample_prompts(template, 20))

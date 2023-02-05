@@ -12,7 +12,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.samplers.base import Sampler, SamplerManager
+from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import next_sampler_next_value
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def _get_combination_samples(
     combo: list[Command],
-    sampler_manager: SamplerManager,
+    sampler_manager: SamplerRouter,
 ) -> Generator[list[str], None, None]:
 
     if len(combo) == 0:
@@ -44,7 +44,7 @@ class CyclicalSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerManager,
+        sampler_manager: SamplerRouter,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,

@@ -1,17 +1,17 @@
-from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.samplers.router import ConcreteSamplerRouter
 
 
 class TestCombinatorialParent:
     def test_cyclical_variant(
         self,
-        combinatorial_sampler_manager: ConcreteSamplerManager,
+        combinatorial_sampler_manager: ConcreteSamplerRouter,
     ):
         template = "A {@red|green} ball"
         prompts = list(combinatorial_sampler_manager.sample_prompts(template, 3))
 
         assert prompts == ["A red ball"]
 
-    def test_variants(self, combinatorial_sampler_manager: ConcreteSamplerManager):
+    def test_variants(self, combinatorial_sampler_manager: ConcreteSamplerRouter):
         template = "A {red|green} {@ball|car}"
         prompts = list(combinatorial_sampler_manager.sample_prompts(template, 3))
 
