@@ -8,7 +8,6 @@ from dynamicprompts.commands import (
     SequenceCommand,
     WildcardCommand,
 )
-from dynamicprompts.samplers.base import SamplerManager
 from dynamicprompts.samplers.random import RandomSampler
 from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -118,40 +117,6 @@ class TestWildcardsCommand:
 
 
 class TestRandomGenerator:
-    def test_empty(self, sampler_manager: ConcreteSamplerManager):
-        prompts = list(sampler_manager.sample_prompts("", 5))
-        assert len(prompts) == 0
-
-    def test_literals(self, sampler_manager: ConcreteSamplerManager):
-        sentence = "A literal sentence"
-        assert list(sampler_manager.sample_prompts(sentence, 5)) == [sentence] * 5
-
-    def test_literal_with_square_brackets(
-        self,
-        sampler_manager: ConcreteSamplerManager,
-    ):
-        prompts = list(sampler_manager.sample_prompts("Test [low emphasis]", 1))
-        assert len(prompts) == 1
-        assert prompts[0] == "Test [low emphasis]"
-
-    def test_variants(self, sampler_manager: ConcreteSamplerManager):
-        expected_prompts = {"A red square", "A red circle"}
-        generated_prompts = set()
-        while generated_prompts != expected_prompts:
-            prompts = list(sampler_manager.sample_prompts("A red {square|circle}", 5))
-            assert len(prompts) == 5  # should generate 5 prompts when asked to
-            assert all(p in expected_prompts for p in prompts)
-            generated_prompts.update(prompts)
-
-    def test_variant_with_blank(self, sampler_manager: SamplerManager):
-        expected_prompts = {"A  rose", "A red rose", "A blue rose"}
-        generated_prompts = set()
-        while generated_prompts != expected_prompts:
-            prompts = list(sampler_manager.sample_prompts("A {red|blue|} rose", 5))
-            assert len(prompts) == 5
-            assert all(p in expected_prompts for p in prompts)
-            generated_prompts.update(prompts)
-
     def test_variants_with_larger_bounds_than_choices(
         self,
         sampler: RandomSampler,
@@ -184,23 +149,6 @@ class TestRandomGenerator:
                 sampler_manager.sample_prompts("A red {3$$|$$square|circle}", 1),
             ) == [
                 "A red square|circle",
-            ]
-
-    def test_two_variants(self, sampler_manager: ConcreteSamplerManager):
-        with mock.patch(
-            "dynamicprompts.samplers.random.DEFAULT_RANDOM.choices",
-        ) as mock_random:
-            mock_random.side_effect = [
-                [LiteralCommand("green")],
-                [LiteralCommand("square")],
-                [LiteralCommand("green")],
-                [LiteralCommand("circle")],
-            ]
-            assert list(
-                sampler_manager.sample_prompts("A {red|green} {square|circle}", 2),
-            ) == [
-                "A green square",
-                "A green circle",
             ]
 
     def test_weighted_variant(

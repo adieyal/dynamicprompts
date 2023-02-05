@@ -49,61 +49,6 @@ def _test_expected(expected: list[str], gen: typing.Iterator[str]):
 
 
 class TestCyclicalGenerator:
-    def test_empty(self, sampler_manager: ConcreteSamplerManager):
-        prompts = list(sampler_manager.sample_prompts("", 5))
-        assert prompts == []
-
-    def test_literals(self, sampler_manager: ConcreteSamplerManager):
-        sentence = "A literal sentence"
-        assert list(sampler_manager.sample_prompts(sentence, 5)) == [sentence] * 5
-
-    def test_literal_with_square_brackets(
-        self,
-        sampler_manager: ConcreteSamplerManager,
-    ):
-        prompts = list(sampler_manager.sample_prompts("Test [low emphasis]", 1))
-        assert len(prompts) == 1
-        assert prompts[0] == "Test [low emphasis]"
-
-    def test_variants(self, sampler_manager: ConcreteSamplerManager):
-        template = "A red {square|circle}"
-        expected_prompts = [
-            "A red square",
-            "A red circle",
-            "A red square",
-            "A red circle",
-            "A red square",
-        ]
-        prompts = list(sampler_manager.sample_prompts(template, 5))
-
-        assert prompts == expected_prompts
-
-    def test_variant_with_blank(self, sampler_manager: ConcreteSamplerManager):
-        template = "A {red|blue|} rose"
-        expected_prompts = [
-            "A red rose",
-            "A blue rose",
-            "A  rose",
-            "A red rose",
-            "A blue rose",
-        ]
-
-        prompts = list(sampler_manager.sample_prompts(template, 5))
-        assert prompts == expected_prompts
-
-    def test_variants_with_bounds(self, sampler_manager: ConcreteSamplerManager):
-        template = "A red {2$$square|circle}"
-        expected_prompts = [
-            "A red square,circle",
-            "A red circle,square",
-            "A red square,circle",
-            "A red circle,square",
-            "A red square,circle",
-        ]
-
-        prompts = list(sampler_manager.sample_prompts(template, 5))
-        assert prompts == expected_prompts
-
     def test_variants_with_larger_bounds_than_choices(
         self,
         sampler_manager: ConcreteSamplerManager,
@@ -128,18 +73,6 @@ class TestCyclicalGenerator:
         template = "A red {2$$|$$square|circle}"
         expected = ["A red square|circle", "A red circle|square"]
         assert list(sampler_manager.sample_prompts(template, 2)) == expected
-
-    def test_two_variants(self, sampler_manager: ConcreteSamplerManager):
-        template = "A {red|green} {square|circle}"
-
-        gen = list(sampler_manager.sample_prompts(template, 4))
-        expected_prompts = [
-            "A red square",
-            "A green circle",
-            "A red square",
-            "A green circle",
-        ]
-        assert list(gen) == expected_prompts
 
     def test_nested_variants(self, sampler_manager: ConcreteSamplerManager):
         template = "A {red|green {square|circle}}"

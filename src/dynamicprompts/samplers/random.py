@@ -43,7 +43,6 @@ class RandomSampler(Sampler):
         weights: list[float],
         num_choices,
     ) -> list[Command]:
-
         return choose_without_replacement(
             values,
             weights=weights,
