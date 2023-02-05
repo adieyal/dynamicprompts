@@ -41,6 +41,13 @@ def next_sampler_next_value(
     yield from (next(iter(sampler)) for sampler in cycle(samplers))
 
 
+def cross(l1: Iterable[T], l2: Iterable[T]) -> Iterable[tuple[T, T]]:
+    for e1 in l1:
+        for e2 in l2:
+            if e1 != e2:
+                yield (e1, e2)
+
+
 def choose_without_replacement(
     values: list[T],
     *,
