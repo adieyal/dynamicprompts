@@ -1,14 +1,34 @@
+import random
 from unittest import mock
 
 import pytest
 from dynamicprompts.commands import (
     LiteralCommand,
     SamplingMethod,
+    SequenceCommand,
+    VariantCommand,
+    WildcardCommand,
 )
-from dynamicprompts.samplers import RandomSampler
+from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.samplers.base import SamplerManager
 from dynamicprompts.samplers.sampler_manager import ConcreteSamplerManager
+from dynamicprompts.wildcardmanager import WildcardManager
 from pytest import FixtureRequest
+
+from tests.consts import RED_GREEN_BLUE
+from tests.utils import cross, interleave, zipstr
+
+
+@pytest.fixture
+def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
+    wildcard_colours = wildcard_manager.get_all_values("colors*")
+    shuffled_colours = wildcard_colours.copy()
+    random.shuffle(shuffled_colours)
+
+    return {
+        "wildcard_colours": wildcard_colours,
+        "shuffled_colours": shuffled_colours,
+    }
 
 
 class TestPrompts:
@@ -90,11 +110,13 @@ class TestPrompts:
         template = "A red {square|circle}"
 
         if isinstance(sampler, RandomSampler):
-            sampler._random.choices = mock.Mock()
-            sampler._random.choices.side_effect = [
-                [LiteralCommand(v)] for v in expected
-            ]
-            prompts = manager.sample_prompts(template, 5)
+            random_choices = [[LiteralCommand(v)] for v in expected]
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, 5))
         else:
             prompts = manager.sample_prompts(template, 5)
 
@@ -133,11 +155,13 @@ class TestPrompts:
         template = "A {red|blue|} rose"
 
         if isinstance(sampler, RandomSampler):
-            sampler._random.choices = mock.Mock()
-            sampler._random.choices.side_effect = [
-                [LiteralCommand(v)] for v in expected
-            ]
-            prompts = manager.sample_prompts(template, 5)
+            random_choices = [[LiteralCommand(v)] for v in expected]
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, 5))
         else:
             prompts = manager.sample_prompts(template, 5)
 
@@ -194,13 +218,15 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(colour)])
                 random_choices.append([LiteralCommand(shape)])
 
-            sampler._random.choices = mock.Mock()
-            sampler._random.choices.side_effect = random_choices
-            prompts = manager.sample_prompts(template, 5)
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, 5))
         else:
             prompts = manager.sample_prompts(template, 5)
 
-        prompts = manager.sample_prompts(template, 5)
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
@@ -261,9 +287,12 @@ class TestPrompts:
 
                 random_choices.append([LiteralCommand(shape)])
 
-            sampler._random.choices = mock.Mock()
-            sampler._random.choices.side_effect = random_choices
-            prompts = manager.sample_prompts(template, 5)
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, 5))
         else:
             prompts = manager.sample_prompts(template, 5)
 
@@ -314,7 +343,6 @@ class TestPrompts:
         sampler = manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {1-2$$red|green|blue} square"
-        prompts = manager.sample_prompts(template, 5)
 
         if isinstance(sampler, RandomSampler):
             split = [v.split() for v in expected]
@@ -326,13 +354,368 @@ class TestPrompts:
                 for p in pair:
                     random_choices.append([LiteralCommand(p)])
 
-            sampler._random.choices = mock.Mock()
-            sampler._random.choices.side_effect = random_choices
-            sampler._random.randint = mock.Mock()
-            sampler._random.randint.side_effect = [2, 1, 2, 2, 2]
-
-            prompts = manager.sample_prompts(template, 5)
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                with mock.patch.object(
+                    sampler._random,
+                    "randint",
+                    side_effect=[2, 1, 2, 2, 2],
+                ):
+                    prompts = list(manager.sample_prompts(template, 5))
         else:
             prompts = manager.sample_prompts(template, 5)
 
         assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "expected"),
+        [
+            (
+                "random_sampler_manager",
+                [
+                    "red|blue",
+                    "blue|green",
+                ],
+            ),
+            (
+                "cyclical_sampler_manager",
+                cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
+            ),
+            (
+                "combinatorial_sampler_manager",
+                cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
+            ),
+        ],
+    )
+    def test_combination_variants_with_separator(
+        self,
+        sampler_manager: str,
+        expected: list[str],
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+
+        template = "A {2$$|$$red|green|blue} square"
+
+        if isinstance(sampler, RandomSampler):
+            colour_pairs = [c.split("|") for c in expected]
+            random_choices = []
+
+            for pair in colour_pairs:
+                for p in pair:
+                    random_choices.append([LiteralCommand(p)])
+
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                with mock.patch.object(sampler._random, "randint", side_effect=[2, 2]):
+                    prompts = list(manager.sample_prompts(template, len(expected)))
+
+        else:
+            prompts = manager.sample_prompts(template, len(expected))
+
+        expected = [f"A {e} square" for e in expected]
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "expected"),
+        [
+            # (  # TODO - fix this
+            #     "random_sampler_manager",
+            #     [
+            #         "blue", "red"
+            #     ],
+            # ),
+            ("cyclical_sampler_manager", RED_GREEN_BLUE),
+            ("combinatorial_sampler_manager", RED_GREEN_BLUE),
+        ],
+    )
+    def test_weighted_variant(
+        self,
+        sampler_manager: str,
+        expected: list[str],
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+
+        template = "A {1::red|2::green|3::blue} square"
+
+        if isinstance(sampler, RandomSampler):
+            random_choices = []
+
+            for colour in expected:
+                random_choices.append([LiteralCommand(colour)])
+
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, len(expected)))
+        else:
+            prompts = manager.sample_prompts(template, len(expected))
+
+        expected = [f"A {e} square" for e in expected]
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "expected"),
+        [
+            ("random_sampler_manager", ["A green circle", "A red"]),
+            (
+                "cyclical_sampler_manager",
+                ["A red", "A green square", "A red", "A green circle"],
+            ),
+            (
+                "combinatorial_sampler_manager",
+                ["A red", "A green square", "A green circle"],
+            ),
+        ],
+    )
+    def test_nested_variants(
+        self,
+        sampler_manager: str,
+        expected: list[str],
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+
+        template = "A {red|green {square|circle}}"
+
+        if isinstance(sampler, RandomSampler):
+            variant = VariantCommand.from_literals_and_weights(["square", "circle"])
+            random_choices = [
+                [SequenceCommand.from_literals([LiteralCommand("green "), variant])],
+                [LiteralCommand("circle")],
+                [LiteralCommand("red")],
+            ]
+
+            with mock.patch.object(
+                sampler._random,
+                "choices",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, len(expected)))
+        else:
+            prompts = manager.sample_prompts(template, len(expected))
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "expected"),
+        [
+            (
+                "random_sampler_manager",
+                ["blue", "red"],
+            ),
+            ("cyclical_sampler_manager", RED_GREEN_BLUE * 2),
+            ("combinatorial_sampler_manager", RED_GREEN_BLUE),
+        ],
+    )
+    def test_wildcards(
+        self,
+        sampler_manager: str,
+        expected: list[str],
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+
+        template = "A __colours__ square"
+
+        with mock.patch.object(
+            manager._wildcard_manager,
+            "get_all_values",
+            side_effect=[RED_GREEN_BLUE],
+        ):
+
+            if isinstance(sampler, RandomSampler):
+                random_choices = []
+
+                for colour in expected:
+                    random_choices.append(LiteralCommand(colour))
+
+                with mock.patch.object(
+                    sampler._random,
+                    "choice",
+                    side_effect=random_choices,
+                ):
+                    prompts = list(manager.sample_prompts(template, len(expected)))
+
+            else:
+                prompts = manager.sample_prompts(template, len(expected))
+
+            expected = [f"A {e} square" for e in expected]
+
+            assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "expected"),
+        [
+            ("random_sampler_manager", ["A __missing__ wildcard"] * 5),
+            ("cyclical_sampler_manager", ["A __missing__ wildcard"] * 5),
+            ("combinatorial_sampler_manager", []),
+        ],
+    )
+    def test_missing_wildcard(
+        self,
+        sampler_manager: str,
+        expected: list[str],
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        template = "A __missing__ wildcard"
+
+        prompts = manager.sample_prompts(template, len(expected))
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "key"),
+        [
+            ("random_sampler_manager", "shuffled_colours"),
+            ("cyclical_sampler_manager", "wildcard_colours"),
+            ("combinatorial_sampler_manager", "wildcard_colours"),
+        ],
+    )
+    def test_nested_wildcard(
+        self,
+        sampler_manager: str,
+        key: str,
+        request: FixtureRequest,
+        data_lookups: dict[str, list[str]],
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        template = "{__colors*__}"
+
+        expected = data_lookups[key]
+        if isinstance(sampler, RandomSampler):
+            random_choices = []
+
+            for colour in expected:
+                random_choices.append(LiteralCommand(colour))
+
+            with mock.patch.object(
+                sampler._random,
+                "choice",
+                side_effect=random_choices,
+            ):
+                prompts = list(manager.sample_prompts(template, len(expected)))
+        else:
+            prompts = manager.sample_prompts(template, len(expected))
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager", "key"),
+        [
+            # ("random_sampler_manager", "shuffled_colours"), # TODO - fix this
+            ("cyclical_sampler_manager", "wildcard_colours"),
+            ("combinatorial_sampler_manager", "wildcard_colours"),
+        ],
+    )
+    def test_nested_wildcard_with_range_and_literal(
+        self,
+        sampler_manager: str,
+        key: str,
+        request: FixtureRequest,
+        data_lookups: dict[str, list[str]],
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        sampler = manager._samplers[SamplingMethod.DEFAULT]
+
+        template = "{2$$__colors*__|black}"
+        expected = data_lookups[key]
+
+        if isinstance(sampler, RandomSampler):
+            random_choices = []
+            variant_choices = [[LiteralCommand("black")], [WildcardCommand("colors*")]]
+
+            for colour in expected:
+                random_choices.append(LiteralCommand(colour))
+
+            with mock.patch.object(
+                sampler._random,
+                "choice",
+                side_effect=random_choices,
+            ):
+                with mock.patch.object(
+                    sampler._random,
+                    "choices",
+                    side_effect=variant_choices,
+                ):
+
+                    black = ["black"] * len(expected)
+                    arr1 = zipstr(expected, black, sep=",")
+                    arr2 = zipstr(black, expected, sep=",")
+                    expected = interleave(arr1, arr2)
+
+                    prompts = list(manager.sample_prompts(template, len(expected)))
+        else:
+            if isinstance(sampler, CyclicalSampler):
+                black = ["black"] * len(expected)
+                arr1 = zipstr(expected, black, sep=",")
+                arr2 = zipstr(black, expected, sep=",")
+                expected = interleave(arr1, arr2)
+            elif isinstance(sampler, CombinatorialSampler):
+                expected = [f"{e},black" for e in expected] + [
+                    f"black,{e}" for e in expected
+                ]
+
+            prompts = manager.sample_prompts(template, len(expected))
+
+        assert list(prompts) == expected
+
+    @pytest.mark.parametrize(
+        ("sampler_manager"),
+        [
+            ("random_sampler_manager"),
+            ("cyclical_sampler_manager"),
+            ("combinatorial_sampler_manager"),
+        ],
+    )
+    def test_variants_with_larger_bounds_than_choices(
+        self,
+        sampler_manager: str,
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+
+        template = "A red {3$$square|circle}"
+        prompts = manager.sample_prompts(template, 10)
+
+        for el in prompts:
+            assert el in ["A red square,circle", "A red circle,square"]
+
+    @pytest.mark.parametrize(
+        ("sampler_manager"),
+        [
+            ("random_sampler_manager"),
+            ("cyclical_sampler_manager"),
+            ("combinatorial_sampler_manager"),
+        ],
+    )
+    def test_nospace_before_or_after_wildcard(
+        self,
+        sampler_manager: str,
+        request: FixtureRequest,
+    ):
+        manager: ConcreteSamplerManager = request.getfixturevalue(sampler_manager)
+        template = "(__colors*__:2.3) "
+
+        prompts = list(manager.sample_prompts(template, 20))
+
+        for prompt in prompts:
+            assert "( " not in prompt
+            assert " :" not in prompt

@@ -26,6 +26,15 @@ class SequenceCommand(Command):
             isinstance(t, Command) for t in self.tokens
         ), "All tokens must be Command instances"
 
+    def __eq__(self, __o: object) -> bool:
+        if isinstance(__o, SequenceCommand):
+            return (
+                self.tokens == __o.tokens
+                and self.separator == __o.separator
+                and self.sampling_method == __o.sampling_method
+            )
+        return False
+
     @classmethod
     def from_literals(
         cls,

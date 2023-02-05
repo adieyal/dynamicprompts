@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import typing
 
 from dynamicprompts.commands import (
@@ -12,6 +13,8 @@ from dynamicprompts.commands import (
 from dynamicprompts.samplers.base import Sampler, SamplerManager
 from dynamicprompts.types import StringGen
 from dynamicprompts.wildcardmanager import WildcardManager
+
+logger = logging.getLogger(__name__)
 
 
 def _dedupe(arr: list[str]) -> tuple[str, ...]:
@@ -90,7 +93,11 @@ class CombinatorialSampler(Sampler):
                         yield variant_command.separator.join(deduped_arr)
 
     def _get_combinatorial_wildcard(self, command: WildcardCommand):
-        for val in self._wildcard_manager.get_all_values(command.wildcard):
+        values = self._wildcard_manager.get_all_values(command.wildcard)
+        if len(values) == 0:
+            logger.warning(f"No values found for wildcard {command.wildcard}")
+
+        for val in values:
             # Parse and generate prompts from wildcard value
             yield from self._sampler_manager.sample_prompts(val)
 

@@ -14,3 +14,8 @@ class LiteralCommand(Command):
         if isinstance(other, LiteralCommand):
             return LiteralCommand(f"{self.literal} {other.literal}")
         raise TypeError(f"Cannot concatenate LiteralCommand with {other}")
+
+    def __eq__(self, other):
+        if isinstance(other, LiteralCommand):
+            return self.literal == other.literal
+        return False

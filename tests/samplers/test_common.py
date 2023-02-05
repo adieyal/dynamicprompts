@@ -17,15 +17,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 from pytest import FixtureRequest
 
 from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
-
-
-def cross(list1: list[str], list2: list[str], sep=",") -> list[str]:
-    return [f"{x}{sep}{y}" for x in list1 for y in list2 if x != y]
-
-
-def zipstr(list1: list[str], list2: list[str], sep="") -> list[str]:
-    return [f"{x}{sep}{y}" for x, y in zip(list1, list2)]
-
+from tests.utils import cross, zipstr
 
 ONE_TWO_THREEx2 = cross(ONE_TWO_THREE, ONE_TWO_THREE)
 ONE_TWO_THREEx2and = cross(ONE_TWO_THREE, ONE_TWO_THREE, sep=" and ")

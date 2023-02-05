@@ -86,7 +86,7 @@ class RandomSampler(Sampler):
                         separator=variant_command.separator,
                     )
 
-    def _get_random_wildcard(self, command: WildcardCommand):
+    def _get_random_wildcard(self, command: WildcardCommand) -> StringGen:
         values = self._wildcard_manager.get_all_values(command.wildcard)
 
         if len(values) == 0:
