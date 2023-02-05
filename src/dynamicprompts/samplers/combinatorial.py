@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import logging
 import typing
+from typing import Iterable
 
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.commands.command_collection import CommandCollection
 from dynamicprompts.samplers.base import Sampler, SamplerManager
 from dynamicprompts.types import StringGen
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -60,14 +63,46 @@ class CombinatorialSampler(Sampler):
         )
         self._sampler_manager = sampler_manager
 
+    def _propograte_sampling_method(self, commands: Iterable[Command]) -> None:
+        for cmd in commands:
+            if cmd.sampling_method == SamplingMethod.DEFAULT:
+                cmd.sampling_method = SamplingMethod.COMBINATORIAL
+
     def _get_sequence(self, command: SequenceCommand) -> StringGen:
-        def get_sequence(tokens: list[Command]) -> typing.Iterable[list[str]]:
-            if not tokens:
+        self._propograte_sampling_method(command.tokens)
+
+        sentinel_start = LiteralCommand(
+            "",
+            sampling_method=SamplingMethod.COMBINATORIAL,
+        )
+        sentinel_end = LiteralCommand("", sampling_method=SamplingMethod.COMBINATORIAL)
+
+        non_combo_commands = [
+            c
+            for c in command.tokens
+            if c.sampling_method != SamplingMethod.COMBINATORIAL
+        ]
+        command_collection = CommandCollection(
+            non_combo_commands,
+            self._sampler_manager,
+        )
+        command.tokens.insert(0, sentinel_start)
+        command.tokens.append(sentinel_end)
+
+        def get_sequence(commands: list[Command]) -> typing.Iterable[list[str]]:
+            if len(commands) == 0:
                 yield []
             else:
-                for prompt in self._sampler_manager.generator_from_command(tokens[0]):
-                    for next_prompts in get_sequence(tokens[1:]):
-                        yield [prompt] + next_prompts
+                first_command, rest = commands[0], commands[1:]
+                if first_command.sampling_method != SamplingMethod.COMBINATORIAL:
+                    for rest_vals in get_sequence(rest):
+                        val = command_collection.get_value(first_command)
+                        yield [val] + rest_vals
+                else:
+                    gen = self._sampler_manager.generator_from_command(first_command)
+                    for first_val in gen:
+                        for rest_vals in get_sequence(rest):
+                            yield [first_val] + rest_vals
 
         word_arrays = get_sequence(command.tokens)
         for word_arr in word_arrays:
@@ -82,6 +117,8 @@ class CombinatorialSampler(Sampler):
             return []
 
         seen = set()
+
+        self._propograte_sampling_method(variant_command.values)
 
         for bound in range(variant_command.min_bound, variant_command.max_bound + 1):
             for combo in variant_command.get_value_combinations(bound):

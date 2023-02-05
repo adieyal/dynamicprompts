@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 from itertools import cycle
-from typing import Generator
+from typing import Generator, Iterable
 
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
@@ -50,8 +51,12 @@ class CyclicalSampler(Sampler):
             ignore_whitespace=ignore_whitespace,
             sampler_manager=sampler_manager,
         )
-        # self._sampler_manager = sampler_manager
         self._already_looping = False
+
+    def _propograte_sampling_method(self, commands: Iterable[Command]) -> None:
+        for cmd in commands:
+            if cmd.sampling_method == SamplingMethod.DEFAULT:
+                cmd.sampling_method = SamplingMethod.CYCLICAL
 
     def _get_cyclical_variant(
         self,
@@ -61,13 +66,15 @@ class CyclicalSampler(Sampler):
         if len(variant_command.values) == 0:
             return
 
+        self._propograte_sampling_method(variant_command.values)
+
         combinations = (
             combo
             for bound in range(variant_command.min_bound, variant_command.max_bound + 1)
             for combo in variant_command.get_value_combinations(bound)
         )
 
-        combination_samplers = cycle(
+        combination_samplers = (
             (
                 variant_command.separator.join(sample)
                 for sample in _get_combination_samples(combo, self._sampler_manager)
@@ -76,7 +83,7 @@ class CyclicalSampler(Sampler):
         )
 
         while True:
-            yield from next_sampler_next_value(combination_samplers)
+            yield from next_sampler_next_value(cycle(combination_samplers))
 
     def _get_cyclical_wildcard(self, command: WildcardCommand):
         values = self._wildcard_manager.get_all_values(command.wildcard)
