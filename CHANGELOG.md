@@ -1,3 +1,4 @@
+0.6.0 - Support symlinks for the wildcards directory
 0.5.0 - A major re-organisation of the parsing machinary.
 0.4.3 - Allow zero repetitions in sequence commands, e.g. `{0-3$$A|B|C}`
 0.4.2 - Added type information
