@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 from itertools import islice
+from random import Random
 
 from dynamicprompts.commands.base import Command, SamplingMethod
 from dynamicprompts.parser.parse import parse
@@ -13,6 +14,8 @@ from dynamicprompts.types import StringGen
 from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
+DEFAULT_RANDOM = Random()
+
 
 class ConcreteSamplerRouter(SamplerRouter):
     def __init__(
@@ -21,6 +24,8 @@ class ConcreteSamplerRouter(SamplerRouter):
         wildcard_manager: WildcardManager,
         default_sampling_method: SamplingMethod,
         ignore_whitespace=False,
+        samplers: dict[SamplingMethod, Sampler] | None = None,
+        rand: Random = DEFAULT_RANDOM,
     ):
         if default_sampling_method == SamplingMethod.DEFAULT:
             raise ValueError("Cannot use default sampling method for generic sampler.")
@@ -31,30 +36,34 @@ class ConcreteSamplerRouter(SamplerRouter):
         kwargs = {
             "wildcard_manager": wildcard_manager,
             "ignore_whitespace": ignore_whitespace,
-            "sampler_manager": self,
+            "sampler_router": self,
         }
 
-        random_sampler = RandomSampler(**kwargs)
+        random_sampler = RandomSampler(**kwargs, rand=rand)
         combinatorial_sampler = CombinatorialSampler(**kwargs)
         cyclical_sampler = CyclicalSampler(**kwargs)
 
-        default_sampler = {
-            SamplingMethod.RANDOM: random_sampler,
-            SamplingMethod.COMBINATORIAL: combinatorial_sampler,
-            SamplingMethod.CYCLICAL: cyclical_sampler,
-        }.get(default_sampling_method)
+        if samplers is None:
+            self._samplers: dict[SamplingMethod, Sampler] = {
+                SamplingMethod.RANDOM: random_sampler,
+                SamplingMethod.COMBINATORIAL: combinatorial_sampler,
+                SamplingMethod.CYCLICAL: cyclical_sampler,
+            }
+        else:
+            self._samplers = samplers
 
-        if default_sampler is None:
-            raise ValueError(
-                f"Invalid default sampling method: {default_sampling_method}",
-            )
+        self.default_sampling_method = default_sampling_method
 
-        self._samplers: dict[SamplingMethod, Sampler] = {
-            SamplingMethod.RANDOM: random_sampler,
-            SamplingMethod.COMBINATORIAL: combinatorial_sampler,
-            SamplingMethod.CYCLICAL: cyclical_sampler,
-            SamplingMethod.DEFAULT: default_sampler,
-        }
+    @property
+    def default_sampling_method(self) -> SamplingMethod:
+        return self._default_sampling_method
+
+    @default_sampling_method.setter
+    def default_sampling_method(self, method: SamplingMethod):
+        if method == SamplingMethod.DEFAULT:
+            raise ValueError("Cannot use default sampling method for generic sampler.")
+        self._default_sampling_method = method
+        self._samplers[SamplingMethod.DEFAULT] = self._samplers[method]
 
     def generator_from_command(self, command) -> StringGen:
         return self._samplers[command.sampling_method].generator_from_command(command)
@@ -74,11 +83,16 @@ class ConcreteSamplerRouter(SamplerRouter):
             return []
         command: Command
         if isinstance(prompt, str):
-            command = parse(prompt)
+            command = parse(
+                prompt,
+                default_sampling_method=self._default_sampling_method,
+            )
         elif isinstance(prompt, Command):
             command = prompt
         else:
             raise TypeError(f"Expected prompt to be str or Command, got {type(prompt)}")
+
+        command.propagate_sampling_method(self._default_sampling_method)
         gen = self.generator_from_command(command)
 
         if self._ignore_whitespace:
@@ -87,3 +101,11 @@ class ConcreteSamplerRouter(SamplerRouter):
         if num_prompts is None:
             return gen
         return islice(gen, num_prompts)
+
+    def clone(self):
+        return ConcreteSamplerRouter(
+            wildcard_manager=self._wildcard_manager,
+            default_sampling_method=self._default_sampling_method,
+            ignore_whitespace=self._ignore_whitespace,
+            samplers=self._samplers,
+        )

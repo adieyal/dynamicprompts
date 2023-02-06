@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 from random import Random
+from typing import Iterable
 
 from dynamicprompts.commands import (
     Command,
     LiteralCommand,
+    SamplingMethod,
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
@@ -26,15 +28,15 @@ class RandomSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerRouter,
+        sampler_router: SamplerRouter,
         rand: Random = DEFAULT_RANDOM,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
-            sampler_manager=sampler_manager,
+            sampler_router=sampler_router,
         )
-        self._sampler_manager = sampler_manager
+        self._sampler_router = sampler_router
         self._random = rand
 
     def _get_choices(
@@ -55,10 +57,12 @@ class RandomSampler(Sampler):
         variant_command: VariantCommand,
     ) -> StringGen:
 
+        self._propagate_sampling_method(variant_command.values)
+
         if len(variant_command.values) == 0:
             return
         elif len(variant_command.values) == 1:
-            yield from self._sampler_manager.generator_from_command(
+            yield from self._sampler_router.generator_from_command(
                 variant_command.values[0],
             )
         else:
@@ -74,7 +78,7 @@ class RandomSampler(Sampler):
                     num_choices=num_choices,
                 )
                 sub_generators = [
-                    self._sampler_manager.generator_from_command(c)
+                    self._sampler_router.generator_from_command(c)
                     for c in selected_commands
                 ]
 
@@ -97,7 +101,15 @@ class RandomSampler(Sampler):
                 yield f"__{command.wildcard}__"
             else:
                 value = self._random.choice(values)
-                yield from self._sampler_manager.sample_prompts(value, 1)
+                yield from self._sampler_router.sample_prompts(value, 1)
+
+    def _propagate_sampling_method(self, commands: Iterable[Command]) -> None:
+        for cmd in commands:
+            if cmd.sampling_method == SamplingMethod.DEFAULT or (
+                cmd.sampling_method is not None
+                and not cmd.sampling_method.is_nonfinite()
+            ):
+                cmd.sampling_method = SamplingMethod.RANDOM
 
     def generator_from_command(self, command: Command) -> StringGen:
         if isinstance(command, LiteralCommand):

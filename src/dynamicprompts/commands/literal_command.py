@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import dataclasses
 
-from dynamicprompts.commands import Command, SamplingMethod
+from dynamicprompts.commands import Command
+from dynamicprompts.enums import SamplingMethod
 
 
 @dataclasses.dataclass

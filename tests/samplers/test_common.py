@@ -10,9 +10,8 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.commands.base import SamplingMethod
+from dynamicprompts.sampler_routers.concrete_sampler_router import ConcreteSamplerRouter
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
-from dynamicprompts.samplers.base import SamplerRouter
-from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 from pytest import FixtureRequest
 
@@ -21,6 +20,10 @@ from tests.utils import cross, zipstr
 
 ONE_TWO_THREEx2 = cross(ONE_TWO_THREE, ONE_TWO_THREE)
 ONE_TWO_THREEx2and = cross(ONE_TWO_THREE, ONE_TWO_THREE, sep=" and ")
+
+
+def get_router(sampler_router: str, request: FixtureRequest) -> ConcreteSamplerRouter:
+    return request.getfixturevalue(sampler_router)
 
 
 @pytest.fixture
@@ -38,145 +41,145 @@ def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
 
 class TestSequenceCommand:
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", "one two three"),
-            ("cyclical_sampler_manager", "one two three"),
-            ("combinatorial_sampler_manager", "one two three"),
+            ("random_sampler_router", "one two three"),
+            ("cyclical_sampler_router", "one two three"),
+            ("combinatorial_sampler_router", "one two three"),
         ],
     )
     def test_prompts(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
-        prompt = next(manager.generator_from_command(sequence))
+        prompt = next(router.generator_from_command(sequence))
         assert prompt == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", "A|sentence"),
-            ("cyclical_sampler_manager", "A|sentence"),
-            ("combinatorial_sampler_manager", "A|sentence"),
+            ("random_sampler_router", "A|sentence"),
+            ("cyclical_sampler_router", "A|sentence"),
+            ("combinatorial_sampler_router", "A|sentence"),
         ],
     )
     def test_custom_separator(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         command1 = LiteralCommand("A")
         command2 = LiteralCommand("sentence")
         sequence = SequenceCommand([command1, command2], separator="|")
-        prompt = next(manager.generator_from_command(sequence))
+        prompt = next(router.generator_from_command(sequence))
         assert prompt == expected
 
 
 class TestLiteralCommand:
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", "one"),
-            ("cyclical_sampler_manager", "one"),
-            ("combinatorial_sampler_manager", "one"),
+            ("random_sampler_router", "one"),
+            ("cyclical_sampler_router", "one"),
+            ("combinatorial_sampler_router", "one"),
         ],
     )
     def test_single_literal(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         literal = LiteralCommand("one")
-        gen = manager.generator_from_command(literal)
+        gen = router.generator_from_command(literal)
         assert next(gen) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", "one two three"),
-            ("cyclical_sampler_manager", "one two three"),
-            ("combinatorial_sampler_manager", "one two three"),
+            ("random_sampler_router", "one two three"),
+            ("cyclical_sampler_router", "one two three"),
+            ("combinatorial_sampler_router", "one two three"),
         ],
     )
     def test_multiple_literals(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
-        prompts = manager.generator_from_command(sequence)
+        prompts = router.generator_from_command(sequence)
 
         assert next(prompts) == expected
 
 
 class TestVariantCommand:
     @pytest.mark.parametrize(
-        ("sampler_manager"),
+        ("sampler_router"),
         [
-            ("random_sampler_manager"),
-            ("cyclical_sampler_manager"),
-            ("combinatorial_sampler_manager"),
+            ("random_sampler_router"),
+            ("cyclical_sampler_router"),
+            ("combinatorial_sampler_router"),
         ],
     )
-    def test_empty_variant(self, sampler_manager: str, request: FixtureRequest):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+    def test_empty_variant(self, sampler_router: str, request: FixtureRequest):
+        router = get_router(sampler_router, request)
 
         command = VariantCommand([])
-        prompts = manager.generator_from_command(command)
+        prompts = router.generator_from_command(command)
         assert len(list(prompts)) == 0
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", "one"),
-            ("cyclical_sampler_manager", "one"),
-            ("combinatorial_sampler_manager", "one"),
+            ("random_sampler_router", "one"),
+            ("cyclical_sampler_router", "one"),
+            ("combinatorial_sampler_router", "one"),
         ],
     )
     def test_single_variant(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: str,
         request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         command = VariantCommand.from_literals_and_weights(["one"])
 
-        gen = manager.generator_from_command(command)
+        gen = router.generator_from_command(command)
         assert next(gen) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", ["one", "three", "two", "one"]),
-            ("cyclical_sampler_manager", ["one", "two", "three", "one", "two"]),
-            ("combinatorial_sampler_manager", ["one", "two", "three"]),
+            ("random_sampler_router", ["one", "three", "two", "one"]),
+            ("cyclical_sampler_router", ["one", "two", "three", "one", "two"]),
+            ("combinatorial_sampler_router", ["one", "two", "three"]),
         ],
     )
     def test_multiple_variant(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         gen = sampler.generator_from_command(command)
 
@@ -193,27 +196,27 @@ class TestVariantCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", ["three", "three", "one", "two"]),
-            ("cyclical_sampler_manager", ["one", "two", "three", "one", "two"]),
-            ("combinatorial_sampler_manager", ["one", "two", "three"]),
+            ("random_sampler_router", ["three", "three", "one", "two"]),
+            ("cyclical_sampler_router", ["one", "two", "three", "one", "two"]),
+            ("combinatorial_sampler_router", ["one", "two", "three"]),
         ],
     )
     def test_variant_with_literal(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
         command2 = LiteralCommand(" circles")
         sequence = SequenceCommand([command1, command2])
 
-        gen = manager.generator_from_command(sequence)
+        gen = router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler, "_get_choices") as get_choices:
@@ -228,19 +231,19 @@ class TestVariantCommand:
             assert prompt == f"{e} circles"
 
     @pytest.mark.parametrize(
-        ("sampler_manager"),
+        ("sampler_router"),
         [
-            ("random_sampler_manager"),
-            ("cyclical_sampler_manager"),
-            ("combinatorial_sampler_manager"),
+            ("random_sampler_router"),
+            ("cyclical_sampler_router"),
+            ("combinatorial_sampler_router"),
         ],
     )
     def test_variant_with_zero_bound(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         command1 = VariantCommand.from_literals_and_weights(
             ONE_TWO_THREE,
@@ -248,28 +251,28 @@ class TestVariantCommand:
             max_bound=0,
         )
 
-        gen = manager.generator_from_command(command1)
+        gen = router.generator_from_command(command1)
         assert next(gen) == ""
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", ["three", "three,one", "one", "two,three"]),
+            ("random_sampler_router", ["three", "three,one", "one", "two,three"]),
             (
-                "cyclical_sampler_manager",
+                "cyclical_sampler_router",
                 ONE_TWO_THREE + ONE_TWO_THREEx2 + ONE_TWO_THREE,
             ),
-            ("combinatorial_sampler_manager", ONE_TWO_THREE + ONE_TWO_THREEx2),
+            ("combinatorial_sampler_router", ONE_TWO_THREE + ONE_TWO_THREEx2),
         ],
     )
     def test_variant_with_bound(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         variant_values = ONE_TWO_THREE
         command1 = VariantCommand.from_literals_and_weights(
@@ -277,7 +280,7 @@ class TestVariantCommand:
             min_bound=1,
             max_bound=2,
         )
-        gen = manager.generator_from_command(command1)
+        gen = router.generator_from_command(command1)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler, "_get_choices") as get_choices:
@@ -295,27 +298,27 @@ class TestVariantCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
             (
-                "random_sampler_manager",
+                "random_sampler_router",
                 ["three", "three and one", "one", "two and three"],
             ),
             (
-                "cyclical_sampler_manager",
+                "cyclical_sampler_router",
                 ONE_TWO_THREE + ONE_TWO_THREEx2and + ONE_TWO_THREE,
             ),
-            ("combinatorial_sampler_manager", ONE_TWO_THREE + ONE_TWO_THREEx2and),
+            ("combinatorial_sampler_router", ONE_TWO_THREE + ONE_TWO_THREEx2and),
         ],
     )
     def test_variant_with_bound_and_sep(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(
             ONE_TWO_THREE,
@@ -324,7 +327,7 @@ class TestVariantCommand:
             separator=" and ",
         )
 
-        gen = manager.generator_from_command(command1)
+        gen = router.generator_from_command(command1)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler, "_get_choices") as get_choices:
@@ -342,21 +345,21 @@ class TestVariantCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", ["red triangle", "blue circle"]),
-            ("cyclical_sampler_manager", zipstr(RED_GREEN_BLUE, SHAPES, sep=" ")),
-            ("combinatorial_sampler_manager", cross(RED_GREEN_BLUE, SHAPES, sep=" ")),
+            ("random_sampler_router", ["red triangle", "blue circle"]),
+            ("cyclical_sampler_router", zipstr(RED_GREEN_BLUE, SHAPES, sep=" ")),
+            ("combinatorial_sampler_router", cross(RED_GREEN_BLUE, SHAPES, sep=" ")),
         ],
     )
     def test_two_variants(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(RED_GREEN_BLUE)
         command2 = LiteralCommand(" ")
@@ -364,7 +367,7 @@ class TestVariantCommand:
 
         sequence = SequenceCommand([command1, command2, command3])
 
-        gen = manager.generator_from_command(sequence)
+        gen = router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler, "_get_choices") as get_choices:
@@ -382,21 +385,21 @@ class TestVariantCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            ("random_sampler_manager", ["red triangle", "blue circle"]),
-            ("cyclical_sampler_manager", zipstr(RED_AND_GREEN, SHAPES, sep=" ")),
-            ("combinatorial_sampler_manager", cross(RED_AND_GREEN, SHAPES, sep=" ")),
+            ("random_sampler_router", ["red triangle", "blue circle"]),
+            ("cyclical_sampler_router", zipstr(RED_AND_GREEN, SHAPES, sep=" ")),
+            ("combinatorial_sampler_router", cross(RED_AND_GREEN, SHAPES, sep=" ")),
         ],
     )
     def test_varied_prompt(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command1 = VariantCommand.from_literals_and_weights(RED_AND_GREEN)
         command3 = VariantCommand.from_literals_and_weights(SHAPES)
@@ -413,7 +416,7 @@ class TestVariantCommand:
             ],
         )
 
-        gen = manager.generator_from_command(sequence)
+        gen = router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler, "_get_choices") as get_choices:
@@ -433,26 +436,26 @@ class TestVariantCommand:
 
 class TestWildcardsCommand:
     @pytest.mark.parametrize(
-        ("sampler_manager", "key"),
+        ("sampler_router", "key"),
         [
-            ("random_sampler_manager", "shuffled_colours"),
-            ("cyclical_sampler_manager", "wildcard_coloursx2"),
-            ("combinatorial_sampler_manager", "wildcard_colours"),
+            ("random_sampler_router", "shuffled_colours"),
+            ("cyclical_sampler_router", "wildcard_coloursx2"),
+            ("combinatorial_sampler_router", "wildcard_colours"),
         ],
     )
     def test_basic_wildcard(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         key: str,
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command = WildcardCommand("colors*")
 
-        gen = manager.generator_from_command(command)
+        gen = router.generator_from_command(command)
 
         if isinstance(sampler, RandomSampler):
             with mock.patch.object(sampler._random, "choice") as get_choices:
@@ -470,22 +473,22 @@ class TestWildcardsCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "key"),
+        ("sampler_router", "key"),
         [
-            ("random_sampler_manager", "shuffled_colours"),
-            ("cyclical_sampler_manager", "wildcard_coloursx2"),
-            ("combinatorial_sampler_manager", "wildcard_colours"),
+            ("random_sampler_router", "shuffled_colours"),
+            ("cyclical_sampler_router", "wildcard_coloursx2"),
+            ("combinatorial_sampler_router", "wildcard_colours"),
         ],
     )
     def test_wildcard_with_literal(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         key: str,
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command = WildcardCommand("colors*")
         sequence = SequenceCommand.from_literals(
@@ -510,22 +513,22 @@ class TestWildcardsCommand:
             assert prompt == f"{e} are cool"
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "key"),
+        ("sampler_router", "key"),
         [
-            ("random_sampler_manager", "shuffled_colours"),
-            ("cyclical_sampler_manager", "wildcard_colours"),
-            ("combinatorial_sampler_manager", "wildcard_colours"),
+            ("random_sampler_router", "shuffled_colours"),
+            ("cyclical_sampler_router", "wildcard_colours"),
+            ("combinatorial_sampler_router", "wildcard_colours"),
         ],
     )
     def test_wildcard_with_variant(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         key: str,
         request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        router = get_router(sampler_router, request)
+        sampler = router._samplers[SamplingMethod.DEFAULT]
 
         command1 = WildcardCommand("colors*")
         command3 = VariantCommand.from_literals_and_weights(SHAPES)
@@ -570,44 +573,44 @@ class TestWildcardsCommand:
             assert prompt == e
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            # ("random_sampler_manager", ""),
+            # ("random_sampler_router", ""),
             (
-                "cyclical_sampler_manager",
+                "cyclical_sampler_router",
                 ["red", "green", "blue", "pink", "green", "blue"],
             ),
-            ("combinatorial_sampler_manager", ["red", "pink", "green", "blue"]),
+            ("combinatorial_sampler_router", ["red", "pink", "green", "blue"]),
         ],
     )
     def test_variant_nested_in_wildcard(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         with mock.patch.object(
-            manager._wildcard_manager,
+            router._wildcard_manager,
             "get_all_values",
             return_value=["{red|pink}", "green", "blue"],
         ):
             wildcard_command = WildcardCommand("colours")
             sequence = SequenceCommand([wildcard_command])
 
-            gen = manager.generator_from_command(sequence)
+            gen = router.generator_from_command(sequence)
 
             prompts = [next(gen) for _ in range(len(expected))]
 
             assert prompts == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampler_router", "expected"),
         [
-            # ("random_sampler_manager", ""),
+            ("random_sampler_router", []),  # TODO fix this
             (
-                "cyclical_sampler_manager",
+                "cyclical_sampler_router",
                 [
                     "red",
                     "green",
@@ -621,18 +624,18 @@ class TestWildcardsCommand:
                 ],
             ),
             (
-                "combinatorial_sampler_manager",
+                "combinatorial_sampler_router",
                 ["red", "pink", "yellow", "green", "blue"],
             ),
         ],
     )
     def test_wildcard_nested_in_wildcard(
         self,
-        sampler_manager: str,
+        sampler_router: str,
         expected: list[str],
         request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
+        router = get_router(sampler_router, request)
 
         test_colours = [
             ["__other_colours__", "green", "blue"],
@@ -640,14 +643,14 @@ class TestWildcardsCommand:
         ]
 
         with mock.patch.object(
-            manager._wildcard_manager,
+            router._wildcard_manager,
             "get_all_values",
             side_effect=test_colours,
         ):
             wildcard_command = WildcardCommand("colours")
             sequence = SequenceCommand([wildcard_command])
 
-            gen = manager.generator_from_command(sequence)
+            gen = router.generator_from_command(sequence)
 
             prompts = [next(gen) for _ in range(len(expected))]
             assert prompts == expected

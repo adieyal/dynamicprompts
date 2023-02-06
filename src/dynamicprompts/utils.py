@@ -23,12 +23,12 @@ def dedupe(arr: list[str]) -> tuple[str, ...]:
     return tuple(ordered_dict.keys())
 
 
-def rotate_all(generators: list[StringGen]) -> list[str]:
+def rotate_all(generators: Iterable[StringGen]) -> list[str]:
     return [next(gen) for gen in generators]
 
 
 def rotate_and_join(
-    generators: list[StringGen],
+    generators: Iterable[StringGen],
     *,
     separator: str,
 ) -> str:
@@ -38,6 +38,7 @@ def rotate_and_join(
 def next_sampler_next_value(
     samplers: Iterable[StringGen],
 ) -> StringGen:
+
     yield from (next(iter(sampler)) for sampler in cycle(samplers))
 
 

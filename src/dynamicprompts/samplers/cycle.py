@@ -20,22 +20,33 @@ from dynamicprompts.wildcardmanager import WildcardManager
 logger = logging.getLogger(__name__)
 
 
+def get_arrs(gen: StringGen, rest_gen: Iterable[list[str]]):
+    try:
+        for r in rest_gen:
+            yield [next(gen)] + r
+    except StopIteration:
+        yield []
+
+
 def _get_combination_samples(
     combo: list[Command],
-    sampler_manager: SamplerRouter,
+    sampler_router: SamplerRouter,
 ) -> Generator[list[str], None, None]:
 
-    if len(combo) == 0:
-        while True:
-            yield []
-    else:
-        c_1, c_rest = combo[0], combo[1:]
+    try:
+        if len(combo) == 0:
+            while True:
+                yield []
+        else:
+            c_1, c_rest = combo[0], combo[1:]
 
-        gen = sampler_manager.generator_from_command(c_1)
-        rest_gen = _get_combination_samples(c_rest, sampler_manager)
-        arrs = ([next(gen)] + r for r in rest_gen)
+            gen = sampler_router.generator_from_command(c_1)
+            rest_gen = _get_combination_samples(c_rest, sampler_router)
+            arrs = get_arrs(gen, rest_gen)
 
-        yield from arrs
+            yield from arrs
+    except StopIteration:
+        return
 
 
 class CyclicalSampler(Sampler):
@@ -44,18 +55,21 @@ class CyclicalSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerRouter,
+        sampler_router: SamplerRouter,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
-            sampler_manager=sampler_manager,
+            sampler_router=sampler_router,
         )
         self._already_looping = False
 
-    def _propograte_sampling_method(self, commands: Iterable[Command]) -> None:
+    def _propagate_sampling_method(self, commands: Iterable[Command]) -> None:
         for cmd in commands:
-            if cmd.sampling_method == SamplingMethod.DEFAULT:
+            if (
+                cmd.sampling_method == SamplingMethod.DEFAULT
+                or not cmd.sampling_method.is_nonfinite()
+            ):
                 cmd.sampling_method = SamplingMethod.CYCLICAL
 
     def _get_cyclical_variant(
@@ -63,10 +77,10 @@ class CyclicalSampler(Sampler):
         variant_command: VariantCommand,
     ) -> StringGen:
 
+        self._propagate_sampling_method(variant_command.values)
+
         if len(variant_command.values) == 0:
             return
-
-        self._propograte_sampling_method(variant_command.values)
 
         combinations = (
             combo
@@ -77,7 +91,7 @@ class CyclicalSampler(Sampler):
         combination_samplers = (
             (
                 variant_command.separator.join(sample)
-                for sample in _get_combination_samples(combo, self._sampler_manager)
+                for sample in _get_combination_samples(combo, self._sampler_router)
             )
             for combo in combinations
         )
@@ -87,16 +101,16 @@ class CyclicalSampler(Sampler):
 
     def _get_cyclical_wildcard(self, command: WildcardCommand):
         values = self._wildcard_manager.get_all_values(command.wildcard)
-        value_samplers = (self._sampler_manager.sample_prompts(val) for val in values)
+        new_router = self._sampler_router.clone()
+        new_router.default_sampling_method = SamplingMethod.CYCLICAL
+        value_samplers = [new_router.sample_prompts(val) for val in values]
 
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {command.wildcard}")
-
-        while True:
-            if len(values) == 0:
+            while True:
                 yield f"__{command.wildcard}__"
-            else:
-                yield from next_sampler_next_value(value_samplers)
+        else:
+            yield from next_sampler_next_value(value_samplers)
 
     def generator_from_command(
         self,

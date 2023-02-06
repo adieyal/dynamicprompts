@@ -4,7 +4,9 @@ import dataclasses
 import logging
 from typing import Generator, Iterable
 
-from dynamicprompts.commands import Command, LiteralCommand, SamplingMethod
+from dynamicprompts.commands.base import Command
+from dynamicprompts.commands.literal_command import LiteralCommand
+from dynamicprompts.enums import SamplingMethod
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,15 @@ class VariantCommand(Command):
 
     def __iter__(self) -> Iterable[VariantOption]:
         return iter(self.variants)
+
+    def propagate_sampling_method(
+        self,
+        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
+    ) -> None:
+        super().propagate_sampling_method(sampling_method=sampling_method)
+
+        for value in self.values:
+            value.propagate_sampling_method(self.sampling_method)
 
     @property
     def weights(self) -> list[float]:

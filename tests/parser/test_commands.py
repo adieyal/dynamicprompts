@@ -31,6 +31,75 @@ class TestSequence:
         assert cast(LiteralCommand, sequence[0]).literal == literals[0]
         assert cast(LiteralCommand, sequence[1]).literal == literals[1]
 
+    @pytest.mark.parametrize(
+        ("parent_sampling_method", "child_sampling_method", "expected_sampling_method"),
+        [
+            (
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.COMBINATORIAL,
+            ),
+            (
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.RANDOM,
+                SamplingMethod.RANDOM,
+            ),
+            (
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.CYCLICAL,
+                SamplingMethod.CYCLICAL,
+            ),
+            (
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.DEFAULT,
+                SamplingMethod.COMBINATORIAL,
+            ),
+            (
+                SamplingMethod.RANDOM,
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.RANDOM,
+            ),
+            (SamplingMethod.RANDOM, SamplingMethod.RANDOM, SamplingMethod.RANDOM),
+            (SamplingMethod.RANDOM, SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL),
+            (SamplingMethod.RANDOM, SamplingMethod.DEFAULT, SamplingMethod.RANDOM),
+            (
+                SamplingMethod.CYCLICAL,
+                SamplingMethod.COMBINATORIAL,
+                SamplingMethod.CYCLICAL,
+            ),
+            (SamplingMethod.CYCLICAL, SamplingMethod.RANDOM, SamplingMethod.RANDOM),
+            (SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL),
+            (SamplingMethod.CYCLICAL, SamplingMethod.DEFAULT, SamplingMethod.CYCLICAL),
+        ],
+    )
+    def test_propagation(
+        self,
+        parent_sampling_method: SamplingMethod,
+        child_sampling_method: SamplingMethod,
+        expected_sampling_method: SamplingMethod,
+    ):
+        commands: list[str | Command] = [
+            LiteralCommand("literal", sampling_method=child_sampling_method),
+            VariantCommand.from_literals_and_weights(
+                ["opt1", "opt2"],
+                sampling_method=child_sampling_method,
+            ),
+            WildcardCommand("colors*", sampling_method=child_sampling_method),
+            SequenceCommand.from_literals(
+                ["seq1", "seq2"],
+                sampling_method=child_sampling_method,
+            ),
+        ]
+
+        seq = SequenceCommand.from_literals(
+            commands,
+            sampling_method=parent_sampling_method,
+        )
+        seq.propagate_sampling_method(parent_sampling_method)
+
+        for token in seq.tokens:
+            assert token.sampling_method == expected_sampling_method
+
 
 class TestLiteral:
     def test_prompts(self):

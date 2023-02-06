@@ -3,7 +3,8 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
-from dynamicprompts.samplers import CombinatorialSampler, RandomSampler, Sampler
+from dynamicprompts.enums import SamplingMethod
+from dynamicprompts.sampler_routers import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -28,23 +29,31 @@ test_cases = [
 ]
 
 
-@pytest.mark.parametrize("sampler_class", [CombinatorialSampler, RandomSampler])
+@pytest.mark.parametrize(
+    "sampling_method",
+    [SamplingMethod.COMBINATORIAL, SamplingMethod.RANDOM],
+)
 @pytest.mark.parametrize("case", test_cases)
 def test_generator(
-    sampler_class: type[Sampler],
+    sampling_method: SamplingMethod,
     case: SmokeTestCase,
     wildcard_manager: WildcardManager,
 ) -> None:
-    sampler = sampler_class(wildcard_manager=wildcard_manager)
+    router = ConcreteSamplerRouter(
+        wildcard_manager=wildcard_manager,
+        default_sampling_method=sampling_method,
+    )
     gen_count = 0
-    for result in sampler.generate_prompts(
+    max_count = 10
+
+    for result in router.sample_prompts(
         case.input,
-        num_prompts=(1 if sampler_class is RandomSampler else None),
+        num_prompts=max_count,
     ):
         assert result
         gen_count += 1
     if case.must_generate:
         assert gen_count
     if case.expected_combinatorial_count is not None:
-        if sampler_class is CombinatorialSampler:
+        if sampling_method is SamplingMethod.COMBINATORIAL:
             assert gen_count == case.expected_combinatorial_count

@@ -3,6 +3,7 @@ Tests for issues reported on the downstream sd-dynamic-prompts repo.
 """
 
 from dynamicprompts.commands import SequenceCommand
+from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -14,7 +15,7 @@ prefix,
 ({0$$a|b} {1$$c|d|e}),
 suffix
     """.strip()
-    parsed = parse(prompt)
+    parsed = parse(prompt, default_sampling_method=SamplingMethod.RANDOM)
     assert isinstance(parsed, SequenceCommand)
     lit1, variant1, lit2, variant2, lit3 = parsed
     assert lit1.literal == "prefix,\n("
@@ -28,7 +29,10 @@ suffix
 
 def test_sd_212(wildcard_manager: WildcardManager):
     """Test that closing braces are allowed within literals. Fixed by #24."""
-    parsed = parse("prompt with closing bra}ce but {parsed|accepted}")
+    parsed = parse(
+        "prompt with closing bra}ce but {parsed|accepted}",
+        default_sampling_method=SamplingMethod.RANDOM,
+    )
     assert isinstance(parsed, SequenceCommand)
     lit1, variant1 = parsed
     assert lit1.literal == "prompt with closing bra}ce but "

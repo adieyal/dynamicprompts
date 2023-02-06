@@ -265,7 +265,7 @@ def create_parser() -> pp.ParserElement:
     return prompt
 
 
-def parse(prompt: str) -> Command:
+def parse(prompt: str, *, default_sampling_method) -> Command:
     """
     Parse a prompt string into a commands.
     :param prompt: The prompt string to parse.
@@ -276,5 +276,8 @@ def parse(prompt: str) -> Command:
         tokens and len(tokens) == 1
     )  # If we have more than one token, the prompt is invalid...
     tok = tokens[0]
+
     assert isinstance(tok, Command)
+    tok = cast(Command, tok)
+    tok.propagate_sampling_method(default_sampling_method)
     return tok

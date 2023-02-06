@@ -12,8 +12,8 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.commands.command_collection import CommandCollection
 from dynamicprompts.samplers.base import Sampler, SamplerRouter
+from dynamicprompts.samplers.command_collection import CommandCollection
 from dynamicprompts.types import StringGen
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -31,7 +31,7 @@ def _dedupe(arr: list[str]) -> tuple[str, ...]:
 
 
 def _combo_to_prompt(
-    sampler_manager: SamplerRouter,
+    sampler_router: SamplerRouter,
     combo: list[Command],
 ) -> typing.Iterable[list[str]]:
     if len(combo) == 0:
@@ -39,13 +39,18 @@ def _combo_to_prompt(
         return
 
     c_1, c_rest = combo[0], combo[1:]
-
-    for p in sampler_manager.generator_from_command(c_1):
-        for rest_prompt in _combo_to_prompt(sampler_manager, c_rest):
-            if rest_prompt:
-                yield [p] + rest_prompt
-            else:
-                yield [p]
+    gen = sampler_router.generator_from_command(c_1)
+    if c_1.sampling_method != SamplingMethod.COMBINATORIAL:
+        for rest_prompt in _combo_to_prompt(sampler_router, c_rest):
+            val = next(gen)
+            yield [val] + rest_prompt
+    else:
+        for p in gen:
+            for rest_prompt in _combo_to_prompt(sampler_router, c_rest):
+                if rest_prompt:
+                    yield [p] + rest_prompt
+                else:
+                    yield [p]
 
 
 class CombinatorialSampler(Sampler):
@@ -54,22 +59,22 @@ class CombinatorialSampler(Sampler):
         *,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
-        sampler_manager: SamplerRouter,
+        sampler_router: SamplerRouter,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
-            sampler_manager=sampler_manager,
+            sampler_router=sampler_router,
         )
-        self._sampler_manager = sampler_manager
+        self._sampler_router = sampler_router
 
-    def _propograte_sampling_method(self, commands: Iterable[Command]) -> None:
+    def _propagate_sampling_method(self, commands: Iterable[Command]) -> None:
         for cmd in commands:
             if cmd.sampling_method == SamplingMethod.DEFAULT:
                 cmd.sampling_method = SamplingMethod.COMBINATORIAL
 
     def _get_sequence(self, command: SequenceCommand) -> StringGen:
-        self._propograte_sampling_method(command.tokens)
+        self._propagate_sampling_method(command.tokens)
 
         sentinel_start = LiteralCommand(
             "",
@@ -84,7 +89,7 @@ class CombinatorialSampler(Sampler):
         ]
         command_collection = CommandCollection(
             non_combo_commands,
-            self._sampler_manager,
+            self._sampler_router,
         )
         command.tokens.insert(0, sentinel_start)
         command.tokens.append(sentinel_end)
@@ -99,14 +104,15 @@ class CombinatorialSampler(Sampler):
                         val = command_collection.get_value(first_command)
                         yield [val] + rest_vals
                 else:
-                    gen = self._sampler_manager.generator_from_command(first_command)
+                    gen = self._sampler_router.generator_from_command(first_command)
                     for first_val in gen:
                         for rest_vals in get_sequence(rest):
                             yield [first_val] + rest_vals
 
         word_arrays = get_sequence(command.tokens)
         for word_arr in word_arrays:
-            yield command.separator.join(word_arr)
+            prompt = command.separator.join(word_arr)
+            yield prompt.strip(command.separator)
 
     def _get_combinatorial_variant(
         self,
@@ -118,11 +124,11 @@ class CombinatorialSampler(Sampler):
 
         seen = set()
 
-        self._propograte_sampling_method(variant_command.values)
+        self._propagate_sampling_method(variant_command.values)
 
         for bound in range(variant_command.min_bound, variant_command.max_bound + 1):
             for combo in variant_command.get_value_combinations(bound):
-                for prompt_arr in _combo_to_prompt(self._sampler_manager, combo):
+                for prompt_arr in _combo_to_prompt(self._sampler_router, combo):
                     deduped_arr = _dedupe(prompt_arr)
                     correct_size = len(deduped_arr) == bound
                     if correct_size and deduped_arr not in seen:
@@ -136,7 +142,7 @@ class CombinatorialSampler(Sampler):
 
         for val in values:
             # Parse and generate prompts from wildcard value
-            yield from self._sampler_manager.sample_prompts(val)
+            yield from self._sampler_router.sample_prompts(val)
 
     def generator_from_command(
         self,

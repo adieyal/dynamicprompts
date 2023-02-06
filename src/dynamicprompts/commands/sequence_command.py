@@ -35,6 +35,15 @@ class SequenceCommand(Command):
             )
         return False
 
+    def propagate_sampling_method(
+        self,
+        sampling_method: SamplingMethod,
+    ) -> None:
+        super().propagate_sampling_method(sampling_method=sampling_method)
+
+        for token in self.tokens:
+            token.propagate_sampling_method(self.sampling_method)
+
     @classmethod
     def from_literals(
         cls,

@@ -5,8 +5,8 @@ from random import Random
 
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
+from dynamicprompts.sampler_routers.concrete_sampler_router import ConcreteSamplerRouter
 from dynamicprompts.samplers.random import DEFAULT_RANDOM
-from dynamicprompts.samplers.router import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class RandomPromptGenerator(PromptGenerator):
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.RANDOM,
             ignore_whitespace=ignore_whitespace,
+            rand=self._random,
         )
 
     def generate(
