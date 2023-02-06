@@ -72,7 +72,7 @@ class WildcardManager:
             return []
 
         return [
-            WildcardFile(path)
+            WildcardFile(path, name=self.path_to_wildcard_without_separators(path))
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
             if _is_relative_to(path.absolute(), self._path)
         ]
@@ -82,9 +82,12 @@ class WildcardManager:
             f".{constants.WILDCARD_SUFFIX}",
         )
 
-    def path_to_wildcard(self, path: Path) -> str:
+    def path_to_wildcard_without_separators(self, path: Path) -> str:
         rel_path = path.relative_to(self._path)
-        return f"__{str(rel_path.with_suffix('')).replace(os.sep, '/')}__"
+        return str(rel_path.with_suffix("")).replace(os.sep, "/")
+
+    def path_to_wildcard(self, path: Path) -> str:
+        return f"__{self.path_to_wildcard_without_separators(path)}__"
 
     def get_wildcards(self) -> list[str]:
         files = self.get_files(relative=True)
