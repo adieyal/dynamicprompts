@@ -74,7 +74,7 @@ class WildcardManager:
         return [
             WildcardFile(path)
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
-            if _is_relative_to(path.resolve(), self._path)
+            if _is_relative_to(path.absolute(), self._path)
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:
