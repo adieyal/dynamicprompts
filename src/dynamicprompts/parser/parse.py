@@ -34,20 +34,18 @@ real_num4 = pp.Word(pp.nums)
 real_num = real_num1 | real_num2 | real_num3 | real_num4
 double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
-default_variant_braces = ("{", "}")
 
 
 class Parser:
-    def __init__(self, builder: ActionBuilder):
+    def __init__(self, builder: ActionBuilder, parser_config=default_parser_config):
         warnings.warn(
             f"{self.__class__.__qualname__} is deprecated and will be removed in a future version. "
             "Instead, directly call `parse(prompt)`.",
             DeprecationWarning,
         )
 
-        variant_braces = (pp.Suppress("{"), pp.Suppress("}"))
         self._builder = builder
-        self._prompt = create_parser(variant_braces=variant_braces)
+        self._prompt = create_parser(parser_config=parser_config)
 
     @property
     def prompt(self):
@@ -96,21 +94,20 @@ def _configure_wildcard() -> pp.ParserElement:
 
 
 def _configure_literal_sequence(
-    variant_braces: tuple[pp.Suppress, pp.Suppress],
+    parser_config: ParserConfig,
     is_variant_literal: bool = False,
 ) -> pp.ParserElement:
     # Characters that are not allowed in a literal
-    # - { denotes the start of a variant
+    # - { denotes the start of a variant (or whatever left_brace is set to  )
     # - # denotes the start of a comment
-    left_brace, right_brace = variant_braces
-    non_literal_chars = rf"#{left_brace.expr}"
+    non_literal_chars = rf"#{parser_config.left_brace}"
 
     if is_variant_literal:
         # Inside a variant the following characters are also not allowed
-        # - } denotes the end of a variant
+        # - } denotes the end of a variant (or whatever right brace is set to)
         # - | denotes the end of a variant option
         # - $ denotes the end of a bound expression
-        non_literal_chars += rf"|${right_brace.expr}"
+        non_literal_chars += rf"|${parser_config.right_brace}"
 
     non_literal_chars = re.escape(non_literal_chars)
     literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
@@ -132,10 +129,11 @@ def _configure_variants(
     bound_expr: pp.ParserElement,
     prompt: pp.ParserElement,
     *,
-    variant_braces: tuple[pp.Suppress, pp.Suppress],
+    parser_config: ParserConfig,
 ) -> pp.ParserElement:
     weight = _create_weight_parser()
-    left_brace, right_brace = variant_braces
+    left_brace = pp.Suppress(parser_config.left_brace)
+    right_brace = pp.Suppress(parser_config.right_brace)
 
     variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
@@ -216,7 +214,7 @@ def _parse_bound_expr(expr, max_options):
 
 def create_parser(
     *,
-    variant_braces: tuple[pp.Suppress, pp.Suppress],
+    parser_config: ParserConfig,
 ) -> pp.ParserElement:
     bound_expr = _configure_range()
 
@@ -224,15 +222,15 @@ def create_parser(
     variant_prompt = pp.Forward()
 
     wildcard = _configure_wildcard()
-    literal_sequence = _configure_literal_sequence(variant_braces=variant_braces)
+    literal_sequence = _configure_literal_sequence(parser_config=parser_config)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
-        variant_braces=variant_braces,
+        parser_config=parser_config,
     )
     variants = _configure_variants(
         bound_expr,
         variant_prompt,
-        variant_braces=variant_braces,
+        parser_config=parser_config,
     )
 
     chunk = variants | wildcard | literal_sequence
@@ -265,10 +263,10 @@ def parse(
     :return: A command representing the parsed prompt.
     """
 
-    left_brace = pp.Suppress(parser_config.left_brace)
-    right_brace = pp.Suppress(parser_config.right_brace)
+    pp.Suppress(parser_config.left_brace)
+    pp.Suppress(parser_config.right_brace)
 
-    tokens = create_parser(variant_braces=(left_brace, right_brace)).parse_string(
+    tokens = create_parser(parser_config=parser_config).parse_string(
         prompt,
         parse_all=True,
     )
