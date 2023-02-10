@@ -28,7 +28,7 @@ wildcard_enclosure = pp.Suppress(double_underscore)
 
 
 class Parser:
-    def __init__(self, builder: ActionBuilder, parser_config=default_parser_config):
+    def __init__(self, builder: ActionBuilder):
         warnings.warn(
             f"{self.__class__.__qualname__} is deprecated and will be removed in a future version. "
             "Instead, directly call `parse(prompt)`.",
@@ -36,7 +36,7 @@ class Parser:
         )
 
         self._builder = builder
-        self._prompt = create_parser(parser_config=parser_config)
+        self._prompt = create_parser(parser_config=default_parser_config)
 
     @property
     def prompt(self):
@@ -246,16 +246,13 @@ def create_parser(
 
 def parse(
     prompt: str,
-    parser_config: ParserConfig,
+    parser_config: ParserConfig = default_parser_config,
 ) -> Command:
     """
     Parse a prompt string into a commands.
     :param prompt: The prompt string to parse.
     :return: A command representing the parsed prompt.
     """
-
-    pp.Suppress(parser_config.left_brace)
-    pp.Suppress(parser_config.right_brace)
 
     tokens = create_parser(parser_config=parser_config).parse_string(
         prompt,

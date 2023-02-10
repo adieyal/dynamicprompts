@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from itertools import islice
 
 from dynamicprompts.commands import Command
-from dynamicprompts.parser.config import ParserConfig
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -16,7 +16,7 @@ class Sampler(metaclass=ABCMeta):
         self,
         *,
         wildcard_manager: WildcardManager,
-        parser_config: ParserConfig,
+        parser_config: ParserConfig = default_parser_config,
         ignore_whitespace: bool = False,
     ):
         self._wildcard_manager = wildcard_manager
