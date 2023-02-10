@@ -10,10 +10,9 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.parser.parse import (
-    ParserConfig,
     _create_weight_parser,
-    default_parser_config,
 )
 from dynamicprompts.parser.parse import parse as original_parse_function
 from pyparsing import ParseException

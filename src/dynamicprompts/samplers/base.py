@@ -5,7 +5,8 @@ from abc import ABCMeta, abstractmethod
 from itertools import islice
 
 from dynamicprompts.commands import Command
-from dynamicprompts.parser.parse import ParserConfig, parse
+from dynamicprompts.parser.config import ParserConfig
+from dynamicprompts.parser.parse import parse
 from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 

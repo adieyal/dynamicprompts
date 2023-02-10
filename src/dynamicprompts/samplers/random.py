@@ -11,7 +11,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.parse import ParserConfig, default_parser_config
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.wildcardmanager import WildcardManager
 

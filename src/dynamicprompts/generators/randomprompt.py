@@ -4,7 +4,7 @@ import logging
 from random import Random
 
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.parser.parse import ParserConfig, default_parser_config
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.samplers.random import DEFAULT_RANDOM, RandomSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 

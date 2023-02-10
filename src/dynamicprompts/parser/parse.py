@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 import warnings
-from dataclasses import dataclass
 from typing import cast
 
 import pyparsing as pp
@@ -16,15 +15,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.parser.action_builder import ActionBuilder
-
-
-@dataclass
-class ParserConfig:
-    left_brace: str = "{"
-    right_brace: str = "}"
-
-
-default_parser_config = ParserConfig()
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
 real_num2 = pp.Combine(pp.Word(pp.nums) + ".")
