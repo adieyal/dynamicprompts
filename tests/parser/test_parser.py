@@ -265,7 +265,7 @@ class TestParser:
         assert parse(input).literal == input
 
     @pytest.mark.parametrize(
-        ("left_brace", "right_brace", "template"),
+        ("variant_start", "variant_end", "template"),
         [
             ("<", ">", "some literal string <A|B|__some/wildcard__>"),
             ("_", "_", "some literal string _A|B|__some/wildcard___"),
@@ -279,9 +279,9 @@ class TestParser:
             ("<<:", ":>>", "some literal string <<:A|B|__some/wildcard__:>>"),
         ],
     )
-    def test_alternative_braces(self, left_brace: str, right_brace, template: str):
+    def test_alternative_braces(self, variant_start: str, variant_end, template: str):
 
-        config = ParserConfig(left_brace=left_brace, right_brace=right_brace)
+        config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
         sequence = cast(SequenceCommand, parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 

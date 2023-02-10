@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ParserConfig:
-    left_brace: str = "{"
-    right_brace: str = "}"
+    variant_start: str = "{"
+    variant_end: str = "}"
 
 
 default_parser_config = ParserConfig()

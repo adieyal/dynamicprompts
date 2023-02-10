@@ -400,7 +400,7 @@ from dynamicprompts.parser.config import ParserConfig
 
 WILDCARD_DIR = Path("/path/to/wildcards/directory")
 wm = WildcardManager(WILDCARD_DIR)
-parser_config = ParserConfig(left_brace="<", right_brace=">")
+parser_config = ParserConfig(variant_start="<", variant_end=">")
 
 generator = RandomPromptGenerator(wm, parser_config=parser_config)
 

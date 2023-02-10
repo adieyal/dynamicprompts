@@ -89,16 +89,16 @@ def _configure_literal_sequence(
     is_variant_literal: bool = False,
 ) -> pp.ParserElement:
     # Characters that are not allowed in a literal
-    # - { denotes the start of a variant (or whatever left_brace is set to  )
+    # - { denotes the start of a variant (or whatever variant_start is set to  )
     # - # denotes the start of a comment
-    non_literal_chars = rf"#{parser_config.left_brace}"
+    non_literal_chars = rf"#{parser_config.variant_start}"
 
     if is_variant_literal:
         # Inside a variant the following characters are also not allowed
         # - } denotes the end of a variant (or whatever right brace is set to)
         # - | denotes the end of a variant option
         # - $ denotes the end of a bound expression
-        non_literal_chars += rf"|${parser_config.right_brace}"
+        non_literal_chars += rf"|${parser_config.variant_end}"
 
     non_literal_chars = re.escape(non_literal_chars)
     literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
@@ -123,16 +123,16 @@ def _configure_variants(
     parser_config: ParserConfig,
 ) -> pp.ParserElement:
     weight = _create_weight_parser()
-    left_brace = pp.Suppress(parser_config.left_brace)
-    right_brace = pp.Suppress(parser_config.right_brace)
+    variant_start = pp.Suppress(parser_config.variant_start)
+    variant_end = pp.Suppress(parser_config.variant_end)
 
     variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
     variants = (
-        left_brace
+        variant_start
         + pp.Group(pp.Opt(bound_expr)("bound_expr") + variants_list("variants"))
-        + right_brace
+        + variant_end
     )
 
     return variants.leave_whitespace()
