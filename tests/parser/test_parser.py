@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from dynamicprompts.commands import (
     LiteralCommand,
+    SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
@@ -256,3 +259,20 @@ class TestParser:
     )
     def test_a1111_special_syntax_intact(self, input):
         assert parse(input).literal == input
+
+    @pytest.mark.parametrize(
+        ("braces", "template"),
+        [
+            ("<>", "some literal string <A|B|__some/wildcard__>"),
+            ("__", "some literal string _A|B|__some/wildcard___"),
+            ("::", "some literal string :A|B|__some/wildcard__:"),
+            ("&&", "some literal string &A|B|__some/wildcard__&`"),
+        ],
+    )
+    def test_alternative_braces(self, braces: str, template: str):
+        sequence = cast(SequenceCommand, parse(template, braces=braces))
+        variant = cast(VariantCommand, sequence[1])
+
+        assert variant.values[0].literal == "A"
+        assert variant.values[1].literal == "B"
+        assert variant.values[2].wildcard == "some/wildcard"
