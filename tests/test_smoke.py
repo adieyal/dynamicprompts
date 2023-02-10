@@ -3,7 +3,6 @@ from __future__ import annotations
 import dataclasses
 
 import pytest
-from dynamicprompts.parser.parse import default_parser_config
 from dynamicprompts.samplers import CombinatorialSampler, RandomSampler, Sampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -38,7 +37,6 @@ def test_generator(
 ) -> None:
     sampler = sampler_class(
         wildcard_manager=wildcard_manager,
-        parser_config=default_parser_config,
     )
     gen_count = 0
     for result in sampler.generate_prompts(

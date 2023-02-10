@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from functools import partial
 from typing import cast
 
 import pytest
@@ -10,14 +9,12 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.config import ParserConfig, default_parser_config
+from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import (
     _create_weight_parser,
+    parse,
 )
-from dynamicprompts.parser.parse import parse as original_parse_function
 from pyparsing import ParseException
-
-parse = partial(original_parse_function, parser_config=default_parser_config)
 
 
 class TestParser:
