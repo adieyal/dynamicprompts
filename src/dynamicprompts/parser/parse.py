@@ -23,6 +23,7 @@ real_num4 = pp.Word(pp.nums)
 real_num = real_num1 | real_num2 | real_num3 | real_num4
 double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
+default_braces = (pp.Suppress("{"), pp.Suppress("}"))
 
 
 class Parser:
@@ -81,18 +82,22 @@ def _configure_wildcard() -> pp.ParserElement:
     return wildcard("wildcard").leave_whitespace()
 
 
-def _configure_literal_sequence(is_variant_literal: bool = False) -> pp.ParserElement:
+def _configure_literal_sequence(
+    braces: tuple[pp.Suppress, pp.Suppress],
+    is_variant_literal: bool = False,
+) -> pp.ParserElement:
     # Characters that are not allowed in a literal
     # - { denotes the start of a variant
     # - # denotes the start of a comment
-    non_literal_chars = r"{#"
+    left_brace, right_brace = braces
+    non_literal_chars = rf"#{left_brace.expr}"
 
     if is_variant_literal:
         # Inside a variant the following characters are also not allowed
         # - } denotes the end of a variant
         # - | denotes the end of a variant option
         # - $ denotes the end of a bound expression
-        non_literal_chars += r"}|$"
+        non_literal_chars += rf"|${right_brace.expr}"
 
     literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
         "literal",
@@ -112,10 +117,11 @@ def _create_weight_parser() -> pp.ParserElement:
 def _configure_variants(
     bound_expr: pp.ParserElement,
     prompt: pp.ParserElement,
+    *,
+    braces: tuple[pp.Suppress, pp.Suppress],
 ) -> pp.ParserElement:
-    left_brace = pp.Suppress("{")
-    right_brace = pp.Suppress("}")
     weight = _create_weight_parser()
+    left_brace, right_brace = braces
 
     variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
@@ -194,18 +200,22 @@ def _parse_bound_expr(expr, max_options):
     return lbound, ubound, separator
 
 
-def create_parser() -> pp.ParserElement:
+def create_parser(
+    *,
+    braces: tuple[pp.Suppress, pp.Suppress] = default_braces,
+) -> pp.ParserElement:
     bound_expr = _configure_range()
 
     prompt = pp.Forward()
     variant_prompt = pp.Forward()
 
     wildcard = _configure_wildcard()
-    literal_sequence = _configure_literal_sequence()
+    literal_sequence = _configure_literal_sequence(braces=braces)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
+        braces=braces,
     )
-    variants = _configure_variants(bound_expr, variant_prompt)
+    variants = _configure_variants(bound_expr, variant_prompt, braces=braces)
 
     chunk = variants | wildcard | literal_sequence
     variant_chunk = variants | wildcard | variant_literal_sequence
@@ -227,13 +237,22 @@ def create_parser() -> pp.ParserElement:
     return prompt
 
 
-def parse(prompt: str) -> Command:
+def parse(prompt: str, braces="{}") -> Command:
+    assert len(braces) == 2
+    # left_brace.expr, right_brace.expr = braces
+
+    left_brace = pp.Suppress(braces[0])
+    right_brace = pp.Suppress(braces[1])
+
     """
     Parse a prompt string into a commands.
     :param prompt: The prompt string to parse.
     :return: A command representing the parsed prompt.
     """
-    tokens = create_parser().parse_string(prompt, parse_all=True)
+    tokens = create_parser(braces=(left_brace, right_brace)).parse_string(
+        prompt,
+        parse_all=True,
+    )
     assert (
         tokens and len(tokens) == 1
     )  # If we have more than one token, the prompt is invalid...
