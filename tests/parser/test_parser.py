@@ -266,7 +266,11 @@ class TestParser:
             ("<>", "some literal string <A|B|__some/wildcard__>"),
             ("__", "some literal string _A|B|__some/wildcard___"),
             ("::", "some literal string :A|B|__some/wildcard__:"),
-            ("&&", "some literal string &A|B|__some/wildcard__&`"),
+            ("&&", "some literal string &A|B|__some/wildcard__&"),
+            (
+                "[]",
+                "some literal string [A|B|__some/wildcard__]",
+            ),  # This also tests that regex is escaped correctly
         ],
     )
     def test_alternative_braces(self, braces: str, template: str):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import warnings
 from typing import cast
 
@@ -99,6 +100,7 @@ def _configure_literal_sequence(
         # - $ denotes the end of a bound expression
         non_literal_chars += rf"|${right_brace.expr}"
 
+    non_literal_chars = re.escape(non_literal_chars)
     literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
         "literal",
     ).leave_whitespace()
