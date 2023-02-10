@@ -11,6 +11,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.parse import ParserConfig, default_parser_config
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -54,10 +55,12 @@ class RandomSampler(Sampler):
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
         rand: Random = DEFAULT_RANDOM,
+        parser_config: ParserConfig = default_parser_config,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
+            parser_config=parser_config,
         )
         self._random = rand
 

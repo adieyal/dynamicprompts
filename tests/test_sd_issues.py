@@ -3,7 +3,7 @@ Tests for issues reported on the downstream sd-dynamic-prompts repo.
 """
 
 from dynamicprompts.commands import SequenceCommand, VariantCommand
-from dynamicprompts.parser.parse import parse
+from dynamicprompts.parser.parse import default_parser_config, parse
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -14,7 +14,7 @@ prefix,
 ({0$$a|b} {1$$c|d|e}),
 suffix
     """.strip()
-    parsed = parse(prompt)
+    parsed = parse(prompt, parser_config=default_parser_config)
     assert isinstance(parsed, SequenceCommand)
     lit1, variant1, lit2, variant2, lit3 = parsed
     assert lit1.literal == "prefix,\n("
@@ -30,7 +30,7 @@ def test_sd_237(wildcard_manager: WildcardManager):
     """Similar to #223. Fixed by #23."""
     prompt = "{2$$ 1| 2| 3} {2$$ 1| 2| 3}"
 
-    parsed = parse(prompt)
+    parsed = parse(prompt, parser_config=default_parser_config)
     assert isinstance(parsed, SequenceCommand)
     variant1, lit1, variant2 = parsed
 
@@ -47,7 +47,10 @@ def test_sd_237(wildcard_manager: WildcardManager):
 
 def test_sd_212(wildcard_manager: WildcardManager):
     """Test that closing braces are allowed within literals. Fixed by #24."""
-    parsed = parse("prompt with closing bra}ce but {parsed|accepted}")
+    parsed = parse(
+        "prompt with closing bra}ce but {parsed|accepted}",
+        parser_config=default_parser_config,
+    )
     assert isinstance(parsed, SequenceCommand)
     lit1, variant1 = parsed
     assert lit1.literal == "prompt with closing bra}ce but "

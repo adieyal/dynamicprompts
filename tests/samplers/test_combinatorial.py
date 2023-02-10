@@ -9,6 +9,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.parse import default_parser_config
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -17,7 +18,10 @@ from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
 
 @pytest.fixture
 def sampler(wildcard_manager: WildcardManager) -> CombinatorialSampler:
-    return CombinatorialSampler(wildcard_manager=wildcard_manager)
+    return CombinatorialSampler(
+        wildcard_manager=wildcard_manager,
+        parser_config=default_parser_config,
+    )
 
 
 class TestLiteralCommand:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
+from dataclasses import dataclass
 from typing import cast
 
 import pyparsing as pp
@@ -15,6 +16,15 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.parser.action_builder import ActionBuilder
+
+
+@dataclass
+class ParserConfig:
+    left_brace: str = "{"
+    right_brace: str = "}"
+
+
+default_parser_config = ParserConfig()
 
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
 real_num2 = pp.Combine(pp.Word(pp.nums) + ".")
@@ -247,7 +257,7 @@ def create_parser(
 
 def parse(
     prompt: str,
-    variant_braces: tuple[str, str] = default_variant_braces,
+    parser_config: ParserConfig,
 ) -> Command:
     """
     Parse a prompt string into a commands.
@@ -255,10 +265,8 @@ def parse(
     :return: A command representing the parsed prompt.
     """
 
-    assert len(variant_braces) == 2
-
-    left_brace = pp.Suppress(variant_braces[0])
-    right_brace = pp.Suppress(variant_braces[1])
+    left_brace = pp.Suppress(parser_config.left_brace)
+    right_brace = pp.Suppress(parser_config.right_brace)
 
     tokens = create_parser(variant_braces=(left_brace, right_brace)).parse_string(
         prompt,

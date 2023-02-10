@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import cast
 
 import pytest
@@ -10,11 +11,14 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.parser.parse import (
+    ParserConfig,
     _create_weight_parser,
-    default_variant_braces,
-    parse,
+    default_parser_config,
 )
+from dynamicprompts.parser.parse import parse as original_parse_function
 from pyparsing import ParseException
+
+parse = partial(original_parse_function, parser_config=default_parser_config)
 
 
 class TestParser:
@@ -35,7 +39,7 @@ class TestParser:
         ],
     )
     def test_literal_characters(self, input: str):
-        literal = parse(input, variant_braces=default_variant_braces)
+        literal = parse(input)
         assert isinstance(literal, LiteralCommand)
         assert literal.literal == input
 
@@ -280,8 +284,9 @@ class TestParser:
         ],
     )
     def test_alternative_braces(self, left_brace: str, right_brace, template: str):
-        braces = (left_brace, right_brace)
-        sequence = cast(SequenceCommand, parse(template, variant_braces=braces))
+
+        config = ParserConfig(left_brace=left_brace, right_brace=right_brace)
+        sequence = cast(SequenceCommand, parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"
