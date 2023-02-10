@@ -24,7 +24,7 @@ real_num4 = pp.Word(pp.nums)
 real_num = real_num1 | real_num2 | real_num3 | real_num4
 double_underscore = "__"
 wildcard_enclosure = pp.Suppress(double_underscore)
-default_variant_braces = (pp.Suppress("{"), pp.Suppress("}"))
+default_variant_braces = ("{", "}")
 
 
 class Parser:
@@ -34,8 +34,10 @@ class Parser:
             "Instead, directly call `parse(prompt)`.",
             DeprecationWarning,
         )
+
+        variant_braces = (pp.Suppress("{"), pp.Suppress("}"))
         self._builder = builder
-        self._prompt = create_parser()
+        self._prompt = create_parser(variant_braces=variant_braces)
 
     @property
     def prompt(self):
@@ -204,7 +206,7 @@ def _parse_bound_expr(expr, max_options):
 
 def create_parser(
     *,
-    variant: tuple[pp.Suppress, pp.Suppress] = default_variant_braces,
+    variant_braces: tuple[pp.Suppress, pp.Suppress],
 ) -> pp.ParserElement:
     bound_expr = _configure_range()
 
@@ -212,12 +214,16 @@ def create_parser(
     variant_prompt = pp.Forward()
 
     wildcard = _configure_wildcard()
-    literal_sequence = _configure_literal_sequence(variant_braces=variant)
+    literal_sequence = _configure_literal_sequence(variant_braces=variant_braces)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
-        variant_braces=variant,
+        variant_braces=variant_braces,
     )
-    variants = _configure_variants(bound_expr, variant_prompt, variant_braces=variant)
+    variants = _configure_variants(
+        bound_expr,
+        variant_prompt,
+        variant_braces=variant_braces,
+    )
 
     chunk = variants | wildcard | literal_sequence
     variant_chunk = variants | wildcard | variant_literal_sequence
@@ -239,19 +245,22 @@ def create_parser(
     return prompt
 
 
-def parse(prompt: str, variant_braces="{}") -> Command:
-    assert len(variant_braces) == 2
-    # left_brace.expr, right_brace.expr = braces
-
-    left_brace = pp.Suppress(variant_braces[0])
-    right_brace = pp.Suppress(variant_braces[1])
-
+def parse(
+    prompt: str,
+    variant_braces: tuple[str, str] = default_variant_braces,
+) -> Command:
     """
     Parse a prompt string into a commands.
     :param prompt: The prompt string to parse.
     :return: A command representing the parsed prompt.
     """
-    tokens = create_parser(variant=(left_brace, right_brace)).parse_string(
+
+    assert len(variant_braces) == 2
+
+    left_brace = pp.Suppress(variant_braces[0])
+    right_brace = pp.Suppress(variant_braces[1])
+
+    tokens = create_parser(variant_braces=(left_brace, right_brace)).parse_string(
         prompt,
         parse_all=True,
     )

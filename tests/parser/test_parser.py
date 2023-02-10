@@ -9,7 +9,11 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.parse import _create_weight_parser, parse
+from dynamicprompts.parser.parse import (
+    _create_weight_parser,
+    default_variant_braces,
+    parse,
+)
 from pyparsing import ParseException
 
 
@@ -31,7 +35,7 @@ class TestParser:
         ],
     )
     def test_literal_characters(self, input: str):
-        literal = parse(input)
+        literal = parse(input, variant_braces=default_variant_braces)
         assert isinstance(literal, LiteralCommand)
         assert literal.literal == input
 
@@ -261,19 +265,22 @@ class TestParser:
         assert parse(input).literal == input
 
     @pytest.mark.parametrize(
-        ("braces", "template"),
+        ("left_brace", "right_brace", "template"),
         [
-            ("<>", "some literal string <A|B|__some/wildcard__>"),
-            ("__", "some literal string _A|B|__some/wildcard___"),
-            ("::", "some literal string :A|B|__some/wildcard__:"),
-            ("&&", "some literal string &A|B|__some/wildcard__&"),
+            ("<", ">", "some literal string <A|B|__some/wildcard__>"),
+            ("_", "_", "some literal string _A|B|__some/wildcard___"),
+            (":", ":", "some literal string :A|B|__some/wildcard__:"),
+            ("&", "&", "some literal string &A|B|__some/wildcard__&"),
             (
-                "[]",
+                "[",
+                "]",
                 "some literal string [A|B|__some/wildcard__]",
             ),  # This also tests that regex is escaped correctly
+            ("<<:", ":>>", "some literal string <<:A|B|__some/wildcard__:>>"),
         ],
     )
-    def test_alternative_braces(self, braces: str, template: str):
+    def test_alternative_braces(self, left_brace: str, right_brace, template: str):
+        braces = (left_brace, right_brace)
         sequence = cast(SequenceCommand, parse(template, variant_braces=braces))
         variant = cast(VariantCommand, sequence[1])
 
