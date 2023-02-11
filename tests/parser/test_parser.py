@@ -9,7 +9,11 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.parser.parse import _create_weight_parser, parse
+from dynamicprompts.parser.config import ParserConfig
+from dynamicprompts.parser.parse import (
+    _create_weight_parser,
+    parse,
+)
 from pyparsing import ParseException
 
 
@@ -261,16 +265,24 @@ class TestParser:
         assert parse(input).literal == input
 
     @pytest.mark.parametrize(
-        ("braces", "template"),
+        ("variant_start", "variant_end", "template"),
         [
-            ("<>", "some literal string <A|B|__some/wildcard__>"),
-            ("__", "some literal string _A|B|__some/wildcard___"),
-            ("::", "some literal string :A|B|__some/wildcard__:"),
-            ("&&", "some literal string &A|B|__some/wildcard__&`"),
+            ("<", ">", "some literal string <A|B|__some/wildcard__>"),
+            ("_", "_", "some literal string _A|B|__some/wildcard___"),
+            (":", ":", "some literal string :A|B|__some/wildcard__:"),
+            ("&", "&", "some literal string &A|B|__some/wildcard__&"),
+            (
+                "[",
+                "]",
+                "some literal string [A|B|__some/wildcard__]",
+            ),  # This also tests that regex is escaped correctly
+            ("<<:", ":>>", "some literal string <<:A|B|__some/wildcard__:>>"),
         ],
     )
-    def test_alternative_braces(self, braces: str, template: str):
-        sequence = cast(SequenceCommand, parse(template, braces=braces))
+    def test_alternative_braces(self, variant_start: str, variant_end, template: str):
+
+        config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
+        sequence = cast(SequenceCommand, parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"

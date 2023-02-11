@@ -35,7 +35,9 @@ def test_generator(
     case: SmokeTestCase,
     wildcard_manager: WildcardManager,
 ) -> None:
-    sampler = sampler_class(wildcard_manager=wildcard_manager)
+    sampler = sampler_class(
+        wildcard_manager=wildcard_manager,
+    )
     gen_count = 0
     for result in sampler.generate_prompts(
         case.input,

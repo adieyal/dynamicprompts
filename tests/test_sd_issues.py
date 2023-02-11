@@ -47,7 +47,9 @@ def test_sd_237(wildcard_manager: WildcardManager):
 
 def test_sd_212(wildcard_manager: WildcardManager):
     """Test that closing braces are allowed within literals. Fixed by #24."""
-    parsed = parse("prompt with closing bra}ce but {parsed|accepted}")
+    parsed = parse(
+        "prompt with closing bra}ce but {parsed|accepted}",
+    )
     assert isinstance(parsed, SequenceCommand)
     lit1, variant1 = parsed
     assert lit1.literal == "prompt with closing bra}ce but "

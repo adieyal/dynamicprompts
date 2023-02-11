@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from itertools import islice
 
 from dynamicprompts.commands import Command
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -15,10 +16,12 @@ class Sampler(metaclass=ABCMeta):
         self,
         *,
         wildcard_manager: WildcardManager,
+        parser_config: ParserConfig = default_parser_config,
         ignore_whitespace: bool = False,
     ):
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
+        self._parser_config = parser_config
 
     @abstractmethod
     def generator_from_command(
@@ -44,7 +47,7 @@ class Sampler(metaclass=ABCMeta):
             return []
         command: Command
         if isinstance(prompt, str):
-            command = parse(prompt)
+            command = parse(prompt, parser_config=self._parser_config)
         elif isinstance(prompt, Command):
             command = prompt
         else:
