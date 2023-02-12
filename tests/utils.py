@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def cross(list1: list[str], list2: list[str], sep=",") -> list[str]:
     return [f"{x}{sep}{y}" for x in list1 for y in list2 if x != y]
 
