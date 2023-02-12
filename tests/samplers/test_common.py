@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from itertools import cycle, islice, zip_longest
 from unittest import mock
