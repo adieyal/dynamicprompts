@@ -8,3 +8,7 @@ StringGen = Generator[str, None, None]
 CommandList = List[Command]
 CommandListGen = Generator[CommandList, None, None]
 StringIter = Iterable[str]
+
+
+def to_string_gen(strs: StringIter) -> StringGen:
+    yield from strs

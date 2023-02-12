@@ -102,7 +102,10 @@ class CombinatorialSampler(Sampler):
                 if first_command.sampling_method != SamplingMethod.COMBINATORIAL:
                     for rest_vals in get_sequence(rest):
                         val = command_collection.get_value(first_command)
-                        yield [val] + rest_vals
+                        if val:
+                            yield [val] + rest_vals
+                        else:
+                            yield rest_vals
                 else:
                     gen = self._sampler_router.generator_from_command(first_command)
                     for first_val in gen:

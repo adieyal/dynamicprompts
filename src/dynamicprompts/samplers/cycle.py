@@ -13,7 +13,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler, SamplerRouter
-from dynamicprompts.types import StringGen
+from dynamicprompts.types import StringGen, to_string_gen
 from dynamicprompts.utils import next_sampler_next_value
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -100,17 +100,19 @@ class CyclicalSampler(Sampler):
             yield from next_sampler_next_value(cycle(combination_samplers))
 
     def _get_cyclical_wildcard(self, command: WildcardCommand):
+
         values = self._wildcard_manager.get_all_values(command.wildcard)
         new_router = self._sampler_router.clone()
         new_router.default_sampling_method = SamplingMethod.CYCLICAL
         value_samplers = [new_router.sample_prompts(val) for val in values]
+        value_string_gens = [to_string_gen(val) for val in value_samplers]
 
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {command.wildcard}")
             while True:
                 yield f"__{command.wildcard}__"
         else:
-            yield from next_sampler_next_value(value_samplers)
+            yield from next_sampler_next_value(value_string_gens)
 
     def generator_from_command(
         self,

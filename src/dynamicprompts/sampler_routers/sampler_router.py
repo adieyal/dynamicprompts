@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Generator
 
 from dynamicprompts.commands import Command
+from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.types import StringGen, StringIter
 
 
@@ -42,3 +43,13 @@ class SamplerRouter(metaclass=ABCMeta):
                         yield [p] + rest_prompt
                     else:
                         yield [p]
+
+    @property
+    @abstractmethod
+    def default_sampling_method(self) -> SamplingMethod:
+        ...
+
+    @default_sampling_method.setter
+    @abstractmethod
+    def default_sampling_method(self, method: SamplingMethod):
+        ...
