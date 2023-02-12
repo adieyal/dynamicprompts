@@ -5,6 +5,7 @@ from random import Random
 
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.sampler_routers.concrete_sampler_router import ConcreteSamplerRouter
 from dynamicprompts.samplers.random import DEFAULT_RANDOM
 from dynamicprompts.wildcardmanager import WildcardManager
@@ -19,6 +20,7 @@ class RandomPromptGenerator(PromptGenerator):
         seed: int | None = None,
         unlink_seed_from_prompt: bool = False,
         ignore_whitespace: bool = False,
+        parser_config: ParserConfig = default_parser_config,
     ) -> None:
         self._wildcard_manager = wildcard_manager
         self._unlink_seed_from_prompt = unlink_seed_from_prompt
@@ -34,6 +36,7 @@ class RandomPromptGenerator(PromptGenerator):
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.RANDOM,
             ignore_whitespace=ignore_whitespace,
+            parser_config=parser_config,
             rand=self._random,
         )
 

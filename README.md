@@ -50,7 +50,7 @@ Additional functionality (see below) can be installed with this command:
 
 Use the RandomPromptGenerator to create 5 random prompts using a given template:
 
-```
+```python
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
@@ -77,7 +77,7 @@ yellow
 
 then
 
-```
+```python
 generator.generate("I love __colours__ roses", num_prompts)
 >> ['I love pink roses', 'I love violet roses', 'I love white roses', 'I love violet roses', 'I love blue roses']
 ```
@@ -114,7 +114,7 @@ will produce:
 > My favourite season is Sprint<br>
 
 ### Usage
-```
+```python
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators import CombinatorialPromptGenerator
@@ -171,7 +171,7 @@ There a few alternatives to Gusacosta's model available. You can try:
 Note that each model requires a download of large model files.
 
 ### Usage
-```
+```python
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
@@ -203,7 +203,7 @@ Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if
 
 ### Usage
 
-```
+```python
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
@@ -224,7 +224,7 @@ If you are using [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusi
 
 ### Usage
 
-```
+```python
 from pathlib import Path
 from dynamicprompts.wildcardmanager import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
@@ -351,7 +351,7 @@ This produce one of:
 > A small dragon (assuming dragon is contained in the monster.txt file)<br>
 > A large dragon<br>
 > A scary ghost<br>
-> A fiendly ghost<br>
+> A friendly ghost<br>
 
 If you find that your prompts are becoming too complicated to read, consider using [whitespace](#whitespace)
 
@@ -384,9 +384,29 @@ In most cases, whitespace is ignored which allows you to create more expressive 
 	wisdom {
     	woman, __colours__ eyes, braided hair
     	|man using a __war/weapons/swords/european__, red turban
-    	|dwarf weilding a warhammer, __colours__ beard
+    	|dwarf wielding a warhammer, __colours__ beard
 	},
 	knows the meaning of life, warrior, hyper-realistic, peaceful, dark fantasy, unreal engine, 8k
+
+## Syntax customisation
+To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`.
+
+```python
+
+from pathlib import Path
+from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.generators import RandomPromptGenerator
+from dynamicprompts.parser.config import ParserConfig
+
+WILDCARD_DIR = Path("/path/to/wildcards/directory")
+wm = WildcardManager(WILDCARD_DIR)
+parser_config = ParserConfig(variant_start="<", variant_end=">")
+
+generator = RandomPromptGenerator(wm, parser_config=parser_config)
+
+```
+
+Currently only variant braces can be customised, but other tokens may be implemented in future.
 
 ## Prompt development
 The flexibility provided in the templating language makes it easy to start developing more sophisticated prompts, e.g,here is a prompt for an engagement ring.

@@ -7,10 +7,20 @@ from dynamicprompts.utils import is_empty_line
 
 
 class WildcardFile:
-    def __init__(self, path: Path, encoding: str = DEFAULT_ENCODING) -> None:
+    def __init__(
+        self,
+        path: Path,
+        encoding: str = DEFAULT_ENCODING,
+        name: str | None = None,
+    ) -> None:
         self._path = path
         self._encoding = encoding
+        self._name = name or path.name
         self._cache: set[str] | None = None
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def __str__(self) -> str:
         return f"<WildcardFile: {self._path}>"

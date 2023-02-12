@@ -6,6 +6,7 @@ from typing import Iterable
 from dynamicprompts import constants
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
+from dynamicprompts.parser.parse import default_parser_config
 from dynamicprompts.sampler_routers import ConcreteSamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -23,6 +24,7 @@ class CombinatorialPromptGenerator(PromptGenerator):
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.COMBINATORIAL,
             ignore_whitespace=ignore_whitespace,
+            parser_config=default_parser_config,
         )
 
     def generate(  # type: ignore[override]

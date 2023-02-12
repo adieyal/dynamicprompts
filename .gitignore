@@ -3,3 +3,4 @@
 *.pyc
 dist
 /.coverage
+*.code-workspace

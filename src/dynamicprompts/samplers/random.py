@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
@@ -30,11 +31,13 @@ class RandomSampler(Sampler):
         ignore_whitespace: bool = False,
         sampler_router: SamplerRouter,
         rand: Random = DEFAULT_RANDOM,
+        parser_config: ParserConfig = default_parser_config,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
             sampler_router=sampler_router,
+            parser_config=parser_config,
         )
         self._sampler_router = sampler_router
         self._random = rand

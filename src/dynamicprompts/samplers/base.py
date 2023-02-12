@@ -4,6 +4,7 @@ import logging
 from abc import ABCMeta, abstractmethod
 
 from dynamicprompts.commands import Command, LiteralCommand, SequenceCommand
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.sampler_routers.sampler_router import SamplerRouter
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import rotate_and_join
@@ -17,12 +18,14 @@ class Sampler(metaclass=ABCMeta):
         self,
         *,
         wildcard_manager: WildcardManager,
+        parser_config: ParserConfig = default_parser_config,
         ignore_whitespace: bool = False,
         sampler_router: SamplerRouter,
     ):
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
         self._sampler_router = sampler_router
+        self._parser_config = parser_config
 
     @abstractmethod
     def generator_from_command(self, command: Command) -> StringGen:

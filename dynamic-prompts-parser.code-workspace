@@ -3,5 +3,15 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"cSpell.words": [
+			"dynamicprompts",
+			"getfixturevalue",
+			"printables",
+			"pyparsing",
+			"qualname",
+			"wildcardmanager"
+		]
+	}
 }

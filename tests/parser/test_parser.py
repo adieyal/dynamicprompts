@@ -11,7 +11,11 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.commands.base import Command, SamplingMethod
-from dynamicprompts.parser.parse import _create_weight_parser, parse
+from dynamicprompts.parser.config import ParserConfig
+from dynamicprompts.parser.parse import (
+    _create_weight_parser,
+    parse,
+)
 from pyparsing import ParseException
 
 default_parse = partial(parse, default_sampling_method=SamplingMethod.DEFAULT)
@@ -344,3 +348,28 @@ class TestParser:
         count = check_children(command, sampling_method)
 
         assert count == expected_count
+
+    @pytest.mark.parametrize(
+        ("variant_start", "variant_end", "template"),
+        [
+            ("<", ">", "some literal string <A|B|__some/wildcard__>"),
+            ("_", "_", "some literal string _A|B|__some/wildcard___"),
+            (":", ":", "some literal string :A|B|__some/wildcard__:"),
+            ("&", "&", "some literal string &A|B|__some/wildcard__&"),
+            (
+                "[",
+                "]",
+                "some literal string [A|B|__some/wildcard__]",
+            ),  # This also tests that regex is escaped correctly
+            ("<<:", ":>>", "some literal string <<:A|B|__some/wildcard__:>>"),
+        ],
+    )
+    def test_alternative_braces(self, variant_start: str, variant_end, template: str):
+
+        config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
+        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
+        variant = cast(VariantCommand, sequence[1])
+
+        assert variant.values[0].literal == "A"
+        assert variant.values[1].literal == "B"
+        assert variant.values[2].wildcard == "some/wildcard"

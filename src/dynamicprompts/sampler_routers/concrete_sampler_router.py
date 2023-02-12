@@ -5,6 +5,7 @@ from itertools import islice
 from random import Random
 
 from dynamicprompts.commands.base import Command, SamplingMethod
+from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
@@ -25,6 +26,7 @@ class ConcreteSamplerRouter(SamplerRouter):
         default_sampling_method: SamplingMethod,
         ignore_whitespace=False,
         samplers: dict[SamplingMethod, Sampler] | None = None,
+        parser_config=default_parser_config,
         rand: Random = DEFAULT_RANDOM,
     ):
         if default_sampling_method == SamplingMethod.DEFAULT:
