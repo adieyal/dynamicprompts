@@ -5,7 +5,7 @@ from typing import Iterable
 
 from dynamicprompts import constants
 from dynamicprompts.generators.promptgenerator import PromptGenerator
-from dynamicprompts.parser.parse import default_parser_config
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler
 from dynamicprompts.wildcardmanager import WildcardManager
 
@@ -17,12 +17,13 @@ class CombinatorialPromptGenerator(PromptGenerator):
         self,
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
+        parser_config: ParserConfig = default_parser_config,
     ) -> None:
         self._wildcard_manager = wildcard_manager
         self._sampler = CombinatorialSampler(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
-            parser_config=default_parser_config,
+            parser_config=parser_config,
         )
 
     def generate(  # type: ignore[override]
