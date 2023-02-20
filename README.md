@@ -394,7 +394,7 @@ In most cases, whitespace is ignored which allows you to create more expressive 
 Behind the scenes, Dynamic Prompts uses samplers to select an option from a wildcard or variant. Samplers can be classed as either finite or non-finite.
 
 ### Finite Samplers
-When sampling using a finite sampler, once the options are exhausted, the sampler no-longer returns any values. 
+When sampling using a finite sampler, once the options are exhausted, the sampler no-longer returns any values.
 
 The only finite sampler currently available is the  **Combinatorial Sampler**.  It will exhaustively generate all possible combinations and then stop, e.g. `{A|B|C}` will produce:
 
@@ -470,7 +470,7 @@ C Y
 ```
 
 ### Mixing samplers in the same prompt
-When parsing a prompt template, every variant and wildcard is assigned a sampler. If a sampler is not explicitly set, then the default sampler is used. You can explictly set the sampler, using the syntax `{!A|B|C}` or `__!wildcard__` for combinatorial, `{~A|B|C}` or `__~wildcard__` for random and `{@A|B|C}` or `__@wildcard__` for cyclical. 
+When parsing a prompt template, every variant and wildcard is assigned a sampler. If a sampler is not explicitly set, then the default sampler is used. You can explictly set the sampler, using the syntax `{!A|B|C}` or `__!wildcard__` for combinatorial, `{~A|B|C}` or `__~wildcard__` for random and `{@A|B|C}` or `__@wildcard__` for cyclical.
 
 Examples:
 In combinatorial mode, the template `{A|B|C} {@X|Y}` will automatically be converted to `{!A|B|C} {@X|Y}`. This will generate the following prompts:
@@ -480,7 +480,7 @@ B Y
 C X
 ```
 
-This template only produces 3 prompts because the combinatorial sampler is exhausted  after producing `A`, `B`, and `C`. 
+This template only produces 3 prompts because the combinatorial sampler is exhausted  after producing `A`, `B`, and `C`.
 
 Similarly, `{!A|B|C} {~X|Y}` might generate the following prompts:
 ```
