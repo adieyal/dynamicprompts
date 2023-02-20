@@ -1,6 +1,7 @@
 from unittest.mock import Mock
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
+from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -91,3 +92,11 @@ class TestCombinatorialGenerator:
         prompts = generator.generate(prompt)
 
         assert len(list(prompts)) == 9
+
+    def test_passing_config(self, wildcard_manager: WildcardManager):
+        generator = CombinatorialPromptGenerator(
+            wildcard_manager,
+            parser_config=default_parser_config,
+        )
+        for sampler in generator._router._samplers.values():
+            assert sampler._parser_config == default_parser_config

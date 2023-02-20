@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.samplers.base import Sampler, SamplerRouter
 from dynamicprompts.types import StringGen, to_string_gen
 from dynamicprompts.utils import next_sampler_next_value
@@ -56,11 +57,13 @@ class CyclicalSampler(Sampler):
         wildcard_manager: WildcardManager,
         ignore_whitespace: bool = False,
         sampler_router: SamplerRouter,
+        parser_config: ParserConfig = default_parser_config,
     ):
         super().__init__(
             wildcard_manager=wildcard_manager,
             ignore_whitespace=ignore_whitespace,
             sampler_router=sampler_router,
+            parser_config=parser_config,
         )
         self._already_looping = False
 

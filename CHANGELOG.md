@@ -1,3 +1,4 @@
+0.7.1 - Fixed missing parser_config argument in CombinatorialPromptGenerator
 0.7.0 - Configurable variant braces
 0.6.0 - Support symlinks for the wildcards directory
 0.5.0 - A major re-organisation of the parsing machinary.

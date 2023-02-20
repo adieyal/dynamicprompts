@@ -39,6 +39,7 @@ class ConcreteSamplerRouter(SamplerRouter):
             "wildcard_manager": wildcard_manager,
             "ignore_whitespace": ignore_whitespace,
             "sampler_router": self,
+            "parser_config": parser_config,
         }
 
         random_sampler = RandomSampler(**kwargs, rand=rand)
