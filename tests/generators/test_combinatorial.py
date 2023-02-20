@@ -98,4 +98,5 @@ class TestCombinatorialGenerator:
             wildcard_manager,
             parser_config=default_parser_config,
         )
-        assert generator._sampler._parser_config == default_parser_config
+        for sampler in generator._router._samplers.values():
+            assert sampler._parser_config == default_parser_config

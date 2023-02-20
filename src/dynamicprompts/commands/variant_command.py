@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import dataclasses
 import logging
-from typing import Iterable
+from typing import Generator, Iterable
 
-from dynamicprompts.commands import Command, LiteralCommand
+from dynamicprompts.commands.base import Command
+from dynamicprompts.commands.literal_command import LiteralCommand
+from dynamicprompts.enums import SamplingMethod
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +23,14 @@ class VariantCommand(Command):
     min_bound: int = 1
     max_bound: int = 1
     separator: str = ","
+    sampling_method: SamplingMethod = SamplingMethod.DEFAULT
 
     def __post_init__(self):
         min_bound, max_bound = sorted((self.min_bound, self.max_bound))
         self.min_bound = max(0, min_bound)
-        self.max_bound = max_bound
+        self.max_bound = min(len(self.variants), max_bound)
+
+        self.min_bound = min(self.min_bound, self.max_bound)
 
     def __len__(self) -> int:
         return len(self.variants)
@@ -35,6 +40,15 @@ class VariantCommand(Command):
 
     def __iter__(self) -> Iterable[VariantOption]:
         return iter(self.variants)
+
+    def propagate_sampling_method(
+        self,
+        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
+    ) -> None:
+        super().propagate_sampling_method(sampling_method=sampling_method)
+
+        for value in self.values:
+            value.propagate_sampling_method(self.sampling_method)
 
     @property
     def weights(self) -> list[float]:
@@ -52,6 +66,7 @@ class VariantCommand(Command):
         min_bound: int = 1,
         max_bound: int = 1,
         separator: str = ",",
+        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
     ) -> VariantCommand:
         vals = [LiteralCommand(str(v)) for v in literals]
         if weights is None:
@@ -62,12 +77,20 @@ class VariantCommand(Command):
             min_bound=min_bound,
             max_bound=max_bound,
             separator=separator,
+            sampling_method=sampling_method,
         )
 
-    def get_value_combinations(self, k: int) -> Iterable[list[Command]]:
+    def get_value_combinations(
+        self,
+        k: int,
+        values=None,
+    ) -> Generator[list[Command], None, None]:
+        if values is None:
+            values = self.values
         if k <= 0:
             yield []
         else:
-            for variant in self.values:
-                for item in self.get_value_combinations(k - 1):
-                    yield [variant] + item
+            for value in values:
+                other_values = [v for v in values if v != value]
+                for item in self.get_value_combinations(k - 1, values=other_values):
+                    yield [value] + item

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import cast
 
 import pytest
@@ -9,12 +10,15 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.commands.base import Command, SamplingMethod
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import (
     _create_weight_parser,
     parse,
 )
 from pyparsing import ParseException
+
+default_parse = partial(parse, default_sampling_method=SamplingMethod.DEFAULT)
 
 
 class TestParser:
@@ -35,7 +39,7 @@ class TestParser:
         ],
     )
     def test_literal_characters(self, input: str):
-        literal = parse(input)
+        literal = default_parse(input)
         assert isinstance(literal, LiteralCommand)
         assert literal.literal == input
 
@@ -48,21 +52,42 @@ class TestParser:
         ],
     )
     def test_wildcard(self, input: str):
-        wildcard_command = parse(f"__{input}__")
+        wildcard_command = default_parse(f"__{input}__")
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == input
+        assert wildcard_command.sampling_method == SamplingMethod.DEFAULT
+
+    @pytest.mark.parametrize(
+        "input, sampling_method, wildcard",
+        [
+            ("colours", SamplingMethod.DEFAULT, "colours"),
+            ("~path/to/colours", SamplingMethod.RANDOM, "path/to/colours"),
+            ("!änder", SamplingMethod.COMBINATORIAL, "änder"),
+            ("@änder", SamplingMethod.CYCLICAL, "änder"),
+        ],
+    )
+    def test_sampling_method(
+        self,
+        input: str,
+        sampling_method: SamplingMethod,
+        wildcard: str,
+    ):
+        wildcard_command = default_parse(f"__{input}__")
+        assert isinstance(wildcard_command, WildcardCommand)
+        assert wildcard_command.wildcard == wildcard
+        assert wildcard_command.sampling_method == sampling_method
 
     def test_two_wildcards_adjacent(self):
-        sequence = parse("__colours__ __colours__")
+        sequence = default_parse("__colours__ __colours__")
         assert len(sequence) == 3
 
     def test_wildcard_adjactent_to_literal(self):
-        literal, wildcard_command = parse(",__colours__")
+        literal, wildcard_command = default_parse(",__colours__")
         assert literal.literal == ","
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == "colours"
 
-        wildcard_command, literal = parse("__colours__ world")
+        wildcard_command, literal = default_parse("__colours__ world")
         assert wildcard_command.wildcard == "colours"
         assert literal.literal == " world"
 
@@ -75,7 +100,7 @@ class TestParser:
         assert weight.parse_string("0.25::")[0] == 0.25
 
     def test_basic_variant(self):
-        variant = parse("{cat|dog}")
+        variant = parse("{cat|dog}", default_sampling_method=SamplingMethod.DEFAULT)
         assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
         assert variant.weights == [1.0, 1.0]
@@ -84,8 +109,25 @@ class TestParser:
         assert values[0].literal == "cat"
         assert values[1].literal == "dog"
 
+    @pytest.mark.parametrize(
+        "input, sampling_method",
+        [
+            ("{red|green|blue}", SamplingMethod.DEFAULT),
+            ("{~red|green|blue}", SamplingMethod.RANDOM),
+            ("{!red|green|blue}", SamplingMethod.COMBINATORIAL),
+            ("{!__test/colours__}", SamplingMethod.COMBINATORIAL),
+            ("{~1-3$$ and $$red|green|blue}", SamplingMethod.RANDOM),
+            ("{~0.2::red|0.4::green|0.6::blue}", SamplingMethod.RANDOM),
+            ("{@0.2::red|0.4::green|0.6::blue}", SamplingMethod.CYCLICAL),
+        ],
+    )
+    def test_variant_with_sampling_method(self, input, sampling_method):
+        variant = default_parse(input)
+        assert isinstance(variant, VariantCommand)
+        assert variant.sampling_method == sampling_method
+
     def test_variant_with_different_characters(self):
-        variant = parse("{new york|washing-ton!|änder}")
+        variant = default_parse("{new york|washing-ton!|änder}")
         assert isinstance(variant, VariantCommand)
         assert [v.literal for v in variant.values] == [
             "new york",
@@ -94,7 +136,7 @@ class TestParser:
         ]
 
     def test_variant_with_blank(self):
-        variant = parse("{|red|blue}")
+        variant = default_parse("{|red|blue}")
         assert isinstance(variant, VariantCommand)
         a, b, c = variant.values
         assert len(a) == 0
@@ -103,10 +145,10 @@ class TestParser:
 
     def test_variant_breaks_without_closing_bracket(self):
         with pytest.raises(ParseException):
-            parse("{cat|dog")
+            default_parse("{cat|dog")
 
     def test_variant_with_wildcard(self):
-        variant = parse("{__test/colours__|washington}")
+        variant = default_parse("{__test/colours__|washington}")
         assert isinstance(variant, VariantCommand)
         wildcard_command, washington = variant.values
         assert isinstance(wildcard_command, WildcardCommand)
@@ -115,7 +157,7 @@ class TestParser:
         assert washington.literal == "washington"
 
     def test_variant_sequences(self):
-        variant = parse(
+        variant = default_parse(
             "{My favourite colour is __colour__ and not __other_colour__|__colour__ is my favourite colour}",
         )
         assert isinstance(variant, VariantCommand)
@@ -140,7 +182,7 @@ class TestParser:
         assert literal3.literal == " is my favourite colour"
 
     def test_variant_with_nested_variant(self):
-        variant = parse("{__test/colours__|{__test/shapes__|washington}}")
+        variant = default_parse("{__test/colours__|{__test/shapes__|washington}}")
         assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
         (wildcard, nested_variant) = variant.values
@@ -163,7 +205,7 @@ class TestParser:
         ],
     )
     def test_variant_with_weights(self, input, weights):
-        variant, literal = parse(input)
+        variant, literal = default_parse(input)
         assert isinstance(variant, VariantCommand)
         assert variant.weights == weights
         assert [v.literal for v in variant.values] == ["cat", "dog", "bird"]
@@ -180,24 +222,28 @@ class TestParser:
                 0,
                 1,
             ),  # https://github.com/adieyal/sd-dynamic-prompts/issues/223
+            ("{!1-2$$cat|dog|bird}", 1, 2),
+            ("{~1-2$$cat|dog|bird}", 1, 2),
         ],
     )
     def test_range(self, input, min_bound, max_bound):
-        variant = parse(input)
+        variant = default_parse(input)
         assert isinstance(variant, VariantCommand)
         assert variant.min_bound == min_bound
         assert variant.max_bound == max_bound
         assert variant.separator == ","
 
     def test_variant_delimiter(self):
-        variant = parse("{2$$ and $$cat|dog|bird}")
+        variant = default_parse("{2$$ and $$cat|dog|bird}")
         assert isinstance(variant, VariantCommand)
 
         assert variant.min_bound == 2
         assert variant.max_bound == 2
         assert variant.separator == " and "
 
-        proclamation, variant, flower = parse("I love {2$$|$$green|yellow|blue} roses")
+        proclamation, variant, flower = default_parse(
+            "I love {2$$|$$green|yellow|blue} roses",
+        )
         assert isinstance(variant, VariantCommand)
         assert [v.literal for v in variant.values] == [
             "green",
@@ -207,12 +253,14 @@ class TestParser:
         assert variant.separator == "|"
 
         with pytest.raises(ParseException):
-            parse("{2$$ $ $$cat|dog|bird}")  # A dollar sign is not a valid separator
+            default_parse(
+                "{2$$ $ $$cat|dog|bird}",
+            )  # A dollar sign is not a valid separator
 
-        parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
+        default_parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
 
     def test_variants_adjacent(self):
-        sequence = parse("{2$$cat|dog|bird}{3$$red|blue|green}")
+        sequence = default_parse("{2$$cat|dog|bird}{3$$red|blue|green}")
         assert len(sequence) == 2
         assert isinstance(sequence[0], VariantCommand)
         assert isinstance(sequence[1], VariantCommand)
@@ -239,7 +287,7 @@ class TestParser:
         five
         """
 
-        sequence = parse(prompt)
+        sequence = default_parse(prompt)
         assert len(sequence) == 5
         one_two_three, variant, whitespace, wildcard, five = sequence
 
@@ -262,7 +310,44 @@ class TestParser:
         ],
     )
     def test_a1111_special_syntax_intact(self, input):
-        assert parse(input).literal == input
+        assert (
+            parse(input, default_sampling_method=SamplingMethod.DEFAULT).literal
+            == input
+        )
+
+    @pytest.mark.parametrize(
+        ("input", "expected_count"),
+        [
+            ("A literal sentence", 1),
+            ("{RED|GREEN|BLUE}", 4),
+            ("__wildcard__", 1),
+            ("{A|B|C} {D|E|g}", 10),
+        ],
+    )
+    def test_deep_propagation(self, input: str, expected_count: int):
+        def check_children(parent: Command, sampling_method: SamplingMethod) -> int:
+            total_count = 1
+
+            assert parent.sampling_method == sampling_method
+            if isinstance(parent, VariantCommand):
+                variant = cast(VariantCommand, parent)
+                for value in variant.values:
+                    child_count = check_children(value, sampling_method)
+                    total_count += child_count
+            elif isinstance(parent, SequenceCommand):
+                sequence = cast(SequenceCommand, parent)
+                for token in sequence.tokens:
+                    child_count = check_children(token, sampling_method)
+                    total_count += child_count
+
+            return total_count
+
+        sampling_method = SamplingMethod.RANDOM
+
+        command = parse(input, default_sampling_method=sampling_method)
+        count = check_children(command, sampling_method)
+
+        assert count == expected_count
 
     @pytest.mark.parametrize(
         ("variant_start", "variant_end", "template"),
@@ -282,7 +367,7 @@ class TestParser:
     def test_alternative_braces(self, variant_start: str, variant_end, template: str):
 
         config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
-        sequence = cast(SequenceCommand, parse(template, parser_config=config))
+        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"

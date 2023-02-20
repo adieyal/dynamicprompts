@@ -388,6 +388,144 @@ In most cases, whitespace is ignored which allows you to create more expressive 
 	},
 	knows the meaning of life, warrior, hyper-realistic, peaceful, dark fantasy, unreal engine, 8k
 
+## Samplers
+[Note, this is an advanced feature and you probably don't need to worry about it.]
+
+Behind the scenes, Dynamic Prompts uses samplers to select an option from a wildcard or variant. Samplers can be classed as either finite or non-finite.
+
+### Finite Samplers
+When sampling using a finite sampler, once the options are exhausted, the sampler no-longer returns any values. 
+
+The only finite sampler currently available is the  **Combinatorial Sampler**.  It will exhaustively generate all possible combinations and then stop, e.g. `{A|B|C}` will produce:
+
+```
+A
+B
+C
+```
+
+CombinatorialPromptGenerators uses a combinatorial sampler by default.
+
+### Non-finite samplers
+Non-finite samplers can be used to generate an infinite number of prompts. They are useful for generating prompts that are not limited by the number of options available in a wildcard file or combination.
+
+**Random Sampler** - this sampler randomly picks an option. In this case `A`, `B`, and `C` are all equally likely to be chosen, e.g.
+```
+A
+C
+B
+B
+A
+C
+...
+```
+
+Unsurprisingly, RandomPromptGenerators uses a random sampler by default.
+
+**Cyclical Sampler** - a cyclical sampler will choose an item in a round-robin fashion. Every time you sample using this sampler, it will return the next option in the list. Once you have exhausted the list it starts again. e.g.:
+```
+A
+B
+C
+A
+B
+...
+```
+
+Both Random and Cyclical samplers treat a wildcard or variant in isolation, whereas the Combinatorial sampler combines all the wildcards and variants in the prompt and treats them as a single unit.  The examples below should make this clearer.
+
+### Comparison between samplers
+Consider the prompt `{A|B|C} {X|Y}`. If we use a random sampler, we might get the following prompts:
+
+```
+A X
+C Y
+B X
+A Y
+C X
+C X
+```
+
+If we use a cyclical sampler, we will generate the following prompts:
+```
+A X
+B Y
+C X
+A Y
+B X
+C Y
+A X
+...
+
+```
+
+Finally, if we use a combinatorial sampler, we will generate exactly 6 prompts:
+```
+A X
+A Y
+B X
+B Y
+C X
+C Y
+```
+
+### Mixing samplers in the same prompt
+When parsing a prompt template, every variant and wildcard is assigned a sampler. If a sampler is not explicitly set, then the default sampler is used. You can explictly set the sampler, using the syntax `{!A|B|C}` or `__!wildcard__` for combinatorial, `{~A|B|C}` or `__~wildcard__` for random and `{@A|B|C}` or `__@wildcard__` for cyclical. 
+
+Examples:
+In combinatorial mode, the template `{A|B|C} {@X|Y}` will automatically be converted to `{!A|B|C} {@X|Y}`. This will generate the following prompts:
+```
+A X
+B Y
+C X
+```
+
+This template only produces 3 prompts because the combinatorial sampler is exhausted  after producing `A`, `B`, and `C`. 
+
+Similarly, `{!A|B|C} {~X|Y}` might generate the following prompts:
+```
+A Y
+B X
+C X
+```
+
+Compare this with `{!A|B|C} {!X|Y}` which will generate the following prompts:
+```
+A X
+A Y
+B X
+B Y
+C X
+C Y
+```
+
+The default mode is propagated to all nested variants and wildcards, e.g. In random mode, this prompt:
+```
+{A|B|C}
+{@X|Y|
+    {1|2|3}
+}
+```
+
+will be converted to:
+```
+{~A|B|C}
+{@X|Y|
+	{@1|2|3}
+}
+```
+
+One final note, finite variants and wildcards cannot be sampled inside non-finite variants and wildcards. For example, in this prompt:
+```
+{~A|B|{!X|Y}}
+```
+
+the combinatorial syntax is ignored and the template will be converted to:
+```
+{~A|B|{~X|Y}}
+```
+
+
 ## Syntax customisation
 To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`.
 
