@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class ParserConfig:
     variant_start: str = "{"
     variant_end: str = "}"
+    wildcard_wrap: str = "__"
 
 
 default_parser_config = ParserConfig()
