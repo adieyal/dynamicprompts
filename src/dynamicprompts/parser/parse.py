@@ -102,7 +102,7 @@ def _configure_literal_sequence(
         non_literal_chars += rf"|${parser_config.variant_end}"
 
     non_literal_chars = re.escape(non_literal_chars)
-    literal = pp.Regex(rf"((?!{parser_config.wildcard_wrap})[^{non_literal_chars}])+")(
+    literal = pp.Regex(rf"((?!{re.escape(parser_config.wildcard_wrap)})[^{non_literal_chars}])+")(
         "literal",
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
