@@ -84,8 +84,10 @@ def _configure_range() -> pp.ParserElement:
 def _configure_wildcard(
     parser_config: ParserConfig,
 ) -> pp.ParserElement:
+    wildcard_path = pp.Regex(
+        r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^{}#])+",
+    )("path").leave_whitespace()
     wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
-    wildcard_path = pp.Regex(r"((?!__)[^{}#])+")("path").leave_whitespace()
     wildcard = (
         wildcard_enclosure
         + pp.Optional(sampler_symbol)("sampling_method")
@@ -113,7 +115,9 @@ def _configure_literal_sequence(
         non_literal_chars += rf"|${parser_config.variant_end}"
 
     non_literal_chars = re.escape(non_literal_chars)
-    literal = pp.Regex(rf"((?!{re.escape(parser_config.wildcard_wrap)})[^{non_literal_chars}])+")(
+    literal = pp.Regex(
+        rf"((?!{re.escape(parser_config.wildcard_wrap)})[^{non_literal_chars}])+",
+    )(
         "literal",
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
