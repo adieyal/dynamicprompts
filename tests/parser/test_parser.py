@@ -389,7 +389,7 @@ class TestParser:
     def test_alternative_wildcard_wrap(self, wildcard_wrap: str, template: str):
 
         config = ParserConfig(wildcard_wrap=wildcard_wrap)
-        sequence = cast(SequenceCommand, parse(template, parser_config=config))
+        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"
