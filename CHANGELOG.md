@@ -1,3 +1,4 @@
+0.9.0 - Configurable wildcard symbols - it's possible to change from the default __ to any arbitrary string
 0.8.0 - Added syntax for changing samplers within prompt sub-trees.
 0.7.1 - Fixed missing parser_config argument in CombinatorialPromptGenerator
 0.7.0 - Configurable variant braces
