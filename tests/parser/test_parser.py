@@ -373,3 +373,25 @@ class TestParser:
         assert variant.values[0].literal == "A"
         assert variant.values[1].literal == "B"
         assert variant.values[2].wildcard == "some/wildcard"
+
+    @pytest.mark.parametrize(
+        ("wildcard_wrap", "template"),
+        [
+            (r"&", r"some literal string {A|B|&some/wildcard&}"),
+            (r"@@", r"some literal string {A|B|@@some/wildcard@@}"),
+            (r"!!", r"some literal string {A|B|!!some/wildcard!!}"),
+            (r"..", r"some literal string {A|B|..some/wildcard..}"),
+            (r"~~", r"some literal string {A|B|~~some/wildcard~~}"),
+            (r"**", r"some literal string {A|B|**some/wildcard**}"),
+            (r"___", r"some literal string {A|B|___some/wildcard___}"),
+        ],
+    )
+    def test_alternative_wildcard_wrap(self, wildcard_wrap: str, template: str):
+
+        config = ParserConfig(wildcard_wrap=wildcard_wrap)
+        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
+        variant = cast(VariantCommand, sequence[1])
+
+        assert variant.values[0].literal == "A"
+        assert variant.values[1].literal == "B"
+        assert variant.values[2].wildcard == "some/wildcard"

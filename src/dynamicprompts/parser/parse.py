@@ -24,8 +24,6 @@ real_num3 = pp.Combine("." + pp.Word(pp.nums))
 real_num4 = pp.Word(pp.nums)
 
 real_num = real_num1 | real_num2 | real_num3 | real_num4
-double_underscore = "__"
-wildcard_enclosure = pp.Suppress(double_underscore)
 sampler_random = pp.Char("~")
 sampler_combinatorial = pp.Char("!")
 sampler_cyclical = pp.Char("@")
@@ -83,8 +81,13 @@ def _configure_range() -> pp.ParserElement:
     return bound_expr
 
 
-def _configure_wildcard() -> pp.ParserElement:
-    wildcard_path = pp.Regex(r"((?!__)[^{}#])+")("path").leave_whitespace()
+def _configure_wildcard(
+    parser_config: ParserConfig,
+) -> pp.ParserElement:
+    wildcard_path = pp.Regex(
+        r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^{}#])+",
+    )("path").leave_whitespace()
+    wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
     wildcard = (
         wildcard_enclosure
         + pp.Optional(sampler_symbol)("sampling_method")
@@ -112,7 +115,9 @@ def _configure_literal_sequence(
         non_literal_chars += rf"|${parser_config.variant_end}"
 
     non_literal_chars = re.escape(non_literal_chars)
-    literal = pp.Regex(rf"((?!{double_underscore})[^{non_literal_chars}])+")(
+    literal = pp.Regex(
+        rf"((?!{re.escape(parser_config.wildcard_wrap)})[^{non_literal_chars}])+",
+    )(
         "literal",
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
@@ -250,7 +255,7 @@ def create_parser(
     prompt = pp.Forward()
     variant_prompt = pp.Forward()
 
-    wildcard = _configure_wildcard()
+    wildcard = _configure_wildcard(parser_config=parser_config)
     literal_sequence = _configure_literal_sequence(parser_config=parser_config)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
