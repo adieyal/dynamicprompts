@@ -377,12 +377,12 @@ class TestParser:
     @pytest.mark.parametrize(
         ("wildcard_wrap", "template"),
         [
-            (r"&",   r"some literal string {A|B|&some/wildcard&}"),
-            (r"@@",  r"some literal string {A|B|@@some/wildcard@@}"),
-            (r"!!",  r"some literal string {A|B|!!some/wildcard!!}"),
-            (r"..",  r"some literal string {A|B|..some/wildcard..}"),
-            (r"~~",  r"some literal string {A|B|~~some/wildcard~~}"),
-            (r"**",  r"some literal string {A|B|**some/wildcard**}"),
+            (r"&", r"some literal string {A|B|&some/wildcard&}"),
+            (r"@@", r"some literal string {A|B|@@some/wildcard@@}"),
+            (r"!!", r"some literal string {A|B|!!some/wildcard!!}"),
+            (r"..", r"some literal string {A|B|..some/wildcard..}"),
+            (r"~~", r"some literal string {A|B|~~some/wildcard~~}"),
+            (r"**", r"some literal string {A|B|**some/wildcard**}"),
             (r"___", r"some literal string {A|B|___some/wildcard___}"),
         ],
     )
