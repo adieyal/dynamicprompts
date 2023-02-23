@@ -31,31 +31,49 @@ class ConcreteSamplerRouter(SamplerRouter):
     ):
         if default_sampling_method == SamplingMethod.DEFAULT:
             raise ValueError("Cannot use default sampling method for generic sampler.")
-
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
 
-        kwargs = {
-            "wildcard_manager": wildcard_manager,
-            "ignore_whitespace": ignore_whitespace,
-            "sampler_router": self,
-            "parser_config": parser_config,
-        }
-
-        random_sampler = RandomSampler(**kwargs, rand=rand)
-        combinatorial_sampler = CombinatorialSampler(**kwargs)
-        cyclical_sampler = CyclicalSampler(**kwargs)
-
         if samplers is None:
-            self._samplers: dict[SamplingMethod, Sampler] = {
-                SamplingMethod.RANDOM: random_sampler,
-                SamplingMethod.COMBINATORIAL: combinatorial_sampler,
-                SamplingMethod.CYCLICAL: cyclical_sampler,
-            }
-        else:
-            self._samplers = samplers
+            samplers = self._build_default_samplers(
+                ignore_whitespace=ignore_whitespace,
+                parser_config=parser_config,
+                rand=rand,
+                wildcard_manager=wildcard_manager,
+            )
+        self._samplers = samplers
 
         self.default_sampling_method = default_sampling_method
+
+    def _build_default_samplers(
+        self,
+        *,
+        ignore_whitespace=False,
+        parser_config=default_parser_config,
+        rand: Random = DEFAULT_RANDOM,
+        wildcard_manager: WildcardManager,
+    ) -> dict[SamplingMethod, Sampler]:
+        return {
+            SamplingMethod.RANDOM: RandomSampler(
+                ignore_whitespace=ignore_whitespace,
+                parser_config=parser_config,
+                rand=rand,
+                sampler_router=self,
+                wildcard_manager=wildcard_manager,
+            ),
+            SamplingMethod.COMBINATORIAL: CombinatorialSampler(
+                ignore_whitespace=ignore_whitespace,
+                parser_config=parser_config,
+                sampler_router=self,
+                wildcard_manager=wildcard_manager,
+            ),
+            SamplingMethod.CYCLICAL: CyclicalSampler(
+                ignore_whitespace=ignore_whitespace,
+                parser_config=parser_config,
+                sampler_router=self,
+                wildcard_manager=wildcard_manager,
+            ),
+        }
 
     @property
     def default_sampling_method(self) -> SamplingMethod:
