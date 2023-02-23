@@ -29,8 +29,6 @@ class ConcreteSamplerRouter(SamplerRouter):
         parser_config=default_parser_config,
         rand: Random = DEFAULT_RANDOM,
     ):
-        if default_sampling_method == SamplingMethod.DEFAULT:
-            raise ValueError("Cannot use default sampling method for generic sampler.")
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
 
