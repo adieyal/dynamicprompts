@@ -12,7 +12,6 @@ class Command:
         self,
         sampling_method: SamplingMethod,
     ) -> None:
-
         if self.sampling_method == SamplingMethod.DEFAULT:
             self.sampling_method = sampling_method
         elif sampling_method.is_nonfinite() and not self.sampling_method.is_nonfinite():

@@ -548,7 +548,6 @@ class TestPrompts:
             "get_all_values",
             side_effect=[RED_GREEN_BLUE],
         ):
-
             if isinstance(sampler, RandomSampler):
                 random_choices = []
 
@@ -665,7 +664,6 @@ class TestPrompts:
                     "choices",
                     side_effect=variant_choices,
                 ):
-
                     black = ["black"] * len(expected)
                     arr1 = zipstr(expected, black, sep=",")
                     arr2 = zipstr(black, expected, sep=",")

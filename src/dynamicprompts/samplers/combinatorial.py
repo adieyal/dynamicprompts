@@ -124,7 +124,6 @@ class CombinatorialSampler(Sampler):
         self,
         variant_command: VariantCommand,
     ) -> typing.Iterable[str]:
-
         if len(variant_command.variants) == 0:
             return []
 

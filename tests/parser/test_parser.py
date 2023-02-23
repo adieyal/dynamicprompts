@@ -365,7 +365,6 @@ class TestParser:
         ],
     )
     def test_alternative_braces(self, variant_start: str, variant_end, template: str):
-
         config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
         sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
@@ -387,7 +386,6 @@ class TestParser:
         ],
     )
     def test_alternative_wildcard_wrap(self, wildcard_wrap: str, template: str):
-
         config = ParserConfig(wildcard_wrap=wildcard_wrap)
         sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])

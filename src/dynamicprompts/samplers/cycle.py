@@ -33,7 +33,6 @@ def _get_combination_samples(
     combo: list[Command],
     sampler_router: SamplerRouter,
 ) -> Generator[list[str], None, None]:
-
     try:
         if len(combo) == 0:
             while True:
@@ -79,7 +78,6 @@ class CyclicalSampler(Sampler):
         self,
         variant_command: VariantCommand,
     ) -> StringGen:
-
         self._propagate_sampling_method(variant_command.values)
 
         if len(variant_command.values) == 0:
@@ -103,7 +101,6 @@ class CyclicalSampler(Sampler):
             yield from next_sampler_next_value(cycle(combination_samplers))
 
     def _get_cyclical_wildcard(self, command: WildcardCommand):
-
         values = self._wildcard_manager.get_all_values(command.wildcard)
         new_router = self._sampler_router.clone()
         new_router.default_sampling_method = SamplingMethod.CYCLICAL
@@ -121,7 +118,6 @@ class CyclicalSampler(Sampler):
         self,
         command: Command,
     ) -> StringGen:
-
         if isinstance(command, LiteralCommand):
             yield from self._get_literal(command)
         elif isinstance(command, SequenceCommand):
