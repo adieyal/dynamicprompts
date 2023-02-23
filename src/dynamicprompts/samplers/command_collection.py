@@ -13,9 +13,6 @@ class CommandCollection:
     """
 
     def __init__(self, commands: Iterable[Command], sampler_router: SamplerRouter):
-        if sampler_router is None:
-            raise ValueError("Sampler router must be provided")
-
         self._commands = list(commands)
         self._generators = [
             sampler_router.generator_from_command(c) for c in self._commands

@@ -26,9 +26,6 @@ def commands() -> CommandList:
 
 class TestCommandCollection:
     def test_empty_collection(self, router):
-        with pytest.raises(ValueError):
-            collection = CommandCollection([], None)
-
         collection = CommandCollection([], router)
         assert len(collection.commands) == 0
         assert len(collection.generators) == 0
