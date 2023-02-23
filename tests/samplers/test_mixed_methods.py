@@ -64,7 +64,6 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
         if choices_side_effect:
             with mock_choices_side_effect(choices_side_effect):
@@ -238,7 +237,6 @@ class TestCombinatorialParent:
         template: str,
         expected: list[str],
     ):
-
         carbike_variant = VariantCommand.from_literals_and_weights(
             ["car", "bike"],
             sampling_method=SamplingMethod.RANDOM,
@@ -283,7 +281,6 @@ class TestCombinatorialParent:
         choice_value: str,
         expected: list[str],
     ):
-
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
         if choice_value:
             with mock_return_value(choice_value):
@@ -341,7 +338,6 @@ class TestRandomParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-
         prompts = random_sampler_router.sample_prompts(template, 3)
         if choices_side_effect:
             with mock_choices_side_effect(choices_side_effect):
@@ -368,7 +364,6 @@ class TestCyclicalParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-
         prompts = cyclical_sampler_router.sample_prompts(template, 3)
         if choices_side_effect:
             with mock_choices_side_effect(choices_side_effect):

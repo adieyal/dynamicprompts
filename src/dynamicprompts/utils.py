@@ -38,7 +38,6 @@ def rotate_and_join(
 def next_sampler_next_value(
     samplers: Iterable[StringGen],
 ) -> StringGen:
-
     yield from (next(iter(sampler)) for sampler in cycle(samplers))
 
 

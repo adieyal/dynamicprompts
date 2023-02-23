@@ -59,7 +59,6 @@ class RandomSampler(Sampler):
         self,
         variant_command: VariantCommand,
     ) -> StringGen:
-
         self._propagate_sampling_method(variant_command.values)
 
         if len(variant_command.values) == 0:
