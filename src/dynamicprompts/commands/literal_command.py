@@ -6,17 +6,12 @@ from dynamicprompts.commands import Command
 from dynamicprompts.enums import SamplingMethod
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class LiteralCommand(Command):
     literal: str
-    sampling_method: SamplingMethod = SamplingMethod.DEFAULT
+    sampling_method: SamplingMethod | None = None
 
     def __add__(self, other):
         if isinstance(other, LiteralCommand):
             return LiteralCommand(f"{self.literal} {other.literal}")
         raise TypeError(f"Cannot concatenate LiteralCommand with {other}")
-
-    def __eq__(self, other):
-        if isinstance(other, LiteralCommand):
-            return self.literal == other.literal
-        return False

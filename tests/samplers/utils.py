@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 from unittest.mock import patch
 
-from dynamicprompts.commands import Command
+from dynamicprompts.commands import Command, SequenceCommand
 from dynamicprompts.samplers import RandomSampler
 
 
@@ -54,4 +55,15 @@ def patch_random_sampler_wildcard_choice(choices: list[str]):
         RandomSampler,
         "_get_wildcard_choice",
         side_effect=choices,
+    )
+
+
+def patch_random_sampler_variant_choices_with_literals(
+    literals: list[str | Command] | None,
+):
+    if literals is None:  # Nothing to patch
+        return nullcontext()
+
+    return patch_random_sampler_variant_choices(
+        [[command] for command in SequenceCommand.from_literals(literals).tokens],
     )

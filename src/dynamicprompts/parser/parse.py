@@ -203,9 +203,9 @@ def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
     )
 
 
-def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod:
+def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod | None:
     if sampling_method_symbol is None:
-        return SamplingMethod.DEFAULT
+        return None
     try:
         return sampler_symbol_to_method[sampling_method_symbol]
     except KeyError:
@@ -291,7 +291,6 @@ def create_parser(
 
 def parse(
     prompt: str,
-    default_sampling_method: SamplingMethod,
     parser_config: ParserConfig = default_parser_config,
 ) -> Command:
     """
@@ -310,6 +309,4 @@ def parse(
     tok = tokens[0]
 
     assert isinstance(tok, Command)
-    tok = cast(Command, tok)
-    tok.propagate_sampling_method(default_sampling_method)
     return tok

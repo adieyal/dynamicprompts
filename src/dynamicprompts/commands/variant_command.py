@@ -11,26 +11,27 @@ from dynamicprompts.enums import SamplingMethod
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class VariantOption:
     value: Command
     weight: float = 1.0
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class VariantCommand(Command):
     variants: list[VariantOption]
     min_bound: int = 1
     max_bound: int = 1
     separator: str = ","
-    sampling_method: SamplingMethod = SamplingMethod.DEFAULT
+    sampling_method: SamplingMethod | None = None
 
     def __post_init__(self):
         min_bound, max_bound = sorted((self.min_bound, self.max_bound))
-        self.min_bound = max(0, min_bound)
-        self.max_bound = min(len(self.variants), max_bound)
-
-        self.min_bound = min(self.min_bound, self.max_bound)
+        min_bound = max(0, min_bound)
+        max_bound = min(len(self.variants), max_bound)
+        min_bound = min(min_bound, max_bound)
+        object.__setattr__(self, "min_bound", min_bound)
+        object.__setattr__(self, "max_bound", max_bound)
 
     def __len__(self) -> int:
         return len(self.variants)
@@ -40,15 +41,6 @@ class VariantCommand(Command):
 
     def __iter__(self) -> Iterable[VariantOption]:
         return iter(self.variants)
-
-    def propagate_sampling_method(
-        self,
-        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
-    ) -> None:
-        super().propagate_sampling_method(sampling_method=sampling_method)
-
-        for value in self.values:
-            value.propagate_sampling_method(self.sampling_method)
 
     @property
     def weights(self) -> list[float]:
@@ -66,7 +58,7 @@ class VariantCommand(Command):
         min_bound: int = 1,
         max_bound: int = 1,
         separator: str = ",",
-        sampling_method: SamplingMethod = SamplingMethod.DEFAULT,
+        sampling_method: SamplingMethod | None = None,
     ) -> VariantCommand:
         vals = [LiteralCommand(str(v)) for v in literals]
         if weights is None:
