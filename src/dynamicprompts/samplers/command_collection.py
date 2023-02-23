@@ -21,9 +21,11 @@ class CommandCollection:
         self._sampler_router = sampler_router
 
     def get_value(self, command: Command) -> str | None:
-        if command not in self._commands:
-            raise ValueError(f"Command {command} not in collection")
-        index = self._commands.index(command)
+        try:
+            index = self._commands.index(command)
+        except ValueError:
+            raise ValueError(f"Command {command} not in collection") from None
+
         generator = self._generators[index]
         value = self._values[index]
 
