@@ -29,6 +29,12 @@ sampler_combinatorial = pp.Char("!")
 sampler_cyclical = pp.Char("@")
 sampler_symbol = sampler_random | sampler_combinatorial | sampler_cyclical
 
+sampler_symbol_to_method = {
+    "~": SamplingMethod.RANDOM,
+    "!": SamplingMethod.COMBINATORIAL,
+    "@": SamplingMethod.CYCLICAL,
+}
+
 
 class Parser:
     def __init__(self, builder: ActionBuilder):
@@ -198,18 +204,14 @@ def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
 
 
 def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod:
-    if sampling_method_symbol == sampler_random:
-        sampling_method = SamplingMethod.RANDOM
-    elif sampling_method_symbol == sampler_combinatorial:
-        sampling_method = SamplingMethod.COMBINATORIAL
-    elif sampling_method_symbol == sampler_cyclical:
-        sampling_method = SamplingMethod.CYCLICAL
-    elif sampling_method_symbol is None:
-        sampling_method = SamplingMethod.DEFAULT
-    else:
-        raise ValueError(f"Unexpected sampling method: {sampling_method_symbol}.")
-
-    return sampling_method
+    if sampling_method_symbol is None:
+        return SamplingMethod.DEFAULT
+    try:
+        return sampler_symbol_to_method[sampling_method_symbol]
+    except KeyError:
+        raise ValueError(
+            f"Unexpected sampling method: {sampling_method_symbol}.",
+        ) from None
 
 
 def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
