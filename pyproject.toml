@@ -74,6 +74,9 @@ unfixable = [
 [tool.ruff.flake8-tidy-imports]
 ban-relative-imports = "all"
 
+[tool.mypy]
+exclude = "tests"
+
 [[tool.mypy.overrides]]
 module = "transformers"
 ignore_missing_imports = true
