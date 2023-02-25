@@ -12,10 +12,14 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.sampler_routers.concrete_sampler_router import ConcreteSamplerRouter
-from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
+from dynamicprompts.samplers import (
+    CombinatorialSampler,
+    CyclicalSampler,
+    RandomSampler,
+)
 from dynamicprompts.samplers.base import SamplerRouter
 from dynamicprompts.wildcardmanager import WildcardManager
-from pytest import FixtureRequest
+from pytest_lazyfixture import lazy_fixture
 
 from tests.consts import RED_GREEN_BLUE
 from tests.utils import cross, interleave, zipstr
@@ -37,77 +41,67 @@ class TestPrompts:
     @pytest.mark.parametrize(
         ("sampler_manager"),
         [
-            ("random_sampler_router"),
-            ("cyclical_sampler_router"),
-            ("combinatorial_sampler_router"),
+            lazy_fixture("random_sampler_router"),
+            lazy_fixture("cyclical_sampler_router"),
+            lazy_fixture("combinatorial_sampler_router"),
         ],
     )
-    def test_empty(self, sampler_manager: str, request: FixtureRequest):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
-
-        prompts = list(manager.sample_prompts("", 5))
+    def test_empty(self, sampler_manager: SamplerRouter):
+        prompts = list(sampler_manager.sample_prompts("", 5))
         assert prompts == []
 
     @pytest.mark.parametrize(
         ("sampler_manager", "expected"),
         [
-            ("random_sampler_router", ["A literal sentence"] * 5),
-            ("cyclical_sampler_router", ["A literal sentence"] * 5),
-            ("combinatorial_sampler_router", ["A literal sentence"]),
+            (lazy_fixture("random_sampler_router"), ["A literal sentence"] * 5),
+            (lazy_fixture("cyclical_sampler_router"), ["A literal sentence"] * 5),
+            (lazy_fixture("combinatorial_sampler_router"), ["A literal sentence"]),
         ],
     )
     def test_literals(
         self,
-        sampler_manager: str,
+        sampler_manager: SamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
-
         template = "A literal sentence"
-        assert list(manager.sample_prompts(template, 5)) == expected
+        assert list(sampler_manager.sample_prompts(template, 5)) == expected
 
     @pytest.mark.parametrize(
         ("sampler_manager", "expected"),
         [
-            ("random_sampler_router", ["Test [low emphasis]"] * 5),
-            ("cyclical_sampler_router", ["Test [low emphasis]"] * 5),
-            ("combinatorial_sampler_router", ["Test [low emphasis]"]),
+            (lazy_fixture("random_sampler_router"), ["Test [low emphasis]"] * 5),
+            (lazy_fixture("cyclical_sampler_router"), ["Test [low emphasis]"] * 5),
+            (lazy_fixture("combinatorial_sampler_router"), ["Test [low emphasis]"]),
         ],
     )
     def test_literal_with_square_brackets(
         self,
-        sampler_manager: str,
+        sampler_manager: SamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: SamplerRouter = request.getfixturevalue(sampler_manager)
-
         template = "Test [low emphasis]"
-        assert list(manager.sample_prompts(template, 5)) == expected
+        assert list(sampler_manager.sample_prompts(template, 5)) == expected
 
     @pytest.mark.parametrize(
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 ["circle", "circle", "square", "circle", "square"],
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 ["square", "circle", "square", "circle", "square"],
             ),
-            ("combinatorial_sampler_router", ["square", "circle"]),
+            (lazy_fixture("combinatorial_sampler_router"), ["square", "circle"]),
         ],
     )
     def test_variants(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A red {square|circle}"
 
@@ -118,9 +112,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, 5))
+                prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
-            prompts = manager.sample_prompts(template, 5)
+            prompts = sampler_manager.sample_prompts(template, 5)
 
         for prompt, e in zip(prompts, expected):
             assert prompt == f"A red {e}"
@@ -129,7 +123,7 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 [
                     "red",
                     "red",
@@ -139,20 +133,18 @@ class TestPrompts:
                 ],  # TODO not correctly handling blanks
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 ["red", "blue", "", "red", "blue"],
             ),
-            ("combinatorial_sampler_router", ["red", "blue", ""]),
+            (lazy_fixture("combinatorial_sampler_router"), ["red", "blue", ""]),
         ],
     )
     def test_variant_with_blank(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|blue|} rose"
 
@@ -163,9 +155,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, 5))
+                prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
-            prompts = manager.sample_prompts(template, 5)
+            prompts = sampler_manager.sample_prompts(template, 5)
 
         expected_sentences = [f"A {e} rose" for e in expected]
 
@@ -175,7 +167,7 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 [
                     "A red circle",
                     "A green square",
@@ -185,7 +177,7 @@ class TestPrompts:
                 ],
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 [
                     "A red square",
                     "A green circle",
@@ -195,19 +187,17 @@ class TestPrompts:
                 ],
             ),
             (
-                "combinatorial_sampler_router",
+                lazy_fixture("combinatorial_sampler_router"),
                 ["A red square", "A red circle", "A green square", "A green circle"],
             ),
         ],
     )
     def test_two_variants(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|green} {square|circle}"
 
@@ -225,9 +215,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, 5))
+                prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
-            prompts = manager.sample_prompts(template, 5)
+            prompts = sampler_manager.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
@@ -235,7 +225,7 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 [
                     "A red,green square",
                     "A green,red circle",
@@ -245,7 +235,7 @@ class TestPrompts:
                 ],
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 [
                     "A red,green square",
                     "A green,red circle",
@@ -255,7 +245,7 @@ class TestPrompts:
                 ],
             ),
             (
-                "combinatorial_sampler_router",
+                lazy_fixture("combinatorial_sampler_router"),
                 [
                     "A red,green square",
                     "A red,green circle",
@@ -267,12 +257,10 @@ class TestPrompts:
     )
     def test_combination_variants(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {2$$red|green} {square|circle}"
 
@@ -294,9 +282,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, 5))
+                prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
-            prompts = manager.sample_prompts(template, 5)
+            prompts = sampler_manager.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
@@ -304,7 +292,7 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 [
                     "A red,green square",
                     "A red square",
@@ -314,7 +302,7 @@ class TestPrompts:
                 ],
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 [
                     "A red square",
                     "A green square",
@@ -324,7 +312,7 @@ class TestPrompts:
                 ],
             ),
             (
-                "combinatorial_sampler_router",
+                lazy_fixture("combinatorial_sampler_router"),
                 [
                     "A red square",
                     "A green square",
@@ -337,12 +325,10 @@ class TestPrompts:
     )
     def test_combination_variants_range(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {1-2$$red|green|blue} square"
 
@@ -366,9 +352,9 @@ class TestPrompts:
                     "randint",
                     side_effect=[2, 1, 2, 2, 2],
                 ):
-                    prompts = list(manager.sample_prompts(template, 5))
+                    prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
-            prompts = manager.sample_prompts(template, 5)
+            prompts = sampler_manager.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
@@ -376,30 +362,28 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 [
                     "red|blue",
                     "blue|green",
                 ],
             ),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
             ),
             (
-                "combinatorial_sampler_router",
+                lazy_fixture("combinatorial_sampler_router"),
                 cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
             ),
         ],
     )
     def test_combination_variants_with_separator(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {2$$|$$red|green|blue} square"
 
@@ -417,10 +401,12 @@ class TestPrompts:
                 side_effect=random_choices,
             ):
                 with mock.patch.object(sampler._random, "randint", side_effect=[2, 2]):
-                    prompts = list(manager.sample_prompts(template, len(expected)))
+                    prompts = list(
+                        sampler_manager.sample_prompts(template, len(expected)),
+                    )
 
         else:
-            prompts = manager.sample_prompts(template, len(expected))
+            prompts = sampler_manager.sample_prompts(template, len(expected))
 
         expected = [f"A {e} square" for e in expected]
 
@@ -430,23 +416,21 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             # (  # TODO - fix this
-            #     "random_sampler_router",
+            #     lazy_fixture("random_sampler_router"),
             #     [
             #         "blue", "red"
             #     ],
             # ),
-            ("cyclical_sampler_router", RED_GREEN_BLUE),
-            ("combinatorial_sampler_router", RED_GREEN_BLUE),
+            (lazy_fixture("cyclical_sampler_router"), RED_GREEN_BLUE),
+            (lazy_fixture("combinatorial_sampler_router"), RED_GREEN_BLUE),
         ],
     )
     def test_weighted_variant(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {1::red|2::green|3::blue} square"
 
@@ -461,9 +445,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, len(expected)))
+                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
         else:
-            prompts = manager.sample_prompts(template, len(expected))
+            prompts = sampler_manager.sample_prompts(template, len(expected))
 
         expected = [f"A {e} square" for e in expected]
 
@@ -472,25 +456,23 @@ class TestPrompts:
     @pytest.mark.parametrize(
         ("sampler_manager", "expected"),
         [
-            ("random_sampler_router", ["A green circle", "A red"]),
+            (lazy_fixture("random_sampler_router"), ["A green circle", "A red"]),
             (
-                "cyclical_sampler_router",
+                lazy_fixture("cyclical_sampler_router"),
                 ["A red", "A green square", "A red", "A green circle"],
             ),
             (
-                "combinatorial_sampler_router",
+                lazy_fixture("combinatorial_sampler_router"),
                 ["A red", "A green square", "A green circle"],
             ),
         ],
     )
     def test_nested_variants(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A {red|green {square|circle}}"
 
@@ -515,9 +497,9 @@ class TestPrompts:
                 "choices",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, len(expected)))
+                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
         else:
-            prompts = manager.sample_prompts(template, len(expected))
+            prompts = sampler_manager.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
@@ -525,26 +507,24 @@ class TestPrompts:
         ("sampler_manager", "expected"),
         [
             (
-                "random_sampler_router",
+                lazy_fixture("random_sampler_router"),
                 ["blue", "red"],
             ),
-            ("cyclical_sampler_router", RED_GREEN_BLUE * 2),
-            ("combinatorial_sampler_router", RED_GREEN_BLUE),
+            (lazy_fixture("cyclical_sampler_router"), RED_GREEN_BLUE * 2),
+            (lazy_fixture("combinatorial_sampler_router"), RED_GREEN_BLUE),
         ],
     )
     def test_wildcards(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "A __colours__ square"
 
         with mock.patch.object(
-            manager._wildcard_manager,
+            sampler_manager._wildcard_manager,
             "get_all_values",
             side_effect=[RED_GREEN_BLUE],
         ):
@@ -559,10 +539,12 @@ class TestPrompts:
                     "choice",
                     side_effect=random_choices,
                 ):
-                    prompts = list(manager.sample_prompts(template, len(expected)))
+                    prompts = list(
+                        sampler_manager.sample_prompts(template, len(expected)),
+                    )
 
             else:
-                prompts = manager.sample_prompts(template, len(expected))
+                prompts = sampler_manager.sample_prompts(template, len(expected))
 
             expected = [f"A {e} square" for e in expected]
 
@@ -571,41 +553,37 @@ class TestPrompts:
     @pytest.mark.parametrize(
         ("sampler_manager", "expected"),
         [
-            ("random_sampler_router", ["A __missing__ wildcard"] * 5),
-            ("cyclical_sampler_router", ["A __missing__ wildcard"] * 5),
-            ("combinatorial_sampler_router", []),
+            (lazy_fixture("random_sampler_router"), ["A __missing__ wildcard"] * 5),
+            (lazy_fixture("cyclical_sampler_router"), ["A __missing__ wildcard"] * 5),
+            (lazy_fixture("combinatorial_sampler_router"), []),
         ],
     )
     def test_missing_wildcard(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
-        request: FixtureRequest,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         template = "A __missing__ wildcard"
 
-        prompts = manager.sample_prompts(template, len(expected))
+        prompts = sampler_manager.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
         ("sampler_manager", "key"),
         [
-            ("random_sampler_router", "shuffled_colours"),
-            ("cyclical_sampler_router", "wildcard_colours"),
-            ("combinatorial_sampler_router", "wildcard_colours"),
+            (lazy_fixture("random_sampler_router"), "shuffled_colours"),
+            (lazy_fixture("cyclical_sampler_router"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampler_router"), "wildcard_colours"),
         ],
     )
     def test_nested_wildcard(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         key: str,
-        request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
         template = "{__colors*__}"
 
         expected = data_lookups[key]
@@ -620,29 +598,27 @@ class TestPrompts:
                 "choice",
                 side_effect=random_choices,
             ):
-                prompts = list(manager.sample_prompts(template, len(expected)))
+                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
         else:
-            prompts = manager.sample_prompts(template, len(expected))
+            prompts = sampler_manager.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
         ("sampler_manager", "key"),
         [
-            # ("random_sampler_router", "shuffled_colours"), # TODO - fix this
-            ("cyclical_sampler_router", "wildcard_colours"),
-            ("combinatorial_sampler_router", "wildcard_colours"),
+            # (lazy_fixture("random_sampler_router"), "shuffled_colours"), # TODO - fix this
+            (lazy_fixture("cyclical_sampler_router"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampler_router"), "wildcard_colours"),
         ],
     )
     def test_nested_wildcard_with_range_and_literal(
         self,
-        sampler_manager: str,
+        sampler_manager: ConcreteSamplerRouter,
         key: str,
-        request: FixtureRequest,
         data_lookups: dict[str, list[str]],
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-        sampler = manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
 
         template = "{2$$__colors*__|black}"
         expected = data_lookups[key]
@@ -669,7 +645,9 @@ class TestPrompts:
                     arr2 = zipstr(black, expected, sep=",")
                     expected = interleave(arr1, arr2)
 
-                    prompts = list(manager.sample_prompts(template, len(expected)))
+                    prompts = list(
+                        sampler_manager.sample_prompts(template, len(expected)),
+                    )
         else:
             if isinstance(sampler, CyclicalSampler):
                 black = ["black"] * len(expected)
@@ -681,27 +659,24 @@ class TestPrompts:
                     f"black,{e}" for e in expected
                 ]
 
-            prompts = manager.sample_prompts(template, len(expected))
+            prompts = sampler_manager.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
         ("sampler_manager"),
         [
-            ("random_sampler_router"),
-            ("cyclical_sampler_router"),
-            ("combinatorial_sampler_router"),
+            (lazy_fixture("random_sampler_router")),
+            (lazy_fixture("cyclical_sampler_router")),
+            (lazy_fixture("combinatorial_sampler_router")),
         ],
     )
     def test_variants_with_larger_bounds_than_choices(
         self,
-        sampler_manager: str,
-        request: FixtureRequest,
+        sampler_manager: ConcreteSamplerRouter,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
-
         template = "A red {3$$square|circle}"
-        prompts = manager.sample_prompts(template, 10)
+        prompts = sampler_manager.sample_prompts(template, 10)
 
         for el in prompts:
             assert el in ["A red square,circle", "A red circle,square"]
@@ -709,20 +684,18 @@ class TestPrompts:
     @pytest.mark.parametrize(
         ("sampler_manager"),
         [
-            ("random_sampler_router"),
-            ("cyclical_sampler_router"),
-            ("combinatorial_sampler_router"),
+            (lazy_fixture("random_sampler_router")),
+            (lazy_fixture("cyclical_sampler_router")),
+            (lazy_fixture("combinatorial_sampler_router")),
         ],
     )
     def test_nospace_before_or_after_wildcard(
         self,
-        sampler_manager: str,
-        request: FixtureRequest,
+        sampler_manager: ConcreteSamplerRouter,
     ):
-        manager: ConcreteSamplerRouter = request.getfixturevalue(sampler_manager)
         template = "(__colors*__:2.3) "
 
-        prompts = list(manager.sample_prompts(template, 20))
+        prompts = list(sampler_manager.sample_prompts(template, 20))
 
         for prompt in prompts:
             assert "( " not in prompt
