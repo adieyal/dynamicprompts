@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from dynamicprompts import constants
+from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.wildcardfile import WildcardFile
 
 logger = logging.getLogger(__name__)
@@ -35,8 +36,13 @@ def _clean_wildcard(wildcard: str) -> str:
 
 
 class WildcardManager:
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self,
+        path: Path,
+        wildcard_wrap=default_parser_config.wildcard_wrap,
+    ) -> None:
         self._path = path
+        self._wildcard_wrap = wildcard_wrap
 
     @property
     def path(self) -> Path:
@@ -44,6 +50,14 @@ class WildcardManager:
         The root path of the wildcard manager.
         """
         return self._path
+
+    @property
+    def wildcard_wrap(self) -> str:
+        """
+        The string that is used as the prefix and suffix of a wildcard
+        the default is "__" (two underscores)
+        """
+        return self._wildcard_wrap
 
     def _directory_exists(self) -> bool:
         return self._path.is_dir()
@@ -87,7 +101,7 @@ class WildcardManager:
         return str(rel_path.with_suffix("")).replace(os.sep, "/")
 
     def path_to_wildcard(self, path: Path) -> str:
-        return f"__{self.path_to_wildcard_without_separators(path)}__"
+        return f"{self._wildcard_wrap}{self.path_to_wildcard_without_separators(path)}{self._wildcard_wrap}"
 
     def get_wildcards(self) -> list[str]:
         files = self.get_files(relative=True)
@@ -113,7 +127,7 @@ class WildcardManager:
         return (wildcards, hierarchy)
 
     def is_wildcard(self, text: str) -> bool:
-        return text.startswith("__") and text.endswith("__")
+        return text.startswith(self.wildcard_wrap) and text.endswith(self.wildcard_wrap)
 
     def get_collection_path(self) -> Path:
         return self._path.parent / "collections"

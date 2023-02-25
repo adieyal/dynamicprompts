@@ -11,7 +11,8 @@ def test_path(wildcard_manager: WildcardManager):
 
 
 def test_is_wildcard(wildcard_manager: WildcardManager):
-    assert wildcard_manager.is_wildcard("__test__")
+    ww = wildcard_manager.wildcard_wrap
+    assert wildcard_manager.is_wildcard(f"{ww}test{ww}")
     assert not wildcard_manager.is_wildcard("test")
 
 
@@ -44,20 +45,30 @@ def test_collections(wildcard_manager: WildcardManager):
 
 
 def test_hierarchy(wildcard_manager: WildcardManager):
+    def to_wildcard(s: str) -> str:
+        return wildcard_manager.wildcard_wrap + s + wildcard_manager.wildcard_wrap
+
     assert wildcard_manager.get_wildcard_hierarchy() == (
-        ["__colors-cold__", "__colors-warm__", "__variant__"],  # Top level
+        [
+            to_wildcard("colors-cold"),
+            to_wildcard("colors-warm"),
+            to_wildcard("variant"),
+        ],  # Top level
         {  # child folders
             "animals": (
-                ["__animals/mystical__"],
+                [to_wildcard("animals/mystical")],
                 {
                     "mammals": (
-                        ["__animals/mammals/canine__", "__animals/mammals/feline__"],
+                        [
+                            to_wildcard("animals/mammals/canine"),
+                            to_wildcard("animals/mammals/feline"),
+                        ],
                         {},
                     ),
                 },
             ),
             "flavors": (
-                ["__flavors/sour__", "__flavors/sweet__"],
+                [to_wildcard("flavors/sour"), to_wildcard("flavors/sweet")],
                 {},
             ),
         },
@@ -83,6 +94,23 @@ def test_clean_wildcard():
 
     with pytest.raises(ValueError):
         _clean_wildcard("foo/../bar")
+
+
+def test_path_to_wildcard_without_separators(wildcard_manager: WildcardManager):
+    wildcard_path = WILDCARD_DATA_DIR / "animals" / "mystical.txt"
+    assert (
+        wildcard_manager.path_to_wildcard_without_separators(wildcard_path)
+        == "animals/mystical"
+    )
+
+
+def test_path_to_wildcard(wildcard_manager: WildcardManager):
+    wildcard_path = WILDCARD_DATA_DIR / "animals" / "mystical.txt"
+    wildcard_wrap = wildcard_manager.wildcard_wrap
+    assert (
+        wildcard_manager.path_to_wildcard(wildcard_path)
+        == f"{wildcard_wrap}animals/mystical{wildcard_wrap}"
+    )
 
 
 def test_wildcard_symlinks(tmp_path: Path):
