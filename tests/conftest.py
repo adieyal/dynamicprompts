@@ -9,9 +9,9 @@ WILDCARD_DATA_DIR = Path(__file__).parent / "test_data" / "wildcards"
 assert WILDCARD_DATA_DIR.is_dir()
 
 
-@pytest.fixture
-def wildcard_manager() -> WildcardManager:
-    return WildcardManager(WILDCARD_DATA_DIR)
+@pytest.fixture(params=["__", "++", "::"])
+def wildcard_manager(request) -> WildcardManager:
+    return WildcardManager(path=WILDCARD_DATA_DIR, wildcard_wrap=request.param)
 
 
 @pytest.fixture
