@@ -6,6 +6,11 @@ from dynamicprompts.wildcardmanager import WildcardManager, _clean_wildcard
 from tests.conftest import WILDCARD_DATA_DIR
 
 
+def test_default_path():
+    wm = WildcardManager()
+    assert wm.path == Path.cwd()
+
+
 def test_path(wildcard_manager: WildcardManager):
     assert wildcard_manager.path == WILDCARD_DATA_DIR
 
