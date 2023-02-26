@@ -38,10 +38,10 @@ def _clean_wildcard(wildcard: str) -> str:
 class WildcardManager:
     def __init__(
         self,
-        path: Path,
+        path: Path | None = None,
         wildcard_wrap=default_parser_config.wildcard_wrap,
     ) -> None:
-        self._path = path
+        self._path = path or Path.cwd()
         self._wildcard_wrap = wildcard_wrap
 
     @property
