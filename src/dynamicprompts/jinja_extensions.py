@@ -46,6 +46,21 @@ def wildcard(environment: Environment, wildcard_name: str) -> list[str]:
     generator: CombinatorialPromptGenerator = environment.globals["generators"]["combinatorial"]  # type: ignore
 
     return list(generator.generate(wm.to_wildcard(wildcard_name)))
+    return combinatorial_sample(environment, wildcard_name)
+
+
+@pass_environment
+def random_sample(environment: Environment, prompt: str) -> str:
+    generator = environment.globals["generators"]["random"]  # type: ignore
+
+    return list(generator.generate(prompt))[0]
+
+
+@pass_environment
+def combinatorial_sample(environment: Environment, prompt: str) -> list[str]:
+    generator = environment.globals["generators"]["combinatorial"]  # type: ignore
+
+    return list(generator.generate(prompt))
 
 
 class PromptExtension(Extension):
@@ -84,4 +99,6 @@ DYNAMICPROMPTS_FUNCTIONS: dict[str, Any] = {
     "randint": random.randint,
     "permutations": permutation,
     "wildcard": wildcard,
+    "random_sample": random_sample,
+    "all_combinations": combinatorial_sample,
 }
