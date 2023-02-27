@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from dynamicprompts.commands import (
@@ -327,7 +327,7 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(p) for p in pair])
 
             with patch_random_sampler_variant_choices(random_choices):
-                with mock.patch.object(
+                with patch.object(
                     sampler._random,
                     "randint",
                     side_effect=[2, 1, 2, 2, 2],
@@ -375,7 +375,7 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(p) for p in pair])
 
             with patch_random_sampler_variant_choices(random_choices):
-                with mock.patch.object(sampler._random, "randint", side_effect=[2, 2]):
+                with patch.object(sampler._random, "randint", side_effect=[2, 2]):
                     prompts = list(
                         sampler_manager.sample_prompts(template, len(expected)),
                     )
@@ -490,7 +490,7 @@ class TestPrompts:
 
         template = "A __colours__ square"
 
-        with mock.patch.object(
+        with patch.object(
             sampler_manager._wildcard_manager,
             "get_all_values",
             side_effect=[RED_GREEN_BLUE],
@@ -501,7 +501,7 @@ class TestPrompts:
                 for colour in expected:
                     random_choices.append(LiteralCommand(colour))
 
-                with mock.patch.object(
+                with patch.object(
                     sampler._random,
                     "choice",
                     side_effect=random_choices,
@@ -560,7 +560,7 @@ class TestPrompts:
             for colour in expected:
                 random_choices.append(LiteralCommand(colour))
 
-            with mock.patch.object(
+            with patch.object(
                 sampler._random,
                 "choice",
                 side_effect=random_choices,
@@ -597,12 +597,12 @@ class TestPrompts:
             for colour in expected:
                 random_choices.append(LiteralCommand(colour))
 
-            with mock.patch.object(
+            with patch.object(
                 sampler._random,
                 "choice",
                 side_effect=random_choices,
             ):
-                with mock.patch.object(
+                with patch.object(
                     sampler._random,
                     "choices",
                     side_effect=variant_choices,

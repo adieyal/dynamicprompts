@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from dynamicprompts.commands import (
@@ -229,7 +229,7 @@ class TestCombinatorialParent:
                 ).tokens
             ]
 
-            with mock.patch.object(DEFAULT_RANDOM, "choices", side_effect=[*literals]):
+            with patch.object(DEFAULT_RANDOM, "choices", side_effect=[*literals]):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
@@ -250,7 +250,7 @@ class TestCombinatorialParent:
     ):
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
         if choice_value:
-            with mock.patch.object(
+            with patch.object(
                 DEFAULT_RANDOM,
                 "choice",
                 return_value=LiteralCommand(choice_value),
@@ -285,7 +285,7 @@ class TestCombinatorialParent:
 
         if choice_side_effect:
             literal_lists = SequenceCommand.from_literals(choice_side_effect).tokens
-            with mock.patch.object(DEFAULT_RANDOM, "choice", side_effect=literal_lists):
+            with patch.object(DEFAULT_RANDOM, "choice", side_effect=literal_lists):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
