@@ -86,7 +86,7 @@ class TestVariant:
         assert variant_command.min_bound == 1
         assert variant_command.max_bound == 2
 
-    def test_sampling_method(self, literals: list[str]):
+    def test_sampling_method(self):
         assert (
             VariantCommand.from_literals_and_weights(ONE_TWO_THREE).sampling_method
             is None

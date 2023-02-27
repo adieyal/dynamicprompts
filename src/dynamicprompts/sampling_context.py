@@ -63,7 +63,7 @@ class SamplingContext:
                     warnings.warn(
                         f"Command {command} has finite sampling method {new_sampling_method} "
                         f"that can't be nested within this non-finite context {self.default_sampling_method}, "
-                        f"so using {new_sampling_method} instead.",
+                        f"so using {self.default_sampling_method} instead.",
                     )
                     new_sampling_method = self.default_sampling_method
             sampler = self.samplers[new_sampling_method]

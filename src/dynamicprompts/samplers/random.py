@@ -92,8 +92,7 @@ class RandomSampler(Sampler):
 
         while True:
             if len(values) == 0:
-                ww = context.parser_config.wildcard_wrap
-                yield f"{ww}{command.wildcard}{ww}"
+                yield context.wildcard_manager.to_wildcard(command.wildcard)
             else:
                 value = self._get_wildcard_choice(context, values)
                 yield from context.sample_prompts(value, 1)
