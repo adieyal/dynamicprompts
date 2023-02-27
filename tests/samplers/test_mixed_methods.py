@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from contextlib import nullcontext
 from unittest import mock
 
 import pytest
@@ -16,32 +16,17 @@ from dynamicprompts.sampler_routers.concrete_sampler_router import (
     ConcreteSamplerRouter,
 )
 
-
-def mock_choices_side_effect(literals: list[str | Command] | None) -> Any:
-    if literals is None:
-        raise ValueError("literals cannot be None")
-
-    literal_lists = [
-        [literal] for literal in SequenceCommand.from_literals(literals).tokens
-    ]
-
-    return mock.patch.object(DEFAULT_RANDOM, "choices", side_effect=[*literal_lists])
+from tests.samplers.utils import patch_random_sampler_variant_choices
 
 
-def mock_choice_side_effect(literals: list[str | Command] | None) -> Any:
-    if literals is None:
-        raise ValueError("literals cannot be None")
+def patch_random_sampler_variant_choices_with_literals(
+    literals: list[str | Command] | None,
+):
+    if literals is None:  # Nothing to patch
+        return nullcontext()
 
-    literal_lists = list(SequenceCommand.from_literals(literals).tokens)
-
-    return mock.patch.object(DEFAULT_RANDOM, "choice", side_effect=[*literal_lists])
-
-
-def mock_return_value(val: str):
-    return mock.patch.object(
-        DEFAULT_RANDOM,
-        "choice",
-        return_value=LiteralCommand(val),
+    return patch_random_sampler_variant_choices(
+        [[command] for command in SequenceCommand.from_literals(literals).tokens],
     )
 
 
@@ -64,12 +49,9 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
+        assert prompts == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -93,13 +75,9 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command] | None,
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
-
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
+        assert prompts == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -123,13 +101,9 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
-
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
+        assert prompts == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -161,13 +135,10 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
 
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-
-        assert list(prompts) == expected
+        assert prompts == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -191,13 +162,9 @@ class TestCombinatorialParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 10)
-
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(combinatorial_sampler_router.sample_prompts(template, 10))
+        assert prompts == expected
 
     @pytest.mark.parametrize(
         ("sampling_method", "template", "expected"),
@@ -283,13 +250,17 @@ class TestCombinatorialParent:
     ):
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
         if choice_value:
-            with mock_return_value(choice_value):
+            with mock.patch.object(
+                DEFAULT_RANDOM,
+                "choice",
+                return_value=LiteralCommand(choice_value),
+            ):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("template", "choices_side_effect", "expected"),
+        ("template", "choice_side_effect", "expected"),
         [
             (
                 "{test1|test2} __@colors-cold__",
@@ -307,13 +278,14 @@ class TestCombinatorialParent:
         self,
         combinatorial_sampler_router: ConcreteSamplerRouter,
         template: str,
-        choices_side_effect: list[str | Command],
+        choice_side_effect: list[str | Command],
         expected: list[str],
     ):
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
 
-        if choices_side_effect:
-            with mock_choice_side_effect(choices_side_effect):
+        if choice_side_effect:
+            literal_lists = SequenceCommand.from_literals(choice_side_effect).tokens
+            with mock.patch.object(DEFAULT_RANDOM, "choice", side_effect=literal_lists):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
@@ -338,11 +310,9 @@ class TestRandomParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = random_sampler_router.sample_prompts(template, 3)
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(random_sampler_router.sample_prompts(template, 3))
+        assert prompts == expected
 
 
 class TestCyclicalParent:
@@ -364,8 +334,6 @@ class TestCyclicalParent:
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
-        prompts = cyclical_sampler_router.sample_prompts(template, 3)
-        if choices_side_effect:
-            with mock_choices_side_effect(choices_side_effect):
-                prompts = list(prompts)
-        assert list(prompts) == expected
+        with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
+            prompts = list(cyclical_sampler_router.sample_prompts(template, 3))
+        assert prompts == expected
