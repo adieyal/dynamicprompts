@@ -62,6 +62,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         [
             to_wildcard("colors-cold"),
             to_wildcard("colors-warm"),
+            to_wildcard("referencing-colors"),
             to_wildcard("variant"),
         ],  # Top level
         {  # child folders

@@ -569,20 +569,20 @@ class TestWildcardsCommand:
             (
                 lazy_fixture("cyclical_sampler_router"),
                 [
+                    "blue",
                     "red",
                     "green",
-                    "blue",
-                    "pink",
-                    "green",
-                    "blue",
                     "yellow",
+                    "blue",
+                    "red",
                     "green",
+                    "yellow",
                     "blue",
                 ],
             ),
             (
                 lazy_fixture("combinatorial_sampler_router"),
-                ["red", "pink", "yellow", "green", "blue"],
+                ["blue", "green", "red", "yellow"],
             ),
         ],
     )
@@ -591,20 +591,7 @@ class TestWildcardsCommand:
         sampler_router: ConcreteSamplerRouter,
         expected: list[str],
     ):
-        test_colours = [
-            ["__other_colours__", "green", "blue"],
-            ["red", "pink", "yellow"],
-        ]
-
-        with patch.object(
-            sampler_router._wildcard_manager,
-            "get_all_values",
-            side_effect=test_colours,
-        ):
-            wildcard_command = WildcardCommand("colours")
-            sequence = SequenceCommand([wildcard_command])
-
-            gen = sampler_router.generator_from_command(sequence)
-
-            prompts = [next(gen) for _ in range(len(expected))]
-            assert prompts == expected
+        wildcard_command = WildcardCommand("referencing-colors")
+        sequence = SequenceCommand([wildcard_command])
+        gen = sampler_router.generator_from_command(sequence)
+        assert list(islice(gen, len(expected))) == expected
