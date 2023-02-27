@@ -10,6 +10,14 @@ from dynamicprompts.types import StringGen
 T = TypeVar("T")
 
 
+def removeprefix(s: str, prefix: str) -> str:
+    return s[len(prefix) :] if s.startswith(prefix) else s
+
+
+def removesuffix(s: str, suffix: str) -> str:
+    return s[: -len(suffix)] if s.endswith(suffix) else s
+
+
 def squash_whitespace(s: str) -> str:
     return " ".join(s.split())
 

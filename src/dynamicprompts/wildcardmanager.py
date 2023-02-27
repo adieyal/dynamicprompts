@@ -7,6 +7,7 @@ from typing import Any
 
 from dynamicprompts import constants
 from dynamicprompts.parser.config import default_parser_config
+from dynamicprompts.utils import removeprefix, removesuffix
 from dynamicprompts.wildcardfile import WildcardFile
 
 logger = logging.getLogger(__name__)
@@ -21,13 +22,15 @@ def _is_relative_to(p1: Path, p2: Path) -> bool:
         return False
 
 
-def _clean_wildcard(wildcard: str) -> str:
+def _clean_wildcard(wildcard: str, *, wildcard_wrap: str) -> str:
     wildcard = (
-        wildcard.strip("_")  # remove wildcard delimiters
-        .replace("/", os.sep)
+        wildcard.replace("/", os.sep)
         .replace("\\", os.sep)  # normalize path separators
         .rstrip(os.sep)  # remove trailing path separator (likely a typo)
     )
+    wildcard = removeprefix(wildcard, wildcard_wrap)
+    wildcard = removesuffix(wildcard, wildcard_wrap)
+
     if wildcard.startswith(os.sep):
         raise ValueError(f"Wildcard {wildcard} cannot start with {os.sep}")
     if ".." in wildcard:
@@ -80,7 +83,7 @@ class WildcardManager:
 
     def match_files(self, wildcard: str) -> list[WildcardFile]:
         try:
-            wildcard = _clean_wildcard(wildcard)
+            wildcard = _clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
         except ValueError:
             logger.warning(f"Invalid wildcard: {wildcard}", exc_info=True)
             return []
@@ -92,7 +95,9 @@ class WildcardManager:
         ]
 
     def wildcard_to_path(self, wildcard: str) -> Path:
-        return (self._path / _clean_wildcard(wildcard)).with_suffix(
+        return (
+            self._path / _clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
+        ).with_suffix(
             f".{constants.WILDCARD_SUFFIX}",
         )
 
@@ -110,6 +115,10 @@ class WildcardManager:
     def get_all_values(self, wildcard: str) -> list[str]:
         files = self.match_files(wildcard)
         return sorted(set().union(*[f.get_wildcards() for f in files]))
+
+    def to_wildcard(self, name: str) -> str:
+        ww = self._wildcard_wrap
+        return f"{ww}{name}{ww}"
 
     # TODO: the return type is actually a recursive type (replace that Any)
     def get_wildcard_hierarchy(

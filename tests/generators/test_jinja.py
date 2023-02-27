@@ -1,25 +1,29 @@
+from __future__ import annotations
+
 from unittest.mock import patch
 
 import pytest
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
 from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS
+from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.wildcardmanager import WildcardManager
 
 GET_ALL_VALUES = "dynamicprompts.wildcardmanager.WildcardManager.get_all_values"
 
 
 @pytest.fixture
-def generator(wildcard_manager: WildcardManager):
-    return JinjaGenerator(wildcard_manager)
+def generator(wildcard_manager: WildcardManager) -> JinjaGenerator:
+    config = ParserConfig(wildcard_wrap=wildcard_manager.wildcard_wrap)
+    return JinjaGenerator(wildcard_manager, parser_config=config)
 
 
 class TestJinjaGenerator:
-    def test_literal_prompt(self, generator):
+    def test_literal_prompt(self, generator: JinjaGenerator):
         template = "This is a literal prompt"
         assert generator.generate(template) == [template]
 
-    def test_choice_prompt(self, generator):
+    def test_choice_prompt(self, generator: JinjaGenerator):
         with patch("random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "blue", "red"]
             template = "This is a {{ choice('red', 'blue') }} rose"
@@ -30,7 +34,7 @@ class TestJinjaGenerator:
                 "This is a red rose",
             ]
 
-    def test_two_choice_prompt(self, generator):
+    def test_two_choice_prompt(self, generator: JinjaGenerator):
         with patch("random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "triangle", "blue", "square"]
             template = "This is a {{ choice('red', 'blue') }} {{ choice('triangle', 'square') }}"
@@ -39,7 +43,7 @@ class TestJinjaGenerator:
                 "This is a blue square",
             ]
 
-    def test_prompt_block(self, generator):
+    def test_prompt_block(self, generator: JinjaGenerator):
         template = """
         {% for colour in ['red', 'blue', 'green'] %}
             {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
@@ -51,7 +55,7 @@ class TestJinjaGenerator:
             "My favourite colour is green",
         ]
 
-    def test_prompt_block_multiple(self, generator):
+    def test_prompt_block_multiple(self, generator: JinjaGenerator):
         template = """
         {% for colour in ['red', 'blue', 'green'] %}
             {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
@@ -68,11 +72,16 @@ class TestJinjaGenerator:
             "My favourite colour is green",
         ]
 
-    def test_wildcards(self, generator):
-        template = """
-        {% for colour in wildcard("__colors-cold__") %}
-            {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
-        {% endfor %}
+    def test_wildcards(
+        self,
+        generator: JinjaGenerator,
+        wildcard_manager: WildcardManager,
+    ):
+        wildcard = wildcard_manager.to_wildcard("colors-cold")
+        template = f"""
+        {{% for colour in wildcard("{wildcard}") %}}
+            {{% prompt %}}My favourite colour is {{{{ colour }}}}{{% endprompt %}}
+        {{% endfor %}}
         """
 
         assert generator.generate(template) == [
@@ -80,16 +89,21 @@ class TestJinjaGenerator:
             "My favourite colour is green",
         ]
 
-    def test_nested_wildcards(self, generator):
-        template = """
-        {% for colour in wildcard("__colours__") %}
-            {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
-        {% endfor %}
+    def test_nested_wildcards(
+        self,
+        generator: JinjaGenerator,
+        wildcard_manager: WildcardManager,
+    ):
+        wildcard = wildcard_manager.to_wildcard("colours")
+        template = f"""
+        {{% for colour in wildcard("{wildcard}") %}}
+            {{% prompt %}}My favourite colour is {{{{ colour }}}}{{% endprompt %}}
+        {{% endfor %}}
         """
 
         with patch(GET_ALL_VALUES) as mock_values:
             mock_values.side_effect = (
-                ["pink", "yellow", "__blacks__", "purple"],
+                ["pink", "yellow", wildcard_manager.to_wildcard("blacks"), "purple"],
                 ["black", "grey"],
             )
 
@@ -101,17 +115,21 @@ class TestJinjaGenerator:
                 "My favourite colour is purple",
             ]
 
-    def test_deep_nested_wildcards(self, generator):
-        template = """
-        {% for colour in wildcard("__colours__") %}
-            {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
-        {% endfor %}
+    def test_deep_nested_wildcards(
+        self,
+        generator: JinjaGenerator,
+        wildcard_manager: WildcardManager,
+    ):
+        template = f"""
+        {{% for colour in wildcard("{wildcard_manager.to_wildcard('colours')}") %}}
+            {{% prompt %}}My favourite colour is {{{{ colour }}}}{{% endprompt %}}
+        {{% endfor %}}
         """
 
         with patch(GET_ALL_VALUES) as mock_values:
             mock_values.side_effect = (
-                ["pink", "yellow", "__blacks__", "purple"],
-                ["black", "__greys__"],
+                ["pink", "yellow", wildcard_manager.to_wildcard("black"), "purple"],
+                ["black", wildcard_manager.to_wildcard("greys")],
                 ["light grey", "dark grey"],
             )
 
@@ -124,27 +142,7 @@ class TestJinjaGenerator:
                 "My favourite colour is purple",
             ]
 
-    def test_choice_nested_in_wildcards(self, generator):
-        template = """
-        {% for colour in wildcard("__colours__") %}
-            {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
-        {% endfor %}
-        """
-
-        with patch(GET_ALL_VALUES) as mock_values:
-            mock_values.side_effect = (["pink", "yellow", "{white|black}", "purple"],)
-
-            with patch("random.choice") as mock_choice:
-                mock_choice.return_value = "white"
-
-                assert generator.generate(template) == [
-                    "My favourite colour is pink",
-                    "My favourite colour is yellow",
-                    "My favourite colour is white",
-                    "My favourite colour is purple",
-                ]
-
-    def test_wildcard_with_choice(self, generator):
+    def test_wildcard_with_choice(self, generator: JinjaGenerator):
         # TODO: what is this test for?
         template = """
         {% prompt %}My favourite colour is {{ choice(wildcard("__colours__")) }}{% endprompt %}
@@ -172,7 +170,7 @@ class TestJinjaGenerator:
 
         assert generator.generate(template) == ["My favourite number is 0.3"]
 
-    def test_choice(self, generator):
+    def test_choice(self, generator: JinjaGenerator):
         with patch("random.choice") as mock_choice:
             mock_choice.return_value = "red"
             template = """
@@ -180,7 +178,7 @@ class TestJinjaGenerator:
             """
             assert generator.generate(template) == ["My favourite color is red"]
 
-    def test_weighted_choice(self, generator):
+    def test_weighted_choice(self, generator: JinjaGenerator):
         with patch("random.choices") as mock_choice:
             mock_choice.side_effect = [["yellow"]]
             template = """My favourite colour is {{ weighted_choice(("pink", 0.2), ("yellow", 0.3), ("black", 0.4), ("purple", 0.1)) }}"""
@@ -189,7 +187,7 @@ class TestJinjaGenerator:
             assert mock_choice.call_args[0][0] == ("pink", "yellow", "black", "purple")
             assert mock_choice.call_args[1]["weights"] == (0.2, 0.3, 0.4, 0.1)
 
-    def test_permutations(self, generator):
+    def test_permutations(self, generator: JinjaGenerator):
         template = """
         {% for val in permutations(["red", "green", "blue"], 1, 2) %}
             {% prompt %}My favourite colours are {{ val|join(' and ') }}{% endprompt %}

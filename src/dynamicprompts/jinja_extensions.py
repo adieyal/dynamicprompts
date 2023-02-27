@@ -10,9 +10,6 @@ from jinja2.ext import Extension
 from jinja2.nodes import CallBlock
 from jinja2.parser import Parser
 
-from dynamicprompts.constants import COMBINATIONS_RE, WILDCARD_RE
-from dynamicprompts.wildcardmanager import WildcardManager
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,19 +39,10 @@ def permutation(
 
 @pass_environment
 def wildcard(environment: Environment, wildcard_name: str) -> list[str]:
-    wm = cast(WildcardManager, environment.globals["wildcard_manager"])
-    values = []
+    generators = environment.globals["generators"]
+    generator = generators["combinatorial"]  # type: ignore
 
-    for value in wm.get_all_values(wildcard_name):
-        if WILDCARD_RE.fullmatch(value):
-            values.extend(wildcard(environment, value))
-        elif COMBINATIONS_RE.fullmatch(value):
-            val = COMBINATIONS_RE.findall(value)[0]
-            options = val.split("|")
-            values.append(choice(options))
-        else:
-            values.append(value)
-    return values
+    return list(generator.generate(wildcard_name))
 
 
 class PromptExtension(Extension):
