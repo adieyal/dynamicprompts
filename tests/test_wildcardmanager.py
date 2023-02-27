@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from functools import partial
 from pathlib import Path
 
 import pytest
@@ -90,15 +93,25 @@ def test_directory_traversal(wildcard_manager: WildcardManager):
     assert not wildcard_manager.get_all_values("..\\cant_touch_this")
 
 
-def test_clean_wildcard():
+def test_clean_wildcard(wildcard_manager: WildcardManager):
+    clean = partial(_clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
     with pytest.raises(ValueError):
-        _clean_wildcard("/foo")
+        clean("/foo")
 
     with pytest.raises(ValueError):
-        _clean_wildcard("\\foo")
+        clean("\\foo")
 
     with pytest.raises(ValueError):
-        _clean_wildcard("foo/../bar")
+        clean("foo/../bar")
+
+    ww = wildcard_manager.wildcard_wrap
+    assert clean(f"{ww}foo{ww}", wildcard_wrap=ww) == "foo"
+
+
+def test_to_wildcard(wildcard_manager: WildcardManager):
+    ww = wildcard_manager.wildcard_wrap
+
+    assert wildcard_manager.to_wildcard("foo") == f"{ww}foo{ww}"
 
 
 def test_path_to_wildcard_without_separators(wildcard_manager: WildcardManager):
