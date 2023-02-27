@@ -5,11 +5,14 @@ import logging
 from jinja2 import Environment
 from jinja2.exceptions import TemplateSyntaxError
 
+from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.generators.promptgenerator import (
     GeneratorException,
     PromptGenerator,
 )
+from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS, PromptExtension
+from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -20,13 +23,28 @@ class JinjaGenerator(PromptGenerator):
         self,
         wildcard_manager: WildcardManager | None = None,
         context: dict | None = None,
+        parser_config: ParserConfig = default_parser_config,
+        unlink_seed_from_prompt: bool = False,
+        ignore_whitespace: bool = False,
     ) -> None:
-        self._wildcard_manager = wildcard_manager
+        self._wildcard_manager = wildcard_manager or WildcardManager()
+        self._parser_config = parser_config
+        self._unlink_seed_from_prompt = unlink_seed_from_prompt
+        self._generators = {
+            "random": RandomPromptGenerator(
+                self._wildcard_manager,
+                parser_config=self._parser_config,
+                unlink_seed_from_prompt=self._unlink_seed_from_prompt,
+                ignore_whitespace=ignore_whitespace,
+            ),
+            "combinatorial": CombinatorialPromptGenerator(
+                self._wildcard_manager,
+                parser_config=self._parser_config,
+                ignore_whitespace=ignore_whitespace,
+            ),
+        }
 
-        if context is not None:
-            self._context = context
-        else:
-            self._context = {}
+        self._context = context or {}
 
     def generate(self, template: str, num_prompts: int = 1) -> list[str]:
         env = Environment(extensions=[PromptExtension])
@@ -35,6 +53,8 @@ class JinjaGenerator(PromptGenerator):
             {
                 "wildcard_manager": self._wildcard_manager,
                 "prompt_blocks": prompt_blocks,
+                "parser_config": self._parser_config,
+                "generators": self._generators,
                 **DYNAMICPROMPTS_FUNCTIONS,
             },
         )
