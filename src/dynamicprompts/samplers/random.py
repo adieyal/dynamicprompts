@@ -56,6 +56,17 @@ class RandomSampler(Sampler):
             rand=self._random,
         )
 
+    def _get_variant_num_choices(self, variant_command: VariantCommand) -> int:
+        # Wraps randint for ease of testing
+        return self._random.randint(
+            variant_command.min_bound,
+            variant_command.max_bound,
+        )
+
+    def _get_wildcard_choice(self, values: list[str]) -> str:
+        # Wraps choice for ease of testing
+        return self._random.choice(values)
+
     def _get_random_variant(
         self,
         variant_command: VariantCommand,
@@ -70,10 +81,7 @@ class RandomSampler(Sampler):
             )
         else:
             while True:
-                num_choices = self._random.randint(
-                    variant_command.min_bound,
-                    variant_command.max_bound,
-                )
+                num_choices = self._get_variant_num_choices(variant_command)
 
                 selected_commands = self._get_variant_choices(
                     variant_command.values,
@@ -103,7 +111,7 @@ class RandomSampler(Sampler):
             if len(values) == 0:
                 yield f"__{command.wildcard}__"
             else:
-                value = self._random.choice(values)
+                value = self._get_wildcard_choice(values)
                 yield from self._sampler_router.sample_prompts(value, 1)
 
     def _propagate_sampling_method(self, commands: Iterable[Command]) -> None:
