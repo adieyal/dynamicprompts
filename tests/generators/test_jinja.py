@@ -157,7 +157,33 @@ class TestJinjaGenerator:
 
             assert generator.generate(template) == ["My favourite colour is yellow"]
 
-    def test_invalid_syntax_throws_exception(self, generator):
+    def test_random_sample(self, generator: JinjaGenerator):
+        template = """
+        {% prompt %}Test prompt: {{ random_sample("A {red|blue|green} {rose|daisy}") }}{% endprompt %}
+        """
+
+        template = """
+        {% prompt %}Test prompt: {{ random_sample("A {blue} {daisy}") }}{% endprompt %}
+        """
+        assert generator.generate(template) == ["Test prompt: A blue daisy"]
+
+    def test_all_combinations(self, generator: JinjaGenerator):
+        template = """
+        {% for prompt in all_combinations("A {red|blue|green} {rose|daisy}") %}
+            {% prompt %}{{ prompt }}{% endprompt %}
+        {% endfor %}
+        """
+
+        assert generator.generate(template) == [
+            "A red rose",
+            "A red daisy",
+            "A blue rose",
+            "A blue daisy",
+            "A green rose",
+            "A green daisy",
+        ]
+
+    def test_invalid_syntax_throws_exception(self, generator: JinjaGenerator):
         template = """
         {% for colour in wildcard("__colours__") %}
             {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
