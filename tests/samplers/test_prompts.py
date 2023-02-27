@@ -482,11 +482,13 @@ class TestPrompts:
         sampling_context: SamplingContext,
         expected: list[str],
     ):
-        template = "A __missing__ wildcard"
+        wrap = sampling_context.wildcard_manager.wildcard_wrap
+        prompts = sampling_context.sample_prompts(
+            "A __missing__ wildcard".replace("__", wrap),
+            len(expected),
+        )
 
-        prompts = sampling_context.sample_prompts(template, len(expected))
-
-        assert list(prompts) == expected
+        assert list(prompts) == [ex.replace("__", wrap) for ex in expected]
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
