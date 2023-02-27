@@ -117,8 +117,15 @@ class WildcardManager:
         return sorted(set().union(*[f.get_wildcards() for f in files]))
 
     def to_wildcard(self, name: str) -> str:
+        """
+        Wrap `name` in the wildcard wrap string if it is not already wrapped.
+        """
         ww = self._wildcard_wrap
-        return f"{ww}{name}{ww}"
+        if not name.startswith(ww):
+            name = f"{ww}{name}"
+        if not name.endswith(ww):
+            name = f"{name}{ww}"
+        return name
 
     # TODO: the return type is actually a recursive type (replace that Any)
     def get_wildcard_hierarchy(

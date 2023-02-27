@@ -72,12 +72,16 @@ class TestJinjaGenerator:
             "My favourite colour is green",
         ]
 
+    @pytest.mark.parametrize("wrapped", [False, True])
     def test_wildcards(
         self,
         generator: JinjaGenerator,
         wildcard_manager: WildcardManager,
+        wrapped: bool,
     ):
-        wildcard = wildcard_manager.to_wildcard("colors-cold")
+        wildcard = "colors-cold"
+        if wrapped:
+            wildcard = wildcard_manager.to_wildcard(wildcard)
         template = f"""
         {{% for colour in wildcard("{wildcard}") %}}
             {{% prompt %}}My favourite colour is {{{{ colour }}}}{{% endprompt %}}
