@@ -68,6 +68,7 @@ ignore = [
 ]
 unfixable = [
     "T2",  # don't automatically remove prints
+    "F841",  # don't remove seemingly unused locals
 ]
 
 [tool.ruff.flake8-tidy-imports]
