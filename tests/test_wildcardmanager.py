@@ -110,8 +110,8 @@ def test_clean_wildcard(wildcard_manager: WildcardManager):
 
 def test_to_wildcard(wildcard_manager: WildcardManager):
     ww = wildcard_manager.wildcard_wrap
-
     assert wildcard_manager.to_wildcard("foo") == f"{ww}foo{ww}"
+    assert wildcard_manager.to_wildcard(f"{ww}foo{ww}") == f"{ww}foo{ww}"
 
 
 def test_path_to_wildcard_without_separators(wildcard_manager: WildcardManager):
