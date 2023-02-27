@@ -19,6 +19,7 @@ from pytest import FixtureRequest
 from pytest_lazyfixture import lazy_fixture
 
 from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
+from tests.samplers.utils import patch_random_sampler_variant_choices
 from tests.utils import cross, zipstr
 
 ONE_TWO_THREEx2 = cross(ONE_TWO_THREE, ONE_TWO_THREE)
@@ -168,10 +169,9 @@ class TestVariantCommand:
         gen = sampler.generator_from_command(command)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = [[LiteralCommand(e)] for e in expected]
-
-                get_choices.side_effect = random_choices
+            with patch_random_sampler_variant_choices(
+                [[LiteralCommand(e)] for e in expected],
+            ):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -204,10 +204,9 @@ class TestVariantCommand:
         gen = sampler_router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = [[LiteralCommand(e)] for e in expected]
-
-                get_choices.side_effect = random_choices
+            with patch_random_sampler_variant_choices(
+                [[LiteralCommand(e)] for e in expected],
+            ):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -269,13 +268,10 @@ class TestVariantCommand:
         gen = sampler_router.generator_from_command(command1)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = []
-                for e in expected:
-                    parts = e.split(",")
-                    random_choices.append([LiteralCommand(p) for p in parts])
-
-                get_choices.side_effect = random_choices
+            random_choices = [
+                [LiteralCommand(p) for p in e.split(",")] for e in expected
+            ]
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -317,13 +313,10 @@ class TestVariantCommand:
         gen = sampler_router.generator_from_command(command1)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = []
-                for e in expected:
-                    parts = e.split(" and ")
-                    random_choices.append([LiteralCommand(p) for p in parts])
-
-                get_choices.side_effect = random_choices
+            random_choices = [
+                [LiteralCommand(p) for p in e.split(" and ")] for e in expected
+            ]
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -361,13 +354,12 @@ class TestVariantCommand:
         gen = sampler_router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = []
-                for e in expected:
-                    parts = e.split(" ")
-                    random_choices += [[LiteralCommand(p)] for p in parts]
+            random_choices = []
+            for e in expected:
+                parts = e.split(" ")
+                random_choices += [[LiteralCommand(p)] for p in parts]
 
-                get_choices.side_effect = random_choices
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -414,13 +406,12 @@ class TestVariantCommand:
         gen = sampler_router.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler, "_get_choices") as get_choices:
-                random_choices = []
-                for e in expected:
-                    parts = e.split(" ")
-                    random_choices += [[LiteralCommand(p)] for p in parts]
+            random_choices = []
+            for e in expected:
+                parts = e.split(" ")
+                random_choices += [[LiteralCommand(p)] for p in parts]
 
-                get_choices.side_effect = random_choices
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = [next(gen) for _ in expected]
         else:
             prompts = [next(gen) for _ in expected]
@@ -526,19 +517,17 @@ class TestWildcardsCommand:
         gen = sampler.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler._random, "choice") as mock_choice:
-                with mock.patch.object(sampler, "_get_choices") as mock_get_choice:
-                    shuffled_colours = data_lookups[key]
-                    shuffled_shapes = SHAPES.copy()
-                    random.shuffle(shuffled_shapes)
-
-                    random_choices = [LiteralCommand(c) for c in shuffled_colours]
-
-                    mock_choice.side_effect = random_choices
-                    mock_get_choice.side_effect = [
-                        [LiteralCommand(shape)] for shape in shuffled_shapes
-                    ]
-
+            shuffled_colours = data_lookups[key]
+            shuffled_shapes = SHAPES.copy()
+            random.shuffle(shuffled_shapes)
+            with mock.patch.object(
+                sampler._random,
+                "choice",
+                side_effect=[LiteralCommand(c) for c in shuffled_colours],
+            ):
+                with patch_random_sampler_variant_choices(
+                    [[LiteralCommand(shape)] for shape in shuffled_shapes],
+                ):
                     expected = [
                         f"{c} {s}" for c, s in zip(shuffled_colours, shuffled_shapes)
                     ]
