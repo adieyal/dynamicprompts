@@ -19,7 +19,10 @@ from pytest import FixtureRequest
 from pytest_lazyfixture import lazy_fixture
 
 from tests.consts import ONE_TWO_THREE, RED_AND_GREEN, RED_GREEN_BLUE, SHAPES
-from tests.samplers.utils import patch_random_sampler_variant_choices
+from tests.samplers.utils import (
+    patch_random_sampler_variant_choices,
+    patch_random_sampler_wildcard_choice,
+)
 from tests.utils import cross, zipstr
 
 ONE_TWO_THREEx2 = cross(ONE_TWO_THREE, ONE_TWO_THREE)
@@ -435,22 +438,11 @@ class TestWildcardsCommand:
         key: str,
         data_lookups: dict[str, list[str]],
     ):
-        sampler = sampler_router._samplers[SamplingMethod.DEFAULT]
-
         command = WildcardCommand("colors*")
 
         gen = sampler_router.generator_from_command(command)
 
-        if isinstance(sampler, RandomSampler):
-            with patch.object(sampler._random, "choice") as get_choices:
-                shuffled_colours = data_lookups[key]
-
-                random_choices = [LiteralCommand(c) for c in shuffled_colours]
-
-                get_choices.side_effect = random_choices
-
-                prompts = [next(gen) for _ in range(len(data_lookups[key]))]
-        else:
+        with patch_random_sampler_wildcard_choice(data_lookups[key]):
             prompts = [next(gen) for _ in range(len(data_lookups[key]))]
 
         for prompt, e in zip(prompts, data_lookups[key]):
@@ -479,16 +471,7 @@ class TestWildcardsCommand:
 
         gen = sampler.generator_from_command(sequence)
 
-        if isinstance(sampler, RandomSampler):
-            with patch.object(sampler._random, "choice") as get_choices:
-                shuffled_colours = data_lookups[key]
-
-                random_choices = [LiteralCommand(c) for c in shuffled_colours]
-
-                get_choices.side_effect = random_choices
-
-                prompts = [next(gen) for _ in range(len(data_lookups[key]))]
-        else:
+        with patch_random_sampler_wildcard_choice(data_lookups[key]):
             prompts = [next(gen) for _ in range(len(data_lookups[key]))]
 
         for prompt, e in zip(prompts, data_lookups[key]):
@@ -520,11 +503,7 @@ class TestWildcardsCommand:
             shuffled_colours = data_lookups[key]
             shuffled_shapes = SHAPES.copy()
             random.shuffle(shuffled_shapes)
-            with patch.object(
-                sampler._random,
-                "choice",
-                side_effect=[LiteralCommand(c) for c in shuffled_colours],
-            ):
+            with patch_random_sampler_wildcard_choice(shuffled_colours):
                 with patch_random_sampler_variant_choices(
                     [[LiteralCommand(shape)] for shape in shuffled_shapes],
                 ):

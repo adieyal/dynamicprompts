@@ -22,7 +22,11 @@ from dynamicprompts.wildcardmanager import WildcardManager
 from pytest_lazyfixture import lazy_fixture
 
 from tests.consts import RED_GREEN_BLUE
-from tests.samplers.utils import patch_random_sampler_variant_choices
+from tests.samplers.utils import (
+    patch_random_sampler_variant_choices,
+    patch_random_sampler_variant_num_choices,
+    patch_random_sampler_wildcard_choice,
+)
 from tests.utils import cross, interleave, zipstr
 
 
@@ -327,11 +331,7 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(p) for p in pair])
 
             with patch_random_sampler_variant_choices(random_choices):
-                with patch.object(
-                    sampler._random,
-                    "randint",
-                    side_effect=[2, 1, 2, 2, 2],
-                ):
+                with patch_random_sampler_variant_num_choices([2, 1, 2, 2, 2]):
                     prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
             prompts = sampler_manager.sample_prompts(template, 5)
@@ -375,7 +375,7 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(p) for p in pair])
 
             with patch_random_sampler_variant_choices(random_choices):
-                with patch.object(sampler._random, "randint", side_effect=[2, 2]):
+                with patch_random_sampler_variant_num_choices([2, 2]):
                     prompts = list(
                         sampler_manager.sample_prompts(template, len(expected)),
                     )
@@ -486,8 +486,6 @@ class TestPrompts:
         sampler_manager: ConcreteSamplerRouter,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
-
         template = "A __colours__ square"
 
         with patch.object(
@@ -495,24 +493,8 @@ class TestPrompts:
             "get_all_values",
             side_effect=[RED_GREEN_BLUE],
         ):
-            if isinstance(sampler, RandomSampler):
-                random_choices = []
-
-                for colour in expected:
-                    random_choices.append(LiteralCommand(colour))
-
-                with patch.object(
-                    sampler._random,
-                    "choice",
-                    side_effect=random_choices,
-                ):
-                    prompts = list(
-                        sampler_manager.sample_prompts(template, len(expected)),
-                    )
-
-            else:
-                prompts = sampler_manager.sample_prompts(template, len(expected))
-
+            with patch_random_sampler_wildcard_choice(expected):
+                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
             expected = [f"A {e} square" for e in expected]
 
             assert list(prompts) == expected
@@ -550,24 +532,11 @@ class TestPrompts:
         key: str,
         data_lookups: dict[str, list[str]],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
         template = "{__colors*__}"
 
         expected = data_lookups[key]
-        if isinstance(sampler, RandomSampler):
-            random_choices = []
-
-            for colour in expected:
-                random_choices.append(LiteralCommand(colour))
-
-            with patch.object(
-                sampler._random,
-                "choice",
-                side_effect=random_choices,
-            ):
-                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
-        else:
-            prompts = sampler_manager.sample_prompts(template, len(expected))
+        with patch_random_sampler_wildcard_choice(expected):
+            prompts = list(sampler_manager.sample_prompts(template, len(expected)))
 
         assert list(prompts) == expected
 
@@ -591,22 +560,10 @@ class TestPrompts:
         expected = data_lookups[key]
 
         if isinstance(sampler, RandomSampler):
-            random_choices = []
             variant_choices = [[LiteralCommand("black")], [WildcardCommand("colors*")]]
 
-            for colour in expected:
-                random_choices.append(LiteralCommand(colour))
-
-            with patch.object(
-                sampler._random,
-                "choice",
-                side_effect=random_choices,
-            ):
-                with patch.object(
-                    sampler._random,
-                    "choices",
-                    side_effect=variant_choices,
-                ):
+            with patch_random_sampler_wildcard_choice(expected):
+                with patch_random_sampler_variant_choices(variant_choices):
                     black = ["black"] * len(expected)
                     arr1 = zipstr(expected, black, sep=",")
                     arr2 = zipstr(black, expected, sep=",")

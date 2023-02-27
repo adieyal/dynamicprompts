@@ -1,22 +1,22 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from unittest.mock import patch
 
 import pytest
 from dynamicprompts.commands import (
     Command,
-    LiteralCommand,
     SamplingMethod,
     SequenceCommand,
     VariantCommand,
 )
 from dynamicprompts.sampler_routers.concrete_sampler_router import (
-    DEFAULT_RANDOM,
     ConcreteSamplerRouter,
 )
 
-from tests.samplers.utils import patch_random_sampler_variant_choices
+from tests.samplers.utils import (
+    patch_random_sampler_variant_choices,
+    patch_random_sampler_wildcard_choice,
+)
 
 
 def patch_random_sampler_variant_choices_with_literals(
@@ -206,31 +206,26 @@ class TestCombinatorialParent:
     ):
         carbike_variant = VariantCommand.from_literals_and_weights(
             ["car", "bike"],
-            sampling_method=SamplingMethod.RANDOM,
+            sampling_method=sampling_method,
         )
         prompts = combinatorial_sampler_router.sample_prompts(template, 8)
-        if sampling_method == SamplingMethod.RANDOM:
-            literals = [
-                [literal]
-                for literal in SequenceCommand.from_literals(
-                    [
-                        "ball",  # A red ball
-                        carbike_variant,  # A blue car
-                        "car",  # A blue car
-                        "ball",  # A green ball
-                        carbike_variant,
-                        "bike",  # A yellow bike
-                        "ball",  # A purple ball
-                        carbike_variant,  # A black car
-                        "car",  # A black car
-                        "ball",  # A white ball
-                        "ball",  # Extra - unused
-                    ],
-                ).tokens
-            ]
 
-            with patch.object(DEFAULT_RANDOM, "choices", side_effect=[*literals]):
-                prompts = list(prompts)
+        with patch_random_sampler_variant_choices_with_literals(
+            [
+                "ball",  # A red ball
+                carbike_variant,  # A blue car
+                "car",  # A blue car
+                "ball",  # A green ball
+                carbike_variant,
+                "bike",  # A yellow bike
+                "ball",  # A purple ball
+                carbike_variant,  # A black car
+                "car",  # A black car
+                "ball",  # A white ball
+                "ball",  # Extra - unused
+            ],
+        ):
+            prompts = list(prompts)
 
         assert list(prompts) == expected
 
@@ -250,11 +245,7 @@ class TestCombinatorialParent:
     ):
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
         if choice_value:
-            with patch.object(
-                DEFAULT_RANDOM,
-                "choice",
-                return_value=LiteralCommand(choice_value),
-            ):
+            with patch_random_sampler_wildcard_choice([choice_value] * 3):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
@@ -284,8 +275,7 @@ class TestCombinatorialParent:
         prompts = combinatorial_sampler_router.sample_prompts(template, 3)
 
         if choice_side_effect:
-            literal_lists = SequenceCommand.from_literals(choice_side_effect).tokens
-            with patch.object(DEFAULT_RANDOM, "choice", side_effect=literal_lists):
+            with patch_random_sampler_wildcard_choice(choice_side_effect):
                 prompts = list(prompts)
 
         assert list(prompts) == expected
