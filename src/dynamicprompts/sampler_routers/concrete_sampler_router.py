@@ -31,6 +31,7 @@ class ConcreteSamplerRouter(SamplerRouter):
     ):
         self._wildcard_manager = wildcard_manager
         self._ignore_whitespace = ignore_whitespace
+        self._parser_config = parser_config
 
         if samplers is None:
             samplers = self._build_default_samplers(
@@ -104,6 +105,7 @@ class ConcreteSamplerRouter(SamplerRouter):
         if isinstance(prompt, str):
             command = parse(
                 prompt,
+                parser_config=self._parser_config,
                 default_sampling_method=self._default_sampling_method,
             )
         elif isinstance(prompt, Command):
