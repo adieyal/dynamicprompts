@@ -22,6 +22,7 @@ from dynamicprompts.wildcardmanager import WildcardManager
 from pytest_lazyfixture import lazy_fixture
 
 from tests.consts import RED_GREEN_BLUE
+from tests.samplers.utils import patch_random_sampler_variant_choices
 from tests.utils import cross, interleave, zipstr
 
 
@@ -107,11 +108,7 @@ class TestPrompts:
 
         if isinstance(sampler, RandomSampler):
             random_choices = [[LiteralCommand(v)] for v in expected]
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
             prompts = sampler_manager.sample_prompts(template, 5)
@@ -150,11 +147,7 @@ class TestPrompts:
 
         if isinstance(sampler, RandomSampler):
             random_choices = [[LiteralCommand(v)] for v in expected]
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
             prompts = sampler_manager.sample_prompts(template, 5)
@@ -210,11 +203,7 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(colour)])
                 random_choices.append([LiteralCommand(shape)])
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
             prompts = sampler_manager.sample_prompts(template, 5)
@@ -272,16 +261,12 @@ class TestPrompts:
             random_choices = []
 
             for colour_pair, shape in zip(colour_pairs, shapes):
-                random_choices.append([LiteralCommand(colour_pair[0])])
-                random_choices.append([LiteralCommand(colour_pair[1])])
-
+                random_choices.append(
+                    [LiteralCommand(colour_pair[0]), LiteralCommand(colour_pair[1])],
+                )
                 random_choices.append([LiteralCommand(shape)])
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, 5))
         else:
             prompts = sampler_manager.sample_prompts(template, 5)
@@ -339,14 +324,9 @@ class TestPrompts:
             random_choices = []
 
             for pair in colour_pairs:
-                for p in pair:
-                    random_choices.append([LiteralCommand(p)])
+                random_choices.append([LiteralCommand(p) for p in pair])
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 with mock.patch.object(
                     sampler._random,
                     "randint",
@@ -392,14 +372,9 @@ class TestPrompts:
             random_choices = []
 
             for pair in colour_pairs:
-                for p in pair:
-                    random_choices.append([LiteralCommand(p)])
+                random_choices.append([LiteralCommand(p) for p in pair])
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 with mock.patch.object(sampler._random, "randint", side_effect=[2, 2]):
                     prompts = list(
                         sampler_manager.sample_prompts(template, len(expected)),
@@ -440,11 +415,7 @@ class TestPrompts:
             for colour in expected:
                 random_choices.append([LiteralCommand(colour)])
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, len(expected)))
         else:
             prompts = sampler_manager.sample_prompts(template, len(expected))
@@ -492,11 +463,7 @@ class TestPrompts:
                 [LiteralCommand("red", SamplingMethod.RANDOM)],
             ]
 
-            with mock.patch.object(
-                sampler._random,
-                "choices",
-                side_effect=random_choices,
-            ):
+            with patch_random_sampler_variant_choices(random_choices):
                 prompts = list(sampler_manager.sample_prompts(template, len(expected)))
         else:
             prompts = sampler_manager.sample_prompts(template, len(expected))

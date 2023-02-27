@@ -42,12 +42,13 @@ class RandomSampler(Sampler):
         self._sampler_router = sampler_router
         self._random = rand
 
-    def _get_choices(
+    def _get_variant_choices(
         self,
         values: list[Command],
         weights: list[float],
         num_choices,
     ) -> list[Command]:
+        # Wraps choose_without_replacement for ease of testing
         return choose_without_replacement(
             values,
             weights=weights,
@@ -74,7 +75,7 @@ class RandomSampler(Sampler):
                     variant_command.max_bound,
                 )
 
-                selected_commands = self._get_choices(
+                selected_commands = self._get_variant_choices(
                     variant_command.values,
                     weights=variant_command.weights,
                     num_choices=num_choices,
