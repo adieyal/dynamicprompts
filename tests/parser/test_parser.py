@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from functools import partial
 from typing import cast
 
 import pytest
@@ -17,8 +16,6 @@ from dynamicprompts.parser.parse import (
     parse,
 )
 from pyparsing import ParseException
-
-default_parse = partial(parse)
 
 
 class TestParser:
@@ -39,7 +36,7 @@ class TestParser:
         ],
     )
     def test_literal_characters(self, input: str):
-        literal = default_parse(input)
+        literal = parse(input)
         assert isinstance(literal, LiteralCommand)
         assert literal.literal == input
 
@@ -52,7 +49,7 @@ class TestParser:
         ],
     )
     def test_wildcard(self, input: str):
-        wildcard_command = default_parse(f"__{input}__")
+        wildcard_command = parse(f"__{input}__")
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == input
         assert wildcard_command.sampling_method is None
@@ -72,22 +69,22 @@ class TestParser:
         sampling_method: SamplingMethod | None,
         wildcard: str,
     ):
-        wildcard_command = default_parse(f"__{input}__")
+        wildcard_command = parse(f"__{input}__")
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == wildcard
         assert wildcard_command.sampling_method == sampling_method
 
     def test_two_wildcards_adjacent(self):
-        sequence = default_parse("__colours__ __colours__")
+        sequence = parse("__colours__ __colours__")
         assert len(sequence) == 3
 
     def test_wildcard_adjactent_to_literal(self):
-        literal, wildcard_command = default_parse(",__colours__")
+        literal, wildcard_command = parse(",__colours__")
         assert literal.literal == ","
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == "colours"
 
-        wildcard_command, literal = default_parse("__colours__ world")
+        wildcard_command, literal = parse("__colours__ world")
         assert wildcard_command.wildcard == "colours"
         assert literal.literal == " world"
 
@@ -122,12 +119,12 @@ class TestParser:
         ],
     )
     def test_variant_with_sampling_method(self, input, sampling_method):
-        variant = default_parse(input)
+        variant = parse(input)
         assert isinstance(variant, VariantCommand)
         assert variant.sampling_method == sampling_method
 
     def test_variant_with_different_characters(self):
-        variant = default_parse("{new york|washing-ton!|änder}")
+        variant = parse("{new york|washing-ton!|änder}")
         assert isinstance(variant, VariantCommand)
         assert [v.literal for v in variant.values] == [
             "new york",
@@ -136,7 +133,7 @@ class TestParser:
         ]
 
     def test_variant_with_blank(self):
-        variant = default_parse("{|red|blue}")
+        variant = parse("{|red|blue}")
         assert isinstance(variant, VariantCommand)
         a, b, c = variant.values
         assert len(a) == 0
@@ -145,10 +142,10 @@ class TestParser:
 
     def test_variant_breaks_without_closing_bracket(self):
         with pytest.raises(ParseException):
-            default_parse("{cat|dog")
+            parse("{cat|dog")
 
     def test_variant_with_wildcard(self):
-        variant = default_parse("{__test/colours__|washington}")
+        variant = parse("{__test/colours__|washington}")
         assert isinstance(variant, VariantCommand)
         wildcard_command, washington = variant.values
         assert isinstance(wildcard_command, WildcardCommand)
@@ -157,7 +154,7 @@ class TestParser:
         assert washington.literal == "washington"
 
     def test_variant_sequences(self):
-        variant = default_parse(
+        variant = parse(
             "{My favourite colour is __colour__ and not __other_colour__|__colour__ is my favourite colour}",
         )
         assert isinstance(variant, VariantCommand)
@@ -182,7 +179,7 @@ class TestParser:
         assert literal3.literal == " is my favourite colour"
 
     def test_variant_with_nested_variant(self):
-        variant = default_parse("{__test/colours__|{__test/shapes__|washington}}")
+        variant = parse("{__test/colours__|{__test/shapes__|washington}}")
         assert isinstance(variant, VariantCommand)
         assert len(variant) == 2
         (wildcard, nested_variant) = variant.values
@@ -205,7 +202,7 @@ class TestParser:
         ],
     )
     def test_variant_with_weights(self, input, weights):
-        variant, literal = default_parse(input)
+        variant, literal = parse(input)
         assert isinstance(variant, VariantCommand)
         assert variant.weights == weights
         assert [v.literal for v in variant.values] == ["cat", "dog", "bird"]
@@ -227,21 +224,21 @@ class TestParser:
         ],
     )
     def test_range(self, input, min_bound, max_bound):
-        variant = default_parse(input)
+        variant = parse(input)
         assert isinstance(variant, VariantCommand)
         assert variant.min_bound == min_bound
         assert variant.max_bound == max_bound
         assert variant.separator == ","
 
     def test_variant_delimiter(self):
-        variant = default_parse("{2$$ and $$cat|dog|bird}")
+        variant = parse("{2$$ and $$cat|dog|bird}")
         assert isinstance(variant, VariantCommand)
 
         assert variant.min_bound == 2
         assert variant.max_bound == 2
         assert variant.separator == " and "
 
-        proclamation, variant, flower = default_parse(
+        proclamation, variant, flower = parse(
             "I love {2$$|$$green|yellow|blue} roses",
         )
         assert isinstance(variant, VariantCommand)
@@ -253,14 +250,14 @@ class TestParser:
         assert variant.separator == "|"
 
         with pytest.raises(ParseException):
-            default_parse(
+            parse(
                 "{2$$ $ $$cat|dog|bird}",
             )  # A dollar sign is not a valid separator
 
-        default_parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
+        parse("{2$$  $$cat|dog|bird}")  # A space is a valid separator
 
     def test_variants_adjacent(self):
-        sequence = default_parse("{2$$cat|dog|bird}{3$$red|blue|green}")
+        sequence = parse("{2$$cat|dog|bird}{3$$red|blue|green}")
         assert len(sequence) == 2
         assert isinstance(sequence[0], VariantCommand)
         assert isinstance(sequence[1], VariantCommand)
@@ -287,7 +284,7 @@ class TestParser:
         five
         """
 
-        sequence = default_parse(prompt)
+        sequence = parse(prompt)
         assert len(sequence) == 5
         one_two_three, variant, whitespace, wildcard, five = sequence
 
@@ -358,7 +355,7 @@ class TestParser:
     )
     def test_alternative_braces(self, variant_start: str, variant_end, template: str):
         config = ParserConfig(variant_start=variant_start, variant_end=variant_end)
-        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
+        sequence = cast(SequenceCommand, parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"
@@ -379,7 +376,7 @@ class TestParser:
     )
     def test_alternative_wildcard_wrap(self, wildcard_wrap: str, template: str):
         config = ParserConfig(wildcard_wrap=wildcard_wrap)
-        sequence = cast(SequenceCommand, default_parse(template, parser_config=config))
+        sequence = cast(SequenceCommand, parse(template, parser_config=config))
         variant = cast(VariantCommand, sequence[1])
 
         assert variant.values[0].literal == "A"
