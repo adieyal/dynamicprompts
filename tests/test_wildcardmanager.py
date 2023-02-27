@@ -9,9 +9,11 @@ from dynamicprompts.wildcardmanager import WildcardManager, _clean_wildcard
 from tests.conftest import WILDCARD_DATA_DIR
 
 
-def test_default_path():
+def test_pathless_wm():
     wm = WildcardManager()
-    assert wm.path == Path.cwd()
+    assert not wm.path
+    assert not wm.get_all_values("test")
+    assert not wm.match_files("test")
 
 
 def test_path(wildcard_manager: WildcardManager):
