@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from itertools import cycle, islice, zip_longest
-from unittest import mock
+from unittest.mock import patch
 
 import pytest
 from dynamicprompts.commands import (
@@ -442,7 +442,7 @@ class TestWildcardsCommand:
         gen = sampler_router.generator_from_command(command)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler._random, "choice") as get_choices:
+            with patch.object(sampler._random, "choice") as get_choices:
                 shuffled_colours = data_lookups[key]
 
                 random_choices = [LiteralCommand(c) for c in shuffled_colours]
@@ -480,7 +480,7 @@ class TestWildcardsCommand:
         gen = sampler.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            with mock.patch.object(sampler._random, "choice") as get_choices:
+            with patch.object(sampler._random, "choice") as get_choices:
                 shuffled_colours = data_lookups[key]
 
                 random_choices = [LiteralCommand(c) for c in shuffled_colours]
@@ -520,7 +520,7 @@ class TestWildcardsCommand:
             shuffled_colours = data_lookups[key]
             shuffled_shapes = SHAPES.copy()
             random.shuffle(shuffled_shapes)
-            with mock.patch.object(
+            with patch.object(
                 sampler._random,
                 "choice",
                 side_effect=[LiteralCommand(c) for c in shuffled_colours],
@@ -569,7 +569,7 @@ class TestWildcardsCommand:
         sampler_router: ConcreteSamplerRouter,
         expected: list[str],
     ):
-        with mock.patch.object(
+        with patch.object(
             sampler_router._wildcard_manager,
             "get_all_values",
             return_value=["{red|pink}", "green", "blue"],
@@ -617,7 +617,7 @@ class TestWildcardsCommand:
             ["red", "pink", "yellow"],
         ]
 
-        with mock.patch.object(
+        with patch.object(
             sampler_router._wildcard_manager,
             "get_all_values",
             side_effect=test_colours,
