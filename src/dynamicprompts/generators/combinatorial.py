@@ -7,7 +7,7 @@ from dynamicprompts import constants
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
-from dynamicprompts.sampler_routers import ConcreteSamplerRouter
+from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -20,8 +20,7 @@ class CombinatorialPromptGenerator(PromptGenerator):
         ignore_whitespace: bool = False,
         parser_config: ParserConfig = default_parser_config,
     ) -> None:
-        self._wildcard_manager = wildcard_manager
-        self._router = ConcreteSamplerRouter(
+        self._context = SamplingContext(
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.COMBINATORIAL,
             ignore_whitespace=ignore_whitespace,
@@ -33,8 +32,4 @@ class CombinatorialPromptGenerator(PromptGenerator):
         template: str | None,
         max_prompts: int | None = constants.MAX_IMAGES,
     ) -> Iterable[str]:
-        if template is None or len(template) == 0:
-            return [""]
-        prompts = self._router.sample_prompts(template, max_prompts)
-
-        return prompts
+        return self._context.sample_prompts((template or ""), max_prompts)

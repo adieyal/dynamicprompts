@@ -31,75 +31,6 @@ class TestSequence:
         assert cast(LiteralCommand, sequence[0]).literal == literals[0]
         assert cast(LiteralCommand, sequence[1]).literal == literals[1]
 
-    @pytest.mark.parametrize(
-        ("parent_sampling_method", "child_sampling_method", "expected_sampling_method"),
-        [
-            (
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.COMBINATORIAL,
-            ),
-            (
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.RANDOM,
-                SamplingMethod.RANDOM,
-            ),
-            (
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.CYCLICAL,
-                SamplingMethod.CYCLICAL,
-            ),
-            (
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.DEFAULT,
-                SamplingMethod.COMBINATORIAL,
-            ),
-            (
-                SamplingMethod.RANDOM,
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.RANDOM,
-            ),
-            (SamplingMethod.RANDOM, SamplingMethod.RANDOM, SamplingMethod.RANDOM),
-            (SamplingMethod.RANDOM, SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL),
-            (SamplingMethod.RANDOM, SamplingMethod.DEFAULT, SamplingMethod.RANDOM),
-            (
-                SamplingMethod.CYCLICAL,
-                SamplingMethod.COMBINATORIAL,
-                SamplingMethod.CYCLICAL,
-            ),
-            (SamplingMethod.CYCLICAL, SamplingMethod.RANDOM, SamplingMethod.RANDOM),
-            (SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL, SamplingMethod.CYCLICAL),
-            (SamplingMethod.CYCLICAL, SamplingMethod.DEFAULT, SamplingMethod.CYCLICAL),
-        ],
-    )
-    def test_propagation(
-        self,
-        parent_sampling_method: SamplingMethod,
-        child_sampling_method: SamplingMethod,
-        expected_sampling_method: SamplingMethod,
-    ):
-        commands: list[str | Command] = [
-            LiteralCommand("literal", sampling_method=child_sampling_method),
-            VariantCommand.from_literals_and_weights(
-                ["opt1", "opt2"],
-                sampling_method=child_sampling_method,
-            ),
-            WildcardCommand("colors*", sampling_method=child_sampling_method),
-            SequenceCommand.from_literals(
-                ["seq1", "seq2"],
-                sampling_method=child_sampling_method,
-            ),
-        ]
-
-        seq = SequenceCommand.from_literals(
-            commands,
-            sampling_method=parent_sampling_method,
-        )
-        seq.propagate_sampling_method(parent_sampling_method)
-
-        for token in seq.tokens:
-            assert token.sampling_method == expected_sampling_method
-
 
 class TestLiteral:
     def test_prompts(self):
@@ -155,24 +86,27 @@ class TestVariant:
         assert variant_command.min_bound == 1
         assert variant_command.max_bound == 2
 
-    def test_sampling_method(self, literals: list[str]):
-        variant_command = VariantCommand.from_literals_and_weights(literals)
-        assert variant_command.sampling_method == SamplingMethod.DEFAULT
-
-        variant_command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
-        assert variant_command.sampling_method == SamplingMethod.DEFAULT
-
-        variant_command = VariantCommand.from_literals_and_weights(
-            ONE_TWO_THREE,
-            sampling_method=SamplingMethod.RANDOM,
+    def test_sampling_method(self):
+        assert (
+            VariantCommand.from_literals_and_weights(ONE_TWO_THREE).sampling_method
+            is None
         )
-        assert variant_command.sampling_method == SamplingMethod.RANDOM
 
-        variant_command = VariantCommand.from_literals_and_weights(
-            ONE_TWO_THREE,
-            sampling_method=SamplingMethod.COMBINATORIAL,
+        assert (
+            VariantCommand.from_literals_and_weights(
+                ONE_TWO_THREE,
+                sampling_method=SamplingMethod.RANDOM,
+            ).sampling_method
+            == SamplingMethod.RANDOM
         )
-        assert variant_command.sampling_method == SamplingMethod.COMBINATORIAL
+
+        assert (
+            VariantCommand.from_literals_and_weights(
+                ONE_TWO_THREE,
+                sampling_method=SamplingMethod.COMBINATORIAL,
+            ).sampling_method
+            == SamplingMethod.COMBINATORIAL
+        )
 
 
 class TestWildcard:
@@ -182,7 +116,7 @@ class TestWildcard:
 
     def test_sampling_method(self):
         l1 = WildcardCommand("hello")
-        assert l1.sampling_method == SamplingMethod.DEFAULT
+        assert l1.sampling_method is None
 
         l2 = WildcardCommand("hello", sampling_method=SamplingMethod.RANDOM)
         assert l2.sampling_method == SamplingMethod.RANDOM

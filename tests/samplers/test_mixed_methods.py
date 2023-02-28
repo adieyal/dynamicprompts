@@ -1,33 +1,17 @@
 from __future__ import annotations
 
-from contextlib import nullcontext
-
 import pytest
 from dynamicprompts.commands import (
     Command,
     SamplingMethod,
-    SequenceCommand,
     VariantCommand,
 )
-from dynamicprompts.sampler_routers.concrete_sampler_router import (
-    ConcreteSamplerRouter,
-)
+from dynamicprompts.sampling_context import SamplingContext
 
 from tests.samplers.utils import (
-    patch_random_sampler_variant_choices,
+    patch_random_sampler_variant_choices_with_literals,
     patch_random_sampler_wildcard_choice,
 )
-
-
-def patch_random_sampler_variant_choices_with_literals(
-    literals: list[str | Command] | None,
-):
-    if literals is None:  # Nothing to patch
-        return nullcontext()
-
-    return patch_random_sampler_variant_choices(
-        [[command] for command in SequenceCommand.from_literals(literals).tokens],
-    )
 
 
 class TestCombinatorialParent:
@@ -44,13 +28,13 @@ class TestCombinatorialParent:
     )
     def test_non_finite_variants(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
+            prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
         assert prompts == expected
 
     @pytest.mark.parametrize(
@@ -70,13 +54,13 @@ class TestCombinatorialParent:
     )
     def test_mixed_non_finite_variants_last_position(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command] | None,
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
+            prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
         assert prompts == expected
 
     @pytest.mark.parametrize(
@@ -96,14 +80,14 @@ class TestCombinatorialParent:
     )
     def test_mixed_non_finite_variants_first_position(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
-        assert prompts == expected
+            prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
+        assert list(prompts) == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -130,14 +114,13 @@ class TestCombinatorialParent:
     )
     def test_mixed_non_finite_variants_multiple_variants(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(combinatorial_sampler_router.sample_prompts(template, 3))
-
+            prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
         assert prompts == expected
 
     @pytest.mark.parametrize(
@@ -157,13 +140,13 @@ class TestCombinatorialParent:
     )
     def test_nested_cyclical_variants(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(combinatorial_sampler_router.sample_prompts(template, 10))
+            prompts = list(combinatorial_sampling_context.sample_prompts(template, 10))
         assert prompts == expected
 
     @pytest.mark.parametrize(
@@ -199,7 +182,7 @@ class TestCombinatorialParent:
     )
     def test_combinatorial_nested_in_non_finite(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         sampling_method: SamplingMethod,
         template: str,
         expected: list[str],
@@ -208,8 +191,7 @@ class TestCombinatorialParent:
             ["car", "bike"],
             sampling_method=sampling_method,
         )
-        prompts = combinatorial_sampler_router.sample_prompts(template, 8)
-
+        prompts = combinatorial_sampling_context.sample_prompts(template, 8)
         with patch_random_sampler_variant_choices_with_literals(
             [
                 "ball",  # A red ball
@@ -238,12 +220,12 @@ class TestCombinatorialParent:
     )
     def test_non_finite_wildcards(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
         choice_value: str,
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
+        prompts = combinatorial_sampling_context.sample_prompts(template, 3)
         if choice_value:
             with patch_random_sampler_wildcard_choice([choice_value] * 3):
                 prompts = list(prompts)
@@ -267,12 +249,12 @@ class TestCombinatorialParent:
     )
     def test_mixed_non_finite_wildcards_last_position(
         self,
-        combinatorial_sampler_router: ConcreteSamplerRouter,
+        combinatorial_sampling_context: SamplingContext,
         template: str,
-        choice_side_effect: list[str | Command],
+        choice_side_effect: list[str],
         expected: list[str],
     ):
-        prompts = combinatorial_sampler_router.sample_prompts(template, 3)
+        prompts = combinatorial_sampling_context.sample_prompts(template, 3)
 
         if choice_side_effect:
             with patch_random_sampler_wildcard_choice(choice_side_effect):
@@ -295,13 +277,13 @@ class TestRandomParent:
     )
     def test_variants(
         self,
-        random_sampler_router: ConcreteSamplerRouter,
+        random_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(random_sampler_router.sample_prompts(template, 3))
+            prompts = list(random_sampling_context.sample_prompts(template, 3))
         assert prompts == expected
 
 
@@ -319,11 +301,11 @@ class TestCyclicalParent:
     )
     def test_variants(
         self,
-        cyclical_sampler_router: ConcreteSamplerRouter,
+        cyclical_sampling_context: SamplingContext,
         template: str,
         choices_side_effect: list[str | Command],
         expected: list[str],
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
-            prompts = list(cyclical_sampler_router.sample_prompts(template, 3))
+            prompts = list(cyclical_sampling_context.sample_prompts(template, 3))
         assert prompts == expected

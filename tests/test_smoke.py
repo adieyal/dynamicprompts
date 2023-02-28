@@ -4,7 +4,7 @@ import dataclasses
 
 import pytest
 from dynamicprompts.enums import SamplingMethod
-from dynamicprompts.sampler_routers import ConcreteSamplerRouter
+from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcardmanager import WildcardManager
 
 
@@ -39,14 +39,14 @@ def test_generator(
     case: SmokeTestCase,
     wildcard_manager: WildcardManager,
 ) -> None:
-    router = ConcreteSamplerRouter(
+    context = SamplingContext(
         wildcard_manager=wildcard_manager,
         default_sampling_method=sampling_method,
     )
     gen_count = 0
     max_count = 10
 
-    for result in router.sample_prompts(
+    for result in context.sample_prompts(
         case.input,
         num_prompts=max_count,
     ):

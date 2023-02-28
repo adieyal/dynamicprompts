@@ -11,19 +11,20 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.sampler_routers.concrete_sampler_router import ConcreteSamplerRouter
 from dynamicprompts.samplers import (
     CombinatorialSampler,
     CyclicalSampler,
     RandomSampler,
 )
-from dynamicprompts.samplers.base import SamplerRouter
+from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcardmanager import WildcardManager
 from pytest_lazyfixture import lazy_fixture
 
+from tests.conftest import sampling_context_lazy_fixtures
 from tests.consts import RED_GREEN_BLUE
 from tests.samplers.utils import (
     patch_random_sampler_variant_choices,
+    patch_random_sampler_variant_choices_with_literals,
     patch_random_sampler_variant_num_choices,
     patch_random_sampler_wildcard_choice,
 )
@@ -43,88 +44,75 @@ def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
 
 
 class TestPrompts:
-    @pytest.mark.parametrize(
-        ("sampler_manager"),
-        [
-            lazy_fixture("random_sampler_router"),
-            lazy_fixture("cyclical_sampler_router"),
-            lazy_fixture("combinatorial_sampler_router"),
-        ],
-    )
-    def test_empty(self, sampler_manager: SamplerRouter):
-        prompts = list(sampler_manager.sample_prompts("", 5))
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_empty(self, sampling_context: SamplingContext):
+        prompts = list(sampling_context.sample_prompts("", 5))
         assert prompts == []
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
-            (lazy_fixture("random_sampler_router"), ["A literal sentence"] * 5),
-            (lazy_fixture("cyclical_sampler_router"), ["A literal sentence"] * 5),
-            (lazy_fixture("combinatorial_sampler_router"), ["A literal sentence"]),
+            (lazy_fixture("random_sampling_context"), ["A literal sentence"] * 5),
+            (lazy_fixture("cyclical_sampling_context"), ["A literal sentence"] * 5),
+            (lazy_fixture("combinatorial_sampling_context"), ["A literal sentence"]),
         ],
     )
     def test_literals(
         self,
-        sampler_manager: SamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
         template = "A literal sentence"
-        assert list(sampler_manager.sample_prompts(template, 5)) == expected
+        assert list(sampling_context.sample_prompts(template, 5)) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
-            (lazy_fixture("random_sampler_router"), ["Test [low emphasis]"] * 5),
-            (lazy_fixture("cyclical_sampler_router"), ["Test [low emphasis]"] * 5),
-            (lazy_fixture("combinatorial_sampler_router"), ["Test [low emphasis]"]),
+            (lazy_fixture("random_sampling_context"), ["Test [low emphasis]"] * 5),
+            (lazy_fixture("cyclical_sampling_context"), ["Test [low emphasis]"] * 5),
+            (lazy_fixture("combinatorial_sampling_context"), ["Test [low emphasis]"]),
         ],
     )
     def test_literal_with_square_brackets(
         self,
-        sampler_manager: SamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
         template = "Test [low emphasis]"
-        assert list(sampler_manager.sample_prompts(template, 5)) == expected
+        assert list(sampling_context.sample_prompts(template, 5)) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 ["circle", "circle", "square", "circle", "square"],
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 ["square", "circle", "square", "circle", "square"],
             ),
-            (lazy_fixture("combinatorial_sampler_router"), ["square", "circle"]),
+            (lazy_fixture("combinatorial_sampling_context"), ["square", "circle"]),
         ],
     )
     def test_variants(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
-
         template = "A red {square|circle}"
 
-        if isinstance(sampler, RandomSampler):
-            random_choices = [[LiteralCommand(v)] for v in expected]
-            with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, 5))
-        else:
-            prompts = sampler_manager.sample_prompts(template, 5)
+        with patch_random_sampler_variant_choices_with_literals(expected):
+            prompts = list(sampling_context.sample_prompts(template, 5))
 
         for prompt, e in zip(prompts, expected):
             assert prompt == f"A red {e}"
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 [
                     "red",
                     "red",
@@ -134,37 +122,31 @@ class TestPrompts:
                 ],  # TODO not correctly handling blanks
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 ["red", "blue", "", "red", "blue"],
             ),
-            (lazy_fixture("combinatorial_sampler_router"), ["red", "blue", ""]),
+            (lazy_fixture("combinatorial_sampling_context"), ["red", "blue", ""]),
         ],
     )
     def test_variant_with_blank(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
-
         template = "A {red|blue|} rose"
 
-        if isinstance(sampler, RandomSampler):
-            random_choices = [[LiteralCommand(v)] for v in expected]
-            with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, 5))
-        else:
-            prompts = sampler_manager.sample_prompts(template, 5)
+        with patch_random_sampler_variant_choices_with_literals(expected):
+            prompts = list(sampling_context.sample_prompts(template, 5))
 
         expected_sentences = [f"A {e} rose" for e in expected]
 
         assert list(prompts) == expected_sentences
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 [
                     "A red circle",
                     "A green square",
@@ -174,7 +156,7 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 [
                     "A red square",
                     "A green circle",
@@ -184,17 +166,17 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("combinatorial_sampler_router"),
+                lazy_fixture("combinatorial_sampling_context"),
                 ["A red square", "A red circle", "A green square", "A green circle"],
             ),
         ],
     )
     def test_two_variants(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "A {red|green} {square|circle}"
 
@@ -208,17 +190,17 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(shape)])
 
             with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, 5))
+                prompts = list(sampling_context.sample_prompts(template, 5))
         else:
-            prompts = sampler_manager.sample_prompts(template, 5)
+            prompts = sampling_context.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 [
                     "A red,green square",
                     "A green,red circle",
@@ -228,7 +210,7 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 [
                     "A red,green square",
                     "A green,red circle",
@@ -238,7 +220,7 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("combinatorial_sampler_router"),
+                lazy_fixture("combinatorial_sampling_context"),
                 [
                     "A red,green square",
                     "A red,green circle",
@@ -250,10 +232,10 @@ class TestPrompts:
     )
     def test_combination_variants(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "A {2$$red|green} {square|circle}"
 
@@ -271,17 +253,17 @@ class TestPrompts:
                 random_choices.append([LiteralCommand(shape)])
 
             with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, 5))
+                prompts = list(sampling_context.sample_prompts(template, 5))
         else:
-            prompts = sampler_manager.sample_prompts(template, 5)
+            prompts = sampling_context.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 [
                     "A red,green square",
                     "A red square",
@@ -291,7 +273,7 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 [
                     "A red square",
                     "A green square",
@@ -301,7 +283,7 @@ class TestPrompts:
                 ],
             ),
             (
-                lazy_fixture("combinatorial_sampler_router"),
+                lazy_fixture("combinatorial_sampling_context"),
                 [
                     "A red square",
                     "A green square",
@@ -314,10 +296,10 @@ class TestPrompts:
     )
     def test_combination_variants_range(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "A {1-2$$red|green|blue} square"
 
@@ -325,125 +307,113 @@ class TestPrompts:
             split = [v.split() for v in expected]
             _, colours, _ = zip(*split)
             colour_pairs = [c.split(",") for c in colours]
-            random_choices = []
-
-            for pair in colour_pairs:
-                random_choices.append([LiteralCommand(p) for p in pair])
+            random_choices = [
+                [LiteralCommand(p) for p in pair] for pair in colour_pairs
+            ]
 
             with patch_random_sampler_variant_choices(random_choices):
                 with patch_random_sampler_variant_num_choices([2, 1, 2, 2, 2]):
-                    prompts = list(sampler_manager.sample_prompts(template, 5))
+                    prompts = list(sampling_context.sample_prompts(template, 5))
         else:
-            prompts = sampler_manager.sample_prompts(template, 5)
+            prompts = sampling_context.sample_prompts(template, 5)
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 [
                     "red|blue",
                     "blue|green",
                 ],
             ),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
             ),
             (
-                lazy_fixture("combinatorial_sampler_router"),
+                lazy_fixture("combinatorial_sampling_context"),
                 cross(RED_GREEN_BLUE, RED_GREEN_BLUE, sep="|"),
             ),
         ],
     )
     def test_combination_variants_with_separator(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "A {2$$|$$red|green|blue} square"
 
         if isinstance(sampler, RandomSampler):
             colour_pairs = [c.split("|") for c in expected]
-            random_choices = []
-
-            for pair in colour_pairs:
-                random_choices.append([LiteralCommand(p) for p in pair])
+            random_choices = [
+                [LiteralCommand(p) for p in pair] for pair in colour_pairs
+            ]
 
             with patch_random_sampler_variant_choices(random_choices):
                 with patch_random_sampler_variant_num_choices([2, 2]):
                     prompts = list(
-                        sampler_manager.sample_prompts(template, len(expected)),
+                        sampling_context.sample_prompts(template, len(expected)),
                     )
 
         else:
-            prompts = sampler_manager.sample_prompts(template, len(expected))
+            prompts = sampling_context.sample_prompts(template, len(expected))
 
         expected = [f"A {e} square" for e in expected]
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             # (  # TODO - fix this
-            #     lazy_fixture("random_sampler_router"),
+            #     lazy_fixture("random_sampling_context"),
             #     [
             #         "blue", "red"
             #     ],
             # ),
-            (lazy_fixture("cyclical_sampler_router"), RED_GREEN_BLUE),
-            (lazy_fixture("combinatorial_sampler_router"), RED_GREEN_BLUE),
+            (lazy_fixture("cyclical_sampling_context"), RED_GREEN_BLUE),
+            (lazy_fixture("combinatorial_sampling_context"), RED_GREEN_BLUE),
         ],
     )
     def test_weighted_variant(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
-
         template = "A {1::red|2::green|3::blue} square"
 
-        if isinstance(sampler, RandomSampler):
-            random_choices = []
-
-            for colour in expected:
-                random_choices.append([LiteralCommand(colour)])
-
-            with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
-        else:
-            prompts = sampler_manager.sample_prompts(template, len(expected))
+        with patch_random_sampler_variant_choices_with_literals(expected):
+            prompts = list(sampling_context.sample_prompts(template, len(expected)))
 
         expected = [f"A {e} square" for e in expected]
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
-            (lazy_fixture("random_sampler_router"), ["A green circle", "A red"]),
+            (lazy_fixture("random_sampling_context"), ["A green circle", "A red"]),
             (
-                lazy_fixture("cyclical_sampler_router"),
+                lazy_fixture("cyclical_sampling_context"),
                 ["A red", "A green square", "A red", "A green circle"],
             ),
             (
-                lazy_fixture("combinatorial_sampler_router"),
+                lazy_fixture("combinatorial_sampling_context"),
                 ["A red", "A green square", "A green circle"],
             ),
         ],
     )
     def test_nested_variants(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "A {red|green {square|circle}}"
 
@@ -464,71 +434,73 @@ class TestPrompts:
             ]
 
             with patch_random_sampler_variant_choices(random_choices):
-                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
+                prompts = list(sampling_context.sample_prompts(template, len(expected)))
         else:
-            prompts = sampler_manager.sample_prompts(template, len(expected))
+            prompts = sampling_context.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
             (
-                lazy_fixture("random_sampler_router"),
+                lazy_fixture("random_sampling_context"),
                 ["blue", "red"],
             ),
-            (lazy_fixture("cyclical_sampler_router"), RED_GREEN_BLUE * 2),
-            (lazy_fixture("combinatorial_sampler_router"), RED_GREEN_BLUE),
+            (lazy_fixture("cyclical_sampling_context"), RED_GREEN_BLUE * 2),
+            (lazy_fixture("combinatorial_sampling_context"), RED_GREEN_BLUE),
         ],
     )
     def test_wildcards(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
         template = "A __colours__ square"
 
         with patch.object(
-            sampler_manager._wildcard_manager,
+            sampling_context.wildcard_manager,
             "get_all_values",
-            side_effect=[RED_GREEN_BLUE],
+            side_effect=lambda name: RED_GREEN_BLUE,
         ):
             with patch_random_sampler_wildcard_choice(expected):
-                prompts = list(sampler_manager.sample_prompts(template, len(expected)))
+                prompts = list(sampling_context.sample_prompts(template, len(expected)))
             expected = [f"A {e} square" for e in expected]
 
             assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "expected"),
+        ("sampling_context", "expected"),
         [
-            (lazy_fixture("random_sampler_router"), ["A __missing__ wildcard"] * 5),
-            (lazy_fixture("cyclical_sampler_router"), ["A __missing__ wildcard"] * 5),
-            (lazy_fixture("combinatorial_sampler_router"), []),
+            (lazy_fixture("random_sampling_context"), ["A __missing__ wildcard"] * 5),
+            (lazy_fixture("cyclical_sampling_context"), ["A __missing__ wildcard"] * 5),
+            (lazy_fixture("combinatorial_sampling_context"), []),
         ],
     )
     def test_missing_wildcard(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         expected: list[str],
     ):
-        template = "A __missing__ wildcard"
+        wrap = sampling_context.wildcard_manager.wildcard_wrap
+        prompts = sampling_context.sample_prompts(
+            "A __missing__ wildcard".replace("__", wrap),
+            len(expected),
+        )
 
-        prompts = sampler_manager.sample_prompts(template, len(expected))
-
-        assert list(prompts) == expected
+        assert list(prompts) == [ex.replace("__", wrap) for ex in expected]
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "key"),
+        ("sampling_context", "key"),
         [
-            (lazy_fixture("random_sampler_router"), "shuffled_colours"),
-            (lazy_fixture("cyclical_sampler_router"), "wildcard_colours"),
-            (lazy_fixture("combinatorial_sampler_router"), "wildcard_colours"),
+            (lazy_fixture("random_sampling_context"), "shuffled_colours"),
+            (lazy_fixture("cyclical_sampling_context"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampling_context"), "wildcard_colours"),
         ],
     )
     def test_nested_wildcard(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         key: str,
         data_lookups: dict[str, list[str]],
     ):
@@ -536,25 +508,25 @@ class TestPrompts:
 
         expected = data_lookups[key]
         with patch_random_sampler_wildcard_choice(expected):
-            prompts = list(sampler_manager.sample_prompts(template, len(expected)))
+            prompts = list(sampling_context.sample_prompts(template, len(expected)))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager", "key"),
+        ("sampling_context", "key"),
         [
-            # (lazy_fixture("random_sampler_router"), "shuffled_colours"), # TODO - fix this
-            (lazy_fixture("cyclical_sampler_router"), "wildcard_colours"),
-            (lazy_fixture("combinatorial_sampler_router"), "wildcard_colours"),
+            # (lazy_fixture("random_sampling_context"), "shuffled_colours"), # TODO - fix this
+            (lazy_fixture("cyclical_sampling_context"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampling_context"), "wildcard_colours"),
         ],
     )
     def test_nested_wildcard_with_range_and_literal(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
         key: str,
         data_lookups: dict[str, list[str]],
     ):
-        sampler = sampler_manager._samplers[SamplingMethod.DEFAULT]
+        sampler = sampling_context.default_sampler
 
         template = "{2$$__colors*__|black}"
         expected = data_lookups[key]
@@ -570,7 +542,7 @@ class TestPrompts:
                     expected = interleave(arr1, arr2)
 
                     prompts = list(
-                        sampler_manager.sample_prompts(template, len(expected)),
+                        sampling_context.sample_prompts(template, len(expected)),
                     )
         else:
             if isinstance(sampler, CyclicalSampler):
@@ -583,43 +555,43 @@ class TestPrompts:
                     f"black,{e}" for e in expected
                 ]
 
-            prompts = sampler_manager.sample_prompts(template, len(expected))
+            prompts = sampling_context.sample_prompts(template, len(expected))
 
         assert list(prompts) == expected
 
     @pytest.mark.parametrize(
-        ("sampler_manager"),
+        ("sampling_context"),
         [
-            (lazy_fixture("random_sampler_router")),
-            (lazy_fixture("cyclical_sampler_router")),
-            (lazy_fixture("combinatorial_sampler_router")),
+            (lazy_fixture("random_sampling_context")),
+            (lazy_fixture("cyclical_sampling_context")),
+            (lazy_fixture("combinatorial_sampling_context")),
         ],
     )
     def test_variants_with_larger_bounds_than_choices(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
     ):
         template = "A red {3$$square|circle}"
-        prompts = sampler_manager.sample_prompts(template, 10)
+        prompts = sampling_context.sample_prompts(template, 10)
 
         for el in prompts:
             assert el in ["A red square,circle", "A red circle,square"]
 
     @pytest.mark.parametrize(
-        ("sampler_manager"),
+        ("sampling_context"),
         [
-            (lazy_fixture("random_sampler_router")),
-            (lazy_fixture("cyclical_sampler_router")),
-            (lazy_fixture("combinatorial_sampler_router")),
+            (lazy_fixture("random_sampling_context")),
+            (lazy_fixture("cyclical_sampling_context")),
+            (lazy_fixture("combinatorial_sampling_context")),
         ],
     )
     def test_nospace_before_or_after_wildcard(
         self,
-        sampler_manager: ConcreteSamplerRouter,
+        sampling_context: SamplingContext,
     ):
         template = "(__colors*__:2.3) "
 
-        prompts = list(sampler_manager.sample_prompts(template, 20))
+        prompts = list(sampling_context.sample_prompts(template, 20))
 
         for prompt in prompts:
             assert "( " not in prompt

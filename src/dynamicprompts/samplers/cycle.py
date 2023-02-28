@@ -6,13 +6,12 @@ from typing import Generator, Iterable
 
 from dynamicprompts.commands import (
     Command,
-    LiteralCommand,
     SamplingMethod,
-    SequenceCommand,
     VariantCommand,
     WildcardCommand,
 )
-from dynamicprompts.samplers.base import Sampler, SamplerRouter
+from dynamicprompts.samplers.base import Sampler
+from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen, to_string_gen
 from dynamicprompts.utils import next_sampler_next_value
 
@@ -29,7 +28,7 @@ def get_arrs(gen: StringGen, rest_gen: Iterable[list[str]]):
 
 def _get_combination_samples(
     combo: list[Command],
-    sampler_router: SamplerRouter,
+    sampling_context: SamplingContext,
 ) -> Generator[list[str], None, None]:
     try:
         if len(combo) == 0:
@@ -38,8 +37,8 @@ def _get_combination_samples(
         else:
             c_1, c_rest = combo[0], combo[1:]
 
-            gen = sampler_router.generator_from_command(c_1)
-            rest_gen = _get_combination_samples(c_rest, sampler_router)
+            gen = sampling_context.generator_from_command(c_1)
+            rest_gen = _get_combination_samples(c_rest, sampling_context)
             arrs = get_arrs(gen, rest_gen)
 
             yield from arrs
@@ -48,33 +47,24 @@ def _get_combination_samples(
 
 
 class CyclicalSampler(Sampler):
-    def _propagate_sampling_method(self, commands: Iterable[Command]) -> None:
-        for cmd in commands:
-            if (
-                cmd.sampling_method == SamplingMethod.DEFAULT
-                or not cmd.sampling_method.is_nonfinite()
-            ):
-                cmd.sampling_method = SamplingMethod.CYCLICAL
-
-    def _get_cyclical_variant(
+    def _get_variant(
         self,
-        variant_command: VariantCommand,
+        command: VariantCommand,
+        sampling_context: SamplingContext,
     ) -> StringGen:
-        self._propagate_sampling_method(variant_command.values)
-
-        if len(variant_command.values) == 0:
+        if len(command.values) == 0:
             return
 
         combinations = (
             combo
-            for bound in range(variant_command.min_bound, variant_command.max_bound + 1)
-            for combo in variant_command.get_value_combinations(bound)
+            for bound in range(command.min_bound, command.max_bound + 1)
+            for combo in command.get_value_combinations(bound)
         )
 
         combination_samplers = (
             (
-                variant_command.separator.join(sample)
-                for sample in _get_combination_samples(combo, self._sampler_router)
+                command.separator.join(sample)
+                for sample in _get_combination_samples(combo, sampling_context)
             )
             for combo in combinations
         )
@@ -82,33 +72,20 @@ class CyclicalSampler(Sampler):
         while True:
             yield from next_sampler_next_value(cycle(combination_samplers))
 
-    def _get_cyclical_wildcard(self, command: WildcardCommand):
-        values = self._wildcard_manager.get_all_values(command.wildcard)
-        new_router = self._sampler_router.clone()
-        new_router.default_sampling_method = SamplingMethod.CYCLICAL
-        value_samplers = [new_router.sample_prompts(val) for val in values]
+    def _get_wildcard(
+        self,
+        command: WildcardCommand,
+        sampling_context: SamplingContext,
+    ):
+        values = sampling_context.wildcard_manager.get_all_values(command.wildcard)
+        new_context = sampling_context.with_sampling_method(SamplingMethod.CYCLICAL)
+        value_samplers = [new_context.sample_prompts(val) for val in values]
         value_string_gens = [to_string_gen(val) for val in value_samplers]
 
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {command.wildcard}")
+            ww = sampling_context.parser_config.wildcard_wrap
             while True:
-                yield f"__{command.wildcard}__"
+                yield f"{ww}{command.wildcard}{ww}"
         else:
             yield from next_sampler_next_value(value_string_gens)
-
-    def generator_from_command(
-        self,
-        command: Command,
-    ) -> StringGen:
-        if isinstance(command, LiteralCommand):
-            yield from self._get_literal(command)
-        elif isinstance(command, SequenceCommand):
-            yield from self._get_sequence(command)
-        elif isinstance(command, VariantCommand):
-            yield from self._get_cyclical_variant(command)
-        elif isinstance(command, WildcardCommand):
-            yield from self._get_cyclical_wildcard(command)
-        else:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not support {command.__class__.__name__}",
-            )
