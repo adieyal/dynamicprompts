@@ -7,6 +7,7 @@ from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
+from dynamicprompts.generators.combirandomgenerator import CombiRandomPromptGenerator
 
 __all__ = [
     "BatchedCombinatorialPromptGenerator",
@@ -16,4 +17,5 @@ __all__ = [
     "JinjaGenerator",
     "PromptGenerator",
     "RandomPromptGenerator",
+    "CombiRandomPromptGenerator",
 ]
