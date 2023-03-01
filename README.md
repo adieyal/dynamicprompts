@@ -1,4 +1,15 @@
 # Dynamic Prompts
+
+
+![MIT](https://img.shields.io/github/license/adieyal/dynamicprompts)
+&nbsp;-&nbsp;
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/adieyal/dynamicprompts/test.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/adieyal/dynamicprompts)](https://app.codecov.io/gh/adieyal/dynamicprompts)
+&nbsp;-&nbsp;
+[![PyPI](https://img.shields.io/pypi/v/dynamicprompts)](https://pypi.org/projects/dynamicprompts) ![PyPI - Downloads](https://img.shields.io/pypi/dm/dynamicprompts)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dynamicprompts)
+
+
 A library that provides tools and a templating language for designing prompts for text-to-image generators such as Stable Diffusion. This is useful if you would like to generate a number of new prompts using a template.
 
 The following template
