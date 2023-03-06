@@ -1,3 +1,4 @@
+0.10.2 - Fixed a bug where the JinjaGenerator was not ignoring whitespace
 0.10.1 - Added limit_prompts to JinjaGenerator. When set to True, `.generate(..., num_images=X)` will produced at most X prompts
 0.10.0 - Added added the ability to combine random and combinatorial prompts. Also added a cyclical sampler - see documentation for details
 0.9.1 - WildcardManager now uses the current working directory by default if a path is not provided

@@ -248,3 +248,20 @@ class TestJinjaGenerator:
             "My favourite colours are blue and red",
             "My favourite colours are blue and green",
         ]
+
+    def test_ignore_whitespace(self, generator: JinjaGenerator):
+        template = """
+        {% for colour in ['red', 'blue', 'green'] %}
+            {% prompt %}My favourite colour is
+              {{ colour }}{% endprompt %}
+        {% endfor %}
+        """
+
+        prompts = generator.generate(template)
+        for p in prompts:
+            assert "\n" in p
+
+        generator = JinjaGenerator(ignore_whitespace=True)
+        prompts = generator.generate(template)
+        for p in prompts:
+            assert "\n" not in p

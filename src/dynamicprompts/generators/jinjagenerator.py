@@ -13,6 +13,7 @@ from dynamicprompts.generators.promptgenerator import (
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS, PromptExtension
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
+from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcardmanager import WildcardManager
 
 logger = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ class JinjaGenerator(PromptGenerator):
 
         self._context = context or {}
         self._limit_prompts = limit_prompts
+        self._ignore_whitespace = ignore_whitespace
 
     def generate(self, template: str, num_prompts: int = 1) -> list[str]:
         env = Environment(extensions=[PromptExtension])
@@ -89,4 +91,7 @@ class JinjaGenerator(PromptGenerator):
 
         if self._limit_prompts:
             prompts = prompts[0:num_prompts]
+
+        if self._ignore_whitespace:
+            prompts = [squash_whitespace(p) for p in prompts]
         return prompts
