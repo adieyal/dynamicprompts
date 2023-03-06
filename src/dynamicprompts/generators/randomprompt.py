@@ -25,12 +25,13 @@ def _get_random(*, seed: int | None, unlink_seed_from_prompt: bool) -> Random:
 class RandomPromptGenerator(PromptGenerator):
     def __init__(
         self,
-        wildcard_manager: WildcardManager,
+        wildcard_manager: WildcardManager | None = None,
         seed: int | None = None,
         unlink_seed_from_prompt: bool = False,
         ignore_whitespace: bool = False,
         parser_config: ParserConfig = default_parser_config,
     ) -> None:
+        wildcard_manager = wildcard_manager or WildcardManager()
         self._context = SamplingContext(
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.RANDOM,

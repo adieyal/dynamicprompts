@@ -91,3 +91,7 @@ class TestCombinatorialGenerator:
         prompts = generator.generate(prompt)
 
         assert len(list(prompts)) == 9
+
+    def test_without_wildcard_manager(self):
+        generator = CombinatorialPromptGenerator()
+        assert generator._context.wildcard_manager.path is None

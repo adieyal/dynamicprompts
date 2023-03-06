@@ -16,10 +16,11 @@ logger = logging.getLogger(__name__)
 class CombinatorialPromptGenerator(PromptGenerator):
     def __init__(
         self,
-        wildcard_manager: WildcardManager,
+        wildcard_manager: WildcardManager | None = None,
         ignore_whitespace: bool = False,
         parser_config: ParserConfig = default_parser_config,
     ) -> None:
+        wildcard_manager = wildcard_manager or WildcardManager()
         self._context = SamplingContext(
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.COMBINATORIAL,
