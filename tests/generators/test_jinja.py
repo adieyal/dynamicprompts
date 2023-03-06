@@ -72,6 +72,19 @@ class TestJinjaGenerator:
             "My favourite colour is green",
         ]
 
+    def test_limit_prompts(self, wildcard_manager: WildcardManager):
+        generator = JinjaGenerator(wildcard_manager, limit_prompts=True)
+        template = """
+        {% for colour in ['red', 'blue', 'green'] %}
+            {% prompt %}My favourite colour is {{ colour }}{% endprompt %}
+        {% endfor %}
+        """
+
+        assert generator.generate(template, 2) == [
+            "My favourite colour is red",
+            "My favourite colour is blue",
+        ]
+
     @pytest.mark.parametrize("wrapped", [False, True])
     def test_wildcards(
         self,

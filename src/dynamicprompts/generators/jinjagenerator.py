@@ -26,7 +26,20 @@ class JinjaGenerator(PromptGenerator):
         parser_config: ParserConfig = default_parser_config,
         unlink_seed_from_prompt: bool = False,
         ignore_whitespace: bool = False,
+        limit_prompts=False,
     ) -> None:
+        """
+        Initialize a JinjaGenerator
+
+        :param wildcard_manager: The wildcard manager to use for this generator, if None a null manager will be used
+        :param context: The context to use for this generator, values in this dict will be available to the template
+        :param parser_config: The parser config to use for this generator
+        :param unlink_seed_from_prompt: Passed to the RandomPromptGenerator to allow random prompts even if the seed is fixed
+        :param ignore_whitespace: Passed to the RandomPromptGenerator to ignore whitespace when generating prompts
+        :param limit_prompts: Whether to limit the number of prompts generated to num_prompts, default is to generate num_prompts * num_prompts_in_template
+
+        """
+
         self._wildcard_manager = wildcard_manager or WildcardManager()
         self._parser_config = parser_config
         self._unlink_seed_from_prompt = unlink_seed_from_prompt
@@ -45,6 +58,7 @@ class JinjaGenerator(PromptGenerator):
         }
 
         self._context = context or {}
+        self._limit_prompts = limit_prompts
 
     def generate(self, template: str, num_prompts: int = 1) -> list[str]:
         env = Environment(extensions=[PromptExtension])
@@ -72,4 +86,7 @@ class JinjaGenerator(PromptGenerator):
 
         if prompt_blocks:
             prompts = prompt_blocks
+
+        if self._limit_prompts:
+            prompts = prompts[0:num_prompts]
         return prompts
