@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import warnings
 
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 
 class ActionBuilder:  # pragma: no cover

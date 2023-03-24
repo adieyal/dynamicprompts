@@ -1,6 +1,6 @@
 import pytest
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 from tests.samplers.utils import patch_random_sampler_wildcard_choice
 

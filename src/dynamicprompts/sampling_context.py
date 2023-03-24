@@ -12,7 +12,7 @@ from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import squash_whitespace
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 if TYPE_CHECKING:
     from dynamicprompts.samplers import Sampler

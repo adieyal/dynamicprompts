@@ -40,7 +40,7 @@ def permutation(
 @pass_environment
 def wildcard(environment: Environment, wildcard_name: str) -> list[str]:
     from dynamicprompts.generators import CombinatorialPromptGenerator
-    from dynamicprompts.wildcardmanager import WildcardManager
+    from dynamicprompts.wildcards import WildcardManager
 
     wm: WildcardManager = environment.globals["wildcard_manager"]  # type: ignore
     generator: CombinatorialPromptGenerator = environment.globals["generators"]["combinatorial"]  # type: ignore

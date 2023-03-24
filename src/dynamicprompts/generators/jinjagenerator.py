@@ -14,7 +14,7 @@ from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS, PromptExtension
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.utils import squash_whitespace
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 logger = logging.getLogger(__name__)
 

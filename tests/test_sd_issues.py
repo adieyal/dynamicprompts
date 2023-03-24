@@ -5,7 +5,7 @@ Tests for issues reported on the downstream sd-dynamic-prompts repo.
 from dynamicprompts.commands import SequenceCommand, VariantCommand
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.parser.parse import parse
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 
 def test_sd_223():

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from pytest_lazyfixture import LazyFixture
 
 WILDCARD_DATA_DIR = Path(__file__).parent / "test_data" / "wildcards"

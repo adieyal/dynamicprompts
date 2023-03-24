@@ -4,7 +4,8 @@ from functools import partial
 from pathlib import Path
 
 import pytest
-from dynamicprompts.wildcardmanager import WildcardManager, _clean_wildcard
+from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.utils import clean_wildcard
 
 from tests.conftest import WILDCARD_DATA_DIR
 
@@ -97,7 +98,7 @@ def test_directory_traversal(wildcard_manager: WildcardManager):
 
 
 def test_clean_wildcard(wildcard_manager: WildcardManager):
-    clean = partial(_clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
+    clean = partial(clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
     with pytest.raises(ValueError):
         clean("/foo")
 

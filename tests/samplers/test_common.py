@@ -14,7 +14,7 @@ from dynamicprompts.commands import (
 )
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from pytest_lazyfixture import lazy_fixture
 
 from tests.conftest import (

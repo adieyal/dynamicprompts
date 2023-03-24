@@ -7,8 +7,8 @@ from typing import Any
 
 from dynamicprompts import constants
 from dynamicprompts.parser.config import default_parser_config
-from dynamicprompts.utils import removeprefix, removesuffix
-from dynamicprompts.wildcardfile import WildcardFile
+from dynamicprompts.wildcards.utils import clean_wildcard
+from dynamicprompts.wildcards.wildcard_file import WildcardFile
 
 logger = logging.getLogger(__name__)
 
@@ -20,22 +20,6 @@ def _is_relative_to(p1: Path, p2: Path) -> bool:
         return True
     except ValueError:
         return False
-
-
-def _clean_wildcard(wildcard: str, *, wildcard_wrap: str) -> str:
-    wildcard = (
-        wildcard.replace("/", os.sep)
-        .replace("\\", os.sep)  # normalize path separators
-        .rstrip(os.sep)  # remove trailing path separator (likely a typo)
-    )
-    wildcard = removeprefix(wildcard, wildcard_wrap)
-    wildcard = removesuffix(wildcard, wildcard_wrap)
-
-    if wildcard.startswith(os.sep):
-        raise ValueError(f"Wildcard {wildcard} cannot start with {os.sep}")
-    if ".." in wildcard:
-        raise ValueError(f"Wildcard can not contain '..': {wildcard}")
-    return wildcard
 
 
 class WildcardManager:
@@ -87,7 +71,7 @@ class WildcardManager:
         if not self._path:
             return []
         try:
-            wildcard = _clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
+            wildcard = clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
         except ValueError:
             logger.warning(f"Invalid wildcard: {wildcard}", exc_info=True)
             return []
@@ -102,7 +86,7 @@ class WildcardManager:
         if not self._path:  # pragma: no cover
             raise ValueError("Can't call wildcard_to_path without a path set")
         return (
-            self._path / _clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
+            self._path / clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
         ).with_suffix(
             f".{constants.WILDCARD_SUFFIX}",
         )
