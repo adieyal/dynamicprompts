@@ -8,7 +8,7 @@ from typing import Any
 from dynamicprompts import constants
 from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.wildcards.utils import clean_wildcard
-from dynamicprompts.wildcards.wildcard_file import WildcardFile
+from dynamicprompts.wildcards.wildcard_file import TxtWildcardFile, WildcardFile
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class WildcardManager:
             return []
 
         return [
-            WildcardFile(path, name=self.path_to_wildcard_without_separators(path))
+            TxtWildcardFile(path, name=self.path_to_wildcard_without_separators(path))
             for path in self._path.rglob(f"{wildcard}.{constants.WILDCARD_SUFFIX}")
             if _is_relative_to(path.absolute(), self._path)
         ]

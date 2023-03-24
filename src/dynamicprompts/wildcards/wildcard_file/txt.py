@@ -4,9 +4,10 @@ from pathlib import Path
 
 from dynamicprompts.constants import DEFAULT_ENCODING
 from dynamicprompts.utils import is_empty_line
+from dynamicprompts.wildcards.wildcard_file.base import WildcardFile
 
 
-class WildcardFile:
+class TxtWildcardFile(WildcardFile):
     def __init__(
         self,
         path: Path,
@@ -23,7 +24,7 @@ class WildcardFile:
         return self._name
 
     def __str__(self) -> str:
-        return f"<WildcardFile: {self._path}>"
+        return f"<TxtWildcardFile: {self._path}>"
 
     def get_wildcards(self) -> set[str]:
         if self._cache is not None:
