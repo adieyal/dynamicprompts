@@ -9,6 +9,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler
+from dynamicprompts.samplers.utils import wildcard_to_variant
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
@@ -25,6 +26,7 @@ class RandomSampler(Sampler):
         rand: Random,
     ) -> list[Command]:
         # Wraps choose_without_replacement for ease of testing
+
         return choose_without_replacement(
             values,
             weights=weights,
@@ -52,15 +54,32 @@ class RandomSampler(Sampler):
         command: VariantCommand,
         context: SamplingContext,
     ) -> StringGen:
+        min_bound = min(command.min_bound, len(command.values))
+        max_bound = min(command.max_bound, len(command.values))
+
         if len(command.values) == 0:
             return
         elif len(command.values) == 1:
-            yield from context.generator_from_command(
-                command.values[0],
-            )
+            if isinstance(command.values[0], WildcardCommand):
+                wildcard_variant = wildcard_to_variant(
+                    command.values[0],
+                    context=context,
+                    min_bound=min_bound,
+                    max_bound=max_bound,
+                    separator=command.separator,
+                )
+
+                yield from self._get_variant(wildcard_variant, context)
+            else:
+                yield from context.generator_from_command(
+                    command.values[0],
+                )
             return
         while True:
-            num_choices = self._get_variant_num_choices(command, context)
+            num_choices = min(
+                max_bound,
+                self._get_variant_num_choices(command, context),
+            )
 
             selected_commands = self._get_variant_choices(
                 command.values,

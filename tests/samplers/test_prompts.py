@@ -506,11 +506,11 @@ class TestPrompts:
     ):
         template = "{__colors*__}"
 
-        expected = data_lookups[key]
-        with patch_random_sampler_wildcard_choice(expected):
+        expected = [[LiteralCommand(c)] for c in data_lookups[key]]
+        with patch_random_sampler_variant_choices(expected):
             prompts = list(sampling_context.sample_prompts(template, len(expected)))
 
-        assert list(prompts) == expected
+        assert list(prompts) == [v[0].literal for v in expected]
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),

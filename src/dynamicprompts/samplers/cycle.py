@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from itertools import cycle
-from typing import Generator, Iterable
+from typing import Generator, Iterable, cast
 
 from dynamicprompts.commands import (
     Command,
@@ -11,6 +11,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler
+from dynamicprompts.samplers.utils import wildcard_to_variant
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen, to_string_gen
 from dynamicprompts.utils import next_sampler_next_value
@@ -52,25 +53,43 @@ class CyclicalSampler(Sampler):
         command: VariantCommand,
         sampling_context: SamplingContext,
     ) -> StringGen:
+        is_wildcard_variant = len(command.values) == 1 and isinstance(
+            command.values[0],
+            WildcardCommand,
+        )
+
         if len(command.values) == 0:
             return
-
-        combinations = (
-            combo
-            for bound in range(command.min_bound, command.max_bound + 1)
-            for combo in command.get_value_combinations(bound)
-        )
-
-        combination_samplers = (
-            (
-                command.separator.join(sample)
-                for sample in _get_combination_samples(combo, sampling_context)
+        elif is_wildcard_variant:
+            wildcard_command = cast(WildcardCommand, command.values[0])
+            wildcard_variant = wildcard_to_variant(
+                wildcard_command,
+                context=sampling_context,
+                min_bound=command.min_bound,
+                max_bound=command.max_bound,
+                separator=command.separator,
             )
-            for combo in combinations
-        )
+            yield from self._get_variant(wildcard_variant, sampling_context)
+        else:
+            min_bound = min(command.min_bound, len(command.values))
+            max_bound = min(command.max_bound, len(command.values))
 
-        while True:
-            yield from next_sampler_next_value(cycle(combination_samplers))
+            combinations = (
+                combo
+                for bound in range(min_bound, max_bound + 1)
+                for combo in command.get_value_combinations(bound)
+            )
+
+            combination_samplers = (
+                (
+                    command.separator.join(sample)
+                    for sample in _get_combination_samples(combo, sampling_context)
+                )
+                for combo in combinations
+            )
+
+            while True:
+                yield from next_sampler_next_value(cycle(combination_samplers))
 
     def _get_wildcard(
         self,

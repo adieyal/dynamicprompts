@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import typing
+from typing import cast
 
 from dynamicprompts.commands import (
     Command,
@@ -13,6 +14,7 @@ from dynamicprompts.commands import (
 )
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
+from dynamicprompts.samplers.utils import wildcard_to_variant
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 
@@ -111,15 +113,35 @@ class CombinatorialSampler(Sampler):
             return
 
         seen = set()
+        is_wildcard_variant = len(variant_command.values) == 1 and isinstance(
+            variant_command.values[0],
+            WildcardCommand,
+        )
 
-        for bound in range(variant_command.min_bound, variant_command.max_bound + 1):
-            for combo in variant_command.get_value_combinations(bound):
-                for prompt_arr in _combo_to_prompt(context, combo):
-                    deduped_arr = _dedupe(prompt_arr)
-                    correct_size = len(deduped_arr) == bound
-                    if correct_size and deduped_arr not in seen:
-                        seen.add(deduped_arr)
-                        yield variant_command.separator.join(deduped_arr)
+        if is_wildcard_variant:
+            wildcard_command = cast(WildcardCommand, variant_command.values[0])
+            wildcard_variant = wildcard_to_variant(
+                wildcard_command,
+                context=context,
+                min_bound=variant_command.min_bound,
+                max_bound=variant_command.max_bound,
+                separator=variant_command.separator,
+            )
+            yield from self._get_variant(wildcard_variant, context)
+        else:
+            min_bound = min(variant_command.min_bound, len(variant_command.values))
+            max_bound = min(variant_command.max_bound, len(variant_command.values))
+            for bound in range(
+                min_bound,
+                max_bound + 1,
+            ):
+                for combo in variant_command.get_value_combinations(bound):
+                    for prompt_arr in _combo_to_prompt(context, combo):
+                        deduped_arr = _dedupe(prompt_arr)
+                        correct_size = len(deduped_arr) == bound
+                        if correct_size and deduped_arr not in seen:
+                            seen.add(deduped_arr)
+                            yield variant_command.separator.join(deduped_arr)
 
     def _get_wildcard(
         self,

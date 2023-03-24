@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable
 
 from dynamicprompts import constants
 from dynamicprompts.enums import SamplingMethod
@@ -32,5 +31,5 @@ class CombinatorialPromptGenerator(PromptGenerator):
         self,
         template: str | None,
         max_prompts: int | None = constants.MAX_IMAGES,
-    ) -> Iterable[str]:
-        return self._context.sample_prompts((template or ""), max_prompts)
+    ) -> list[str]:
+        return list(self._context.sample_prompts((template or ""), max_prompts))
