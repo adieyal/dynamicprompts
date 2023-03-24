@@ -46,6 +46,23 @@ class WildcardManager:
         """
         return self._wildcard_wrap
 
+    def to_wildcard(self, name: str) -> str:
+        """
+        Wrap `name` in the wildcard wrap string if it is not already wrapped.
+        """
+        ww = self._wildcard_wrap
+        if not name.startswith(ww):
+            name = f"{ww}{name}"
+        if not name.endswith(ww):
+            name = f"{name}{ww}"
+        return name
+
+    def is_wildcard(self, text: str) -> bool:
+        """
+        Check if `text` is a wildcard reference (i.e. starts and ends with the wildcard wrap string)
+        """
+        return text.startswith(self.wildcard_wrap) and text.endswith(self.wildcard_wrap)
+
     def _directory_exists(self) -> bool:
         return bool(self._path and self._path.is_dir())
 
@@ -110,17 +127,6 @@ class WildcardManager:
         files = self.match_files(wildcard)
         return sorted(set().union(*[f.get_wildcards() for f in files]))
 
-    def to_wildcard(self, name: str) -> str:
-        """
-        Wrap `name` in the wildcard wrap string if it is not already wrapped.
-        """
-        ww = self._wildcard_wrap
-        if not name.startswith(ww):
-            name = f"{ww}{name}"
-        if not name.endswith(ww):
-            name = f"{name}{ww}"
-        return name
-
     # TODO: the return type is actually a recursive type (replace that Any)
     def get_wildcard_hierarchy(
         self,
@@ -137,9 +143,6 @@ class WildcardManager:
 
         hierarchy = {d.name: self.get_wildcard_hierarchy(d) for d in directories}
         return (wildcards, hierarchy)
-
-    def is_wildcard(self, text: str) -> bool:
-        return text.startswith(self.wildcard_wrap) and text.endswith(self.wildcard_wrap)
 
     def get_collection_path(self) -> Path:
         if not self._path:  # pragma: no cover
