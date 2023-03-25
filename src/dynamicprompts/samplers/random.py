@@ -54,9 +54,6 @@ class RandomSampler(Sampler):
         command: VariantCommand,
         context: SamplingContext,
     ) -> StringGen:
-        min_bound = min(command.min_bound, len(command.values))
-        max_bound = min(command.max_bound, len(command.values))
-
         if len(command.values) == 0:
             return
         elif len(command.values) == 1:
@@ -64,8 +61,8 @@ class RandomSampler(Sampler):
                 wildcard_variant = wildcard_to_variant(
                     command.values[0],
                     context=context,
-                    min_bound=min_bound,
-                    max_bound=max_bound,
+                    min_bound=command.min_bound,
+                    max_bound=command.max_bound,
                     separator=command.separator,
                 )
 
@@ -76,8 +73,10 @@ class RandomSampler(Sampler):
                 )
             return
         while True:
+            command = command.adjust_range()
+
             num_choices = min(
-                max_bound,
+                command.max_bound,
                 self._get_variant_num_choices(command, context),
             )
 

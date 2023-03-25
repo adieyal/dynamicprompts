@@ -48,6 +48,11 @@ class VariantCommand(Command):
     def values(self) -> list[Command]:
         return [p.value for p in self.variants]
 
+    def adjust_range(self) -> VariantCommand:
+        min_bound = min(self.min_bound, len(self.values))
+        max_bound = min(self.max_bound, len(self.values))
+        return dataclasses.replace(self, min_bound=min_bound, max_bound=max_bound)
+
     @classmethod
     def from_literals_and_weights(
         cls,
