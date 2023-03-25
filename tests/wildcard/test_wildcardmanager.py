@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 from dynamicprompts.wildcards import WildcardManager
-from dynamicprompts.wildcards.utils import clean_wildcard
 from dynamicprompts.wildcards.collection import WildcardTextFile
+from dynamicprompts.wildcards.utils import clean_wildcard
 
 from tests.conftest import WILDCARD_DATA_DIR
 
@@ -36,12 +36,26 @@ def test_get_all_values(wildcard_manager: WildcardManager):
         "yellow",
     ]
     assert wildcard_manager.get_all_values("flavors/*") == [
-        "chocolate",
-        "grapefruit",
-        "lemon",
-        "strawberry",
-        "vanilla",
+        "chocolate",  # sweet
+        "coffee",  # bitter (from pantry JSON)
+        "dark chocolate",  # bitter (from pantry JSON)
+        "grapefruit",  # sour
+        "lemon",  # sour
+        "strawberry",  # sweet
+        "vanilla",  # sweet
     ]
+
+
+def test_pantry_expansion(wildcard_manager: WildcardManager):
+    """
+    Test that a pantry file appears as if it was a wildcard file.
+    """
+    assert wildcard_manager.get_all_values("flavors/bitter") == [
+        "coffee",
+        "dark chocolate",
+    ]
+    assert wildcard_manager.get_all_values("clothing") == ["Pants", "Shoes", "T-shirt"]
+    assert "Akseli Gallen-Kallela" in wildcard_manager.get_all_values("artists/finnish")
 
 
 def test_match_files_with_missing_wildcard(wildcard_manager: WildcardManager):
@@ -54,10 +68,13 @@ def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager)
 
 def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
+    assert len(list(root.walk_items())) == 14
     assert set(root.collections) == {
+        "clothing",  # from pantry YAML
         "colors-cold",  # .txt
         "colors-warm",  # .txt
         "referencing-colors",  # .txt
+        "shapes",  # flat list YAML
         "variant",  # .txt
     }
     assert set(root.child_nodes["animals"].collections) == {"mystical"}
@@ -70,11 +87,19 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "animals/mammals/feline",
         "animals/mystical",
     }
-    assert set(root.child_nodes["flavors"].collections) == {"sour", "sweet"}
+    assert set(root.child_nodes["flavors"].collections) == {
+        "sour",  # .txt
+        "sweet",  # .txt
+        "bitter",  # from .json
+    }
+    assert set(root.child_nodes["artists"].collections) == {
+        "finnish",  # from root pantry YAML's nested dict
+        "dutch",  # from root pantry YAML's nested dict
+    }
 
 
 def test_backslash_norm(wildcard_manager: WildcardManager):
-    assert len(wildcard_manager.get_all_values("flavors\\*")) == 5
+    assert len(wildcard_manager.get_all_values("flavors\\*")) == 7
     # Empirically, this also works on Windows
 
 

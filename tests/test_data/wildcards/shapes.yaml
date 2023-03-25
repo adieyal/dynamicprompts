@@ -1,0 +1,4 @@
+# test for a yaml file that's just a list of entries
+- circle
+- square
+- triangle

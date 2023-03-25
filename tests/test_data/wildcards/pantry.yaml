@@ -1,0 +1,15 @@
+clothing:
+  - T-shirt
+  - Pants
+  - Shoes
+artists:
+  finnish:
+    - Akseli Gallen-Kallela
+    - Eero Järnefelt
+    - Helene Schjerfbeck
+  dutch:
+    - Piet Mondrian
+    - Rembrandt van Rijn
+    - Vincent van Gogh
+  1234: 5678  # this is ignored
+  flurp: 12345  # this too
