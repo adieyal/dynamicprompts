@@ -1,3 +1,4 @@
+0.10.4 - Fixed wildcard in variant syntax `{2$$__wildcard__}`
 0.10.3 - Enabled batch processing for magic prompts. Higher batch size can dramatically improve prompt generation time at the expense of slightly higher memory usage.
 0.10.2 - Fixed a bug where the JinjaGenerator was not ignoring whitespace
 0.10.1 - Added limit_prompts to JinjaGenerator. When set to True, `.generate(..., num_images=X)` will produced at most X prompts
