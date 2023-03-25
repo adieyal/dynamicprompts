@@ -9,6 +9,7 @@ from dynamicprompts.commands import (
     LiteralCommand,
     SequenceCommand,
     VariantCommand,
+    VariantOption,
     WildcardCommand,
 )
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
@@ -35,11 +36,15 @@ def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
     wildcard_colours = wildcard_manager.get_all_values("colors*")
     shuffled_colours = wildcard_colours.copy()
     random.shuffle(shuffled_colours)
+    cold_colours = wildcard_manager.get_all_values("colors-cold")
+    shuffled_cold_colours = cold_colours.copy()
 
     return {
         "wildcard_colours": wildcard_colours,
         "wildcard_coloursx2": wildcard_colours * 2,
         "shuffled_colours": shuffled_colours,
+        "cold_colours": cold_colours,
+        "shuffled_cold_colours": shuffled_cold_colours,
     }
 
 
@@ -259,6 +264,95 @@ class TestVariantCommand:
 
         for prompt, e in zip(prompts, expected):
             assert prompt == e
+
+    @pytest.mark.parametrize("separator", [",", " and "])
+    @pytest.mark.parametrize(
+        ("sampling_context", "key"),
+        [
+            (lazy_fixture("random_sampling_context"), "shuffled_colours"),
+            (lazy_fixture("cyclical_sampling_context"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampling_context"), "wildcard_colours"),
+        ],
+    )
+    def test_variant_with_wildcard(
+        self,
+        separator,
+        sampling_context: SamplingContext,
+        key: str,
+        data_lookups: dict[str, list[str]],
+    ):
+        wildcard_command = WildcardCommand("colors*")
+        variant_command = VariantCommand(
+            [VariantOption(wildcard_command)],
+            min_bound=2,
+            max_bound=2,
+            separator=separator,
+        )
+
+        gen = sampling_context.generator_from_command(variant_command)
+        colors = [LiteralCommand(val) for val in data_lookups[key]]
+
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            color_pairs = [list(t) for t in zip(colors[::2], colors[1::2])]
+            with patch_random_sampler_variant_choices(color_pairs):
+                prompts = [next(gen) for _ in range(len(color_pairs))]
+        elif isinstance(sampling_context.default_sampler, CombinatorialSampler):
+            color_pairs = [[c1, c2] for c1 in colors for c2 in colors if c1 != c2]
+            prompts = [next(gen) for _ in range(len(color_pairs))]
+        elif isinstance(sampling_context.default_sampler, CyclicalSampler):
+            color_pairs = [[c1, c2] for c1 in colors for c2 in colors if c1 != c2] * 2
+            prompts = [next(gen) for _ in range(len(color_pairs))]
+        else:
+            raise NotImplementedError(
+                f"Unknown sampler type {type(sampling_context.default_sampler)}",
+            )
+
+        color_pair_strings = [
+            f"{c1.literal}{separator}{c2.literal}" for c1, c2 in color_pairs
+        ]
+        assert prompts == color_pair_strings
+
+    @pytest.mark.parametrize(
+        ("sampling_context", "key"),
+        [
+            (lazy_fixture("random_sampling_context"), "shuffled_cold_colours"),
+            (lazy_fixture("cyclical_sampling_context"), "cold_colours"),
+            (lazy_fixture("combinatorial_sampling_context"), "cold_colours"),
+        ],
+    )
+    def test_variant_with_wildcard_and_high_bounds(
+        self,
+        sampling_context: SamplingContext,
+        key: str,
+        data_lookups: dict[str, list[str]],
+    ):
+        wildcard_command = WildcardCommand("colors-cold")
+        separator = ","
+        variant_command = VariantCommand(
+            [VariantOption(wildcard_command)],
+            min_bound=3,
+            max_bound=3,
+            separator=separator,
+        )
+
+        gen = sampling_context.generator_from_command(variant_command)
+        colors = [LiteralCommand(val) for val in data_lookups[key]]
+
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            color_pairs = [list(t) for t in zip(colors[::2], colors[1::2])]
+            with patch_random_sampler_variant_choices(color_pairs):
+                prompts = [next(gen) for _ in range(len(color_pairs))]
+        elif isinstance(sampling_context.default_sampler, CombinatorialSampler):
+            color_pairs = [[c1, c2] for c1 in colors for c2 in colors if c1 != c2]
+            prompts = [next(gen) for _ in range(len(color_pairs))]
+        elif isinstance(sampling_context.default_sampler, CyclicalSampler):
+            color_pairs = [[c1, c2] for c1 in colors for c2 in colors if c1 != c2] * 2
+            prompts = [next(gen) for _ in range(len(color_pairs))]
+
+        color_pair_strings = [
+            f"{c1.literal}{separator}{c2.literal}" for c1, c2 in color_pairs
+        ]
+        assert prompts == color_pair_strings
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
