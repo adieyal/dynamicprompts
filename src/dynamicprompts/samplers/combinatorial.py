@@ -129,11 +129,10 @@ class CombinatorialSampler(Sampler):
             )
             yield from self._get_variant(wildcard_variant, context)
         else:
-            min_bound = min(variant_command.min_bound, len(variant_command.values))
-            max_bound = min(variant_command.max_bound, len(variant_command.values))
+            variant_command = variant_command.adjust_range()
             for bound in range(
-                min_bound,
-                max_bound + 1,
+                variant_command.min_bound,
+                variant_command.max_bound + 1,
             ):
                 for combo in variant_command.get_value_combinations(bound):
                     for prompt_arr in _combo_to_prompt(context, combo):

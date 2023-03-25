@@ -71,12 +71,11 @@ class CyclicalSampler(Sampler):
             )
             yield from self._get_variant(wildcard_variant, sampling_context)
         else:
-            min_bound = min(command.min_bound, len(command.values))
-            max_bound = min(command.max_bound, len(command.values))
+            command = command.adjust_range()
 
             combinations = (
                 combo
-                for bound in range(min_bound, max_bound + 1)
+                for bound in range(command.min_bound, command.max_bound + 1)
                 for combo in command.get_value_combinations(bound)
             )
 
