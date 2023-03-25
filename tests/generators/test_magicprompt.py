@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from functools import partial
 
@@ -91,8 +93,18 @@ def test_magic_prompt_blocklist():
         "picasso",
     ]
 
-    def _generator(orig_prompt: str, max_length: int, temperature: float):
-        return [{"generated_text": f"{orig_prompt} {random.choice(all_artists)}"}]
+    def _generator(
+        orig_prompts: list[str],
+        max_length: int,
+        temperature: float,
+        **kwargs,
+    ):
+        return [
+            [
+                {"generated_text": f"{orig_prompt} {random.choice(all_artists)}"}
+                for orig_prompt in orig_prompts
+            ],
+        ]
 
     generator = MagicPromptGenerator(
         # a regexp that will block some of those boring artists.
@@ -102,9 +114,10 @@ def test_magic_prompt_blocklist():
 
     original_prompt = "This is a prompt"
     for x in range(len(all_artists) * 2):  # should be enough to try things out
-        prompt = generator.generate(original_prompt)
+        prompts = generator.generate(original_prompt)
+        magic_prompt = prompts[0]
         assert (
-            prompt != original_prompt
+            magic_prompt != original_prompt
         )  # Make sure we're not getting the original prompt back
         # Make sure we're not getting any of the blocked artists
-        assert not any(artist in prompt for artist in boring_artists)
+        assert not any(artist in magic_prompt for artist in boring_artists)
