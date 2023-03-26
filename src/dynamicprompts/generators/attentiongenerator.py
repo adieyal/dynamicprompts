@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
+from functools import lru_cache
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator
@@ -36,7 +37,7 @@ class AttentionGenerator(PromptGenerator):
 
             download(MODEL_NAME)
 
-        self._nlp = spacy.load(MODEL_NAME)
+        self._nlp = lru_cache(maxsize=64)(spacy.load(MODEL_NAME))
 
         if generator is None:
             self._prompt_generator = DummyGenerator()
