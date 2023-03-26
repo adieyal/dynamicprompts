@@ -5,6 +5,7 @@ import random
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator
+from dynamicprompts.utils import append_chunks, remove_a1111_special_syntax_chunks
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,9 @@ class AttentionGenerator(PromptGenerator):
         self._min_attention, self._max_attention = m, M
 
     def _add_emphasis(self, prompt: str) -> str:
+        # Grab the special chunks first, so we don't accidentally add emphasis to them
+        prompt, special_chunks = remove_a1111_special_syntax_chunks(prompt)
+
         doc = self._nlp(prompt)
         keywords = list(doc.noun_chunks)
         if len(keywords) == 0:
@@ -55,7 +59,8 @@ class AttentionGenerator(PromptGenerator):
         attention = round(random.uniform(self._min_attention, self._max_attention), 2)
         prompt = prompt.replace(str(keyword), f"({keyword}:{attention})")
 
-        return prompt
+        # Add the special chunks back in
+        return append_chunks(prompt, special_chunks)
 
     def generate(self, *args, **kwargs) -> list[str]:
         prompts = self._prompt_generator.generate(*args, **kwargs)
