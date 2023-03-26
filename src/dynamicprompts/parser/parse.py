@@ -37,6 +37,33 @@ sampler_symbol_to_method = {
 
 
 class Parser:
+    """
+    A parser for a prompt grammar which is roughly as follows:
+
+    <prompt> ::= (<chunk>)*
+    <variant_prompt> ::= (<variant_chunk>)*
+    <chunk> ::= <variants> | <wildcard> | <literal_sequence>
+    <variant_chunk> ::= <variants> | <wildcard> | <variant_literal_sequence>
+    <variants> ::= <variant_start> <sampling_method>?(<bound><separator>?)? <variants_list>? <variant_end>
+    <variants_list> ::= <variant> ("|" <variant>)*
+    <variant> ::= <weight>? <variant_prompt>
+    <weight> ::= <real> | <integer>
+    <variant_start> ::= "{"  # Can be configured to an arbitrary string
+    <variant_end> ::= "}"    # Can be configured to an arbitrary string
+    <sampling_method> ::= "!"|"~"|"@"
+    <bound> :: <integer>(-<integer)?$$
+    <separator> ::= [^$}]+$$
+    <wildcard> ::= <wildcard_enclosure> <sampling_method> <path> <wildcard_enclosure>
+    <wildcard_enclosure> ::= "__" # Can be configured to an arbitrary string
+    <path>::=  ~"__" + [^{}#]+"
+    <literal>:=[^#<variant_start>]+
+    <variant_literal>:=[^#$|<variant_start><variant_end>]+
+    <literal_sequence> ::= <literal>+
+    <variant_literal_sequence> ::= <variant_literal>+
+
+    Note that whitespace is preserved in case it is significant to the user.
+    """
+
     def __init__(self, builder: ActionBuilder):
         warnings.warn(
             f"{self.__class__.__qualname__} is deprecated and will be removed in a future version. "
@@ -148,14 +175,22 @@ def _configure_variants(
     variant_start = pp.Suppress(parser_config.variant_start)
     variant_end = pp.Suppress(parser_config.variant_end)
 
-    variant = pp.Group(pp.Opt(weight, default=1)("weight") + prompt()("val"))
+    variant = pp.Group(
+        pp.Optional(pp.White())
+        + pp.Opt(weight, default=1)("weight")
+        + prompt()("val")
+        + pp.Optional(pp.White()),
+    )
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
     variants = pp.Group(
         variant_start
+        + pp.Optional(pp.White())
         + pp.Optional(sampler_symbol)("sampling_method")
         + pp.Opt(bound_expr)("bound_expr")
+        + pp.Optional(pp.White())
         + variants_list("variants")
+        + pp.Optional(pp.White())
         + variant_end,
     )
 
