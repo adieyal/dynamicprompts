@@ -62,3 +62,19 @@ def test_sd_307(wildcard_manager: WildcardManager):
     combinations = [f"{c1},{c2}" for c1 in colors for c2 in colors if c1 != c2]
     # check the every prompt is a combination of two colors
     assert all(p in combinations for p in prompts)
+
+
+def test_sd_324():
+    generator = RandomPromptGenerator(ignore_whitespace=True)
+    s = """{
+        # 60% A
+        0.6::A
+        |
+        # 40% B
+        0.4::B
+        }
+        """
+
+    prompts = generator.generate(s, 10)
+
+    assert all([p in ["A", "B"] for p in prompts])
