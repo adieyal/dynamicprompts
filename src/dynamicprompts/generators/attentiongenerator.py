@@ -21,7 +21,15 @@ class AttentionGenerator(PromptGenerator):
         generator: PromptGenerator | None = None,
         min_attention: float = 0.1,
         max_attention: float = 0.9,
+        ignore_special_syntax: bool = False,
     ) -> None:
+        """
+        :param generator: Prompt generator to wrap
+        :param min_attention: Minimum attention value to use
+        :param max_attention: Maximum attention value to use
+        :param ignore_special_syntax: Ignore special syntax chunks when adding emphasis
+                                      (currently A1111's LoRA/hypernet syntax, i.e. `<...>`)
+        """
         try:
             import spacy
         except ImportError as ie:
@@ -44,12 +52,17 @@ class AttentionGenerator(PromptGenerator):
         else:
             self._prompt_generator = generator
 
-        m, M = min(min_attention, max_attention), max(min_attention, max_attention)
-        self._min_attention, self._max_attention = m, M
+        self._min_attention, self._max_attention = sorted(
+            (min_attention, max_attention)
+        )
+        self._ignore_special_syntax = ignore_special_syntax
 
     def _add_emphasis(self, prompt: str) -> str:
-        # Grab the special chunks first, so we don't accidentally add emphasis to them
-        prompt, special_chunks = remove_a1111_special_syntax_chunks(prompt)
+        if self._ignore_special_syntax:
+            # Grab the special chunks first, so we don't accidentally add emphasis to them
+            prompt, special_chunks = remove_a1111_special_syntax_chunks(prompt)
+        else:
+            special_chunks = []
 
         doc = self._nlp(prompt)
         keywords = list(doc.noun_chunks)
