@@ -7,9 +7,11 @@ from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
 from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS
 from dynamicprompts.parser.config import ParserConfig
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
-GET_ALL_VALUES = "dynamicprompts.wildcardmanager.WildcardManager.get_all_values"
+GET_ALL_VALUES = (
+    "dynamicprompts.wildcards.wildcard_manager.WildcardManager.get_all_values"
+)
 
 
 @pytest.fixture

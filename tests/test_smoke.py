@@ -5,7 +5,7 @@ import dataclasses
 import pytest
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 
 @dataclasses.dataclass(frozen=True)

@@ -63,7 +63,7 @@ Use the RandomPromptGenerator to create 5 random prompts using a given template:
 
 ```python
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 
 WILDCARD_DIR = Path("/path/to/wildcards/directory")
@@ -125,9 +125,10 @@ will produce:
 > My favourite season is Sprint<br>
 
 ### Usage
+
 ```python
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import CombinatorialPromptGenerator
 
 WILDCARD_DIR = Path("/path/to/wildcards/directory")
@@ -182,9 +183,10 @@ There a few alternatives to Gusacosta's model available. You can try:
 Note that each model requires a download of large model files.
 
 ### Usage
+
 ```python
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 
@@ -216,7 +218,7 @@ Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if
 
 ```python
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator
 
@@ -237,7 +239,7 @@ If you are using [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusi
 
 ```python
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.attentiongenerator import AttentionGenerator
 
@@ -543,7 +545,7 @@ To address potential syntax clashes with other tools it is possible to change va
 ```python
 
 from pathlib import Path
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.parser.config import ParserConfig
 

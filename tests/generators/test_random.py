@@ -1,6 +1,6 @@
 import pytest
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 from tests.samplers.utils import patch_random_sampler_wildcard_choice
 
@@ -20,8 +20,8 @@ class TestRandomGenerator:
         assert prompts[0] == prompt
 
     def test_generate_with_wildcard(self, generator):
-        prompt = "I saw a __mammals/*__"
-        animals = ["dog", "dog", "wolf", "tiger"]
+        prompt = "I saw a __animals/mammals/*__"  # refers to a real wildcard
+        animals = ["dog", "dog", "wolf", "tiger"]  # ... but we'll mock it
 
         with patch_random_sampler_wildcard_choice(animals):
             prompts = list(generator.generate(prompt, 4))

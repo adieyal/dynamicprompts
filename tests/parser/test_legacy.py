@@ -1,7 +1,7 @@
 from dynamicprompts.commands import SequenceCommand
 from dynamicprompts.parser.action_builder import ActionBuilder
 from dynamicprompts.parser.parse import Parser
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 
 def test_legacy(wildcard_manager: WildcardManager):

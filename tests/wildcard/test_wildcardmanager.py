@@ -4,7 +4,9 @@ from functools import partial
 from pathlib import Path
 
 import pytest
-from dynamicprompts.wildcardmanager import WildcardManager, _clean_wildcard
+from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.collection import WildcardTextFile
+from dynamicprompts.wildcards.utils import clean_wildcard
 
 from tests.conftest import WILDCARD_DATA_DIR
 
@@ -13,7 +15,7 @@ def test_pathless_wm():
     wm = WildcardManager()
     assert not wm.path
     assert not wm.get_all_values("test")
-    assert not wm.match_files("test")
+    assert not list(wm.match_collections("test"))
 
 
 def test_path(wildcard_manager: WildcardManager):
@@ -34,60 +36,70 @@ def test_get_all_values(wildcard_manager: WildcardManager):
         "yellow",
     ]
     assert wildcard_manager.get_all_values("flavors/*") == [
-        "chocolate",
-        "grapefruit",
-        "lemon",
-        "strawberry",
-        "vanilla",
+        "chocolate",  # sweet
+        "coffee",  # bitter (from pantry JSON)
+        "dark chocolate",  # bitter (from pantry JSON)
+        "grapefruit",  # sour
+        "lemon",  # sour
+        "strawberry",  # sweet
+        "vanilla",  # sweet
     ]
 
 
+def test_pantry_expansion(wildcard_manager: WildcardManager):
+    """
+    Test that a pantry file appears as if it was a wildcard file.
+    """
+    assert wildcard_manager.get_all_values("flavors/bitter") == [
+        "coffee",
+        "dark chocolate",
+    ]
+    assert wildcard_manager.get_all_values("clothing") == ["Pants", "Shoes", "T-shirt"]
+    assert "Akseli Gallen-Kallela" in wildcard_manager.get_all_values("artists/finnish")
+
+
 def test_match_files_with_missing_wildcard(wildcard_manager: WildcardManager):
-    assert wildcard_manager.match_files("__invalid_wildcard__") == []
+    assert list(wildcard_manager.match_collections("__invalid_wildcard__")) == []
 
 
 def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager):
     assert wildcard_manager.get_all_values("__invalid_wildcard__") == []
 
 
-def test_collections(wildcard_manager: WildcardManager):
-    assert wildcard_manager.get_collections() == ["derp"]
-
-
 def test_hierarchy(wildcard_manager: WildcardManager):
-    def to_wildcard(s: str) -> str:
-        return wildcard_manager.wildcard_wrap + s + wildcard_manager.wildcard_wrap
-
-    assert wildcard_manager.get_wildcard_hierarchy() == (
-        [
-            to_wildcard("colors-cold"),
-            to_wildcard("colors-warm"),
-            to_wildcard("referencing-colors"),
-            to_wildcard("variant"),
-        ],  # Top level
-        {  # child folders
-            "animals": (
-                [to_wildcard("animals/mystical")],
-                {
-                    "mammals": (
-                        [
-                            to_wildcard("animals/mammals/canine"),
-                            to_wildcard("animals/mammals/feline"),
-                        ],
-                        {},
-                    ),
-                },
-            ),
-            "flavors": (
-                [to_wildcard("flavors/sour"), to_wildcard("flavors/sweet")],
-                {},
-            ),
-        },
-    )
+    root = wildcard_manager.tree.root
+    assert len(list(root.walk_items())) == 14
+    assert set(root.collections) == {
+        "clothing",  # from pantry YAML
+        "colors-cold",  # .txt
+        "colors-warm",  # .txt
+        "referencing-colors",  # .txt
+        "shapes",  # flat list YAML
+        "variant",  # .txt
+    }
+    assert set(root.child_nodes["animals"].collections) == {"mystical"}
+    assert set(root.child_nodes["animals"].child_nodes["mammals"].collections) == {
+        "canine",
+        "feline",
+    }
+    assert set(root.child_nodes["animals"].walk_full_names()) == {
+        "animals/mammals/canine",
+        "animals/mammals/feline",
+        "animals/mystical",
+    }
+    assert set(root.child_nodes["flavors"].collections) == {
+        "sour",  # .txt
+        "sweet",  # .txt
+        "bitter",  # from .json
+    }
+    assert set(root.child_nodes["artists"].collections) == {
+        "finnish",  # from root pantry YAML's nested dict
+        "dutch",  # from root pantry YAML's nested dict
+    }
 
 
 def test_backslash_norm(wildcard_manager: WildcardManager):
-    assert len(wildcard_manager.get_all_values("flavors\\*")) == 5
+    assert len(wildcard_manager.get_all_values("flavors\\*")) == 7
     # Empirically, this also works on Windows
 
 
@@ -97,7 +109,7 @@ def test_directory_traversal(wildcard_manager: WildcardManager):
 
 
 def test_clean_wildcard(wildcard_manager: WildcardManager):
-    clean = partial(_clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
+    clean = partial(clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
     with pytest.raises(ValueError):
         clean("/foo")
 
@@ -115,23 +127,6 @@ def test_to_wildcard(wildcard_manager: WildcardManager):
     ww = wildcard_manager.wildcard_wrap
     assert wildcard_manager.to_wildcard("foo") == f"{ww}foo{ww}"
     assert wildcard_manager.to_wildcard(f"{ww}foo{ww}") == f"{ww}foo{ww}"
-
-
-def test_path_to_wildcard_without_separators(wildcard_manager: WildcardManager):
-    wildcard_path = WILDCARD_DATA_DIR / "animals" / "mystical.txt"
-    assert (
-        wildcard_manager.path_to_wildcard_without_separators(wildcard_path)
-        == "animals/mystical"
-    )
-
-
-def test_path_to_wildcard(wildcard_manager: WildcardManager):
-    wildcard_path = WILDCARD_DATA_DIR / "animals" / "mystical.txt"
-    wildcard_wrap = wildcard_manager.wildcard_wrap
-    assert (
-        wildcard_manager.path_to_wildcard(wildcard_path)
-        == f"{wildcard_wrap}animals/mystical{wildcard_wrap}"
-    )
 
 
 def test_wildcard_symlinks(tmp_path: Path):
@@ -165,7 +160,7 @@ def test_wildcard_symlinks(tmp_path: Path):
     wild_file.symlink_to(secret_file)
 
     wcm = WildcardManager(wildcards_dir)
-    assert {w.name for w in wcm.match_files("*")} == {
+    assert wcm.get_collection_names() == {
         "animals/cool",
         "animals/internet",
         "friendos",
@@ -191,7 +186,18 @@ def test_wildcard_symlinks(tmp_path: Path):
     # ... and write some more there!
     wilder_file = wildly_dir / "wilder.txt"
     wilder_file.write_text("whoa!!!")
+    wcm.clear_cache()
     assert set(wcm.get_all_values("wildly/*")) == {
         *wild_things,
         "whoa!!!",
     }
+
+
+def test_read_write_is_idempotent(wildcard_manager: WildcardManager):
+    wf = wildcard_manager.get_file("colors-cold")
+    assert isinstance(wf, WildcardTextFile)
+    orig_values = list(wf.get_values())
+    assert list(wf.get_values()) == orig_values  # exercise the cache
+    text = wf.read_text()
+    wf.write_text(text)
+    assert list(wf.get_values()) == orig_values

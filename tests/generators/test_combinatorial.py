@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 
 class TestCombinatorialGenerator:

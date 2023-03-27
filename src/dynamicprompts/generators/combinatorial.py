@@ -7,7 +7,7 @@ from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.generators.promptgenerator import PromptGenerator
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards import WildcardManager
 
 logger = logging.getLogger(__name__)
 
