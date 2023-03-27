@@ -1,3 +1,4 @@
+0.20.0 - Backward incompatible rework of the wildcard machinery, with support for JSON/YAML structured wildcard files.
 0.10.6 - Fixed a bug in the parser that didn't accept whitespace before or after a variant option - see https://github.com/adieyal/sd-dynamic-prompts/issues/324
 0.10.5 - Bug fix that cause RandomPromptGenerator to incorrectly handle wildcards in variants
 0.10.4 - Fixed wildcard in variant syntax `{2$$__wildcard__}`
