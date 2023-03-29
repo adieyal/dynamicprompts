@@ -60,10 +60,9 @@ class CombinatorialSampler(Sampler):
         command: SequenceCommand,
         context: SamplingContext,
     ) -> StringGen:
+        tokens, context = context.process_variable_assignments(command.tokens)
         non_combo_commands = [
-            c
-            for c in command.tokens
-            if c.sampling_method != SamplingMethod.COMBINATORIAL
+            c for c in tokens if c.sampling_method != SamplingMethod.COMBINATORIAL
         ]
         command_collection = CommandCollection(
             non_combo_commands,
@@ -74,7 +73,7 @@ class CombinatorialSampler(Sampler):
                 "",
                 sampling_method=SamplingMethod.COMBINATORIAL,
             ),  # sentinel 1
-            *command.tokens,
+            *tokens,
             LiteralCommand(
                 "",
                 sampling_method=SamplingMethod.COMBINATORIAL,

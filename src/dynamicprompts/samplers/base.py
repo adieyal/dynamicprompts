@@ -9,6 +9,10 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.commands.variable_commands import (
+    VariableAccessCommand,
+    VariableAssignmentCommand,
+)
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import rotate_and_join
@@ -32,6 +36,12 @@ class Sampler:
             return self._get_variant(command, context)
         if isinstance(command, WildcardCommand):
             return self._get_wildcard(command, context)
+        if isinstance(command, VariableAssignmentCommand):
+            raise NotImplementedError(
+                "VariableAssignmentCommand should never be sampled",
+            )
+        if isinstance(command, VariableAccessCommand):
+            return self._get_variable(command, context)
         return self._unsupported_command(command)
 
     def _unsupported_command(self, command: Command) -> StringGen:
@@ -58,7 +68,8 @@ class Sampler:
         command: SequenceCommand,
         context: SamplingContext,
     ) -> StringGen:
-        sub_generators = [context.generator_from_command(c) for c in command.tokens]
+        tokens, context = context.process_variable_assignments(command.tokens)
+        sub_generators = [context.generator_from_command(c) for c in tokens]
 
         while True:
             yield rotate_and_join(sub_generators, separator=command.separator)
@@ -70,3 +81,15 @@ class Sampler:
     ) -> StringGen:
         while True:
             yield command.literal
+
+    def _get_variable(
+        self,
+        command: VariableAccessCommand,
+        context: SamplingContext,
+    ) -> StringGen:
+        variable = command.name
+        command_to_sample = context.variables.get(variable, command.default)
+        if not command_to_sample:
+            # TODO: do we want to support returning e.g. empty here (c.f. Jinja's "undefined")?
+            raise KeyError(f"Variable {variable} is not defined in this context")
+        return context.generator_from_command(command_to_sample)

@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
+from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcards import WildcardManager
@@ -620,3 +621,41 @@ class TestWildcardsCommand:
         sequence = SequenceCommand([wildcard_command])
         gen = sampling_context.generator_from_command(sequence)
         assert list(islice(gen, len(expected))) == expected
+
+
+class TestVariableCommands:
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_variable_commands(self, sampling_context: SamplingContext):
+        cmd = parse("${animal=cat}the animal is ${animal:dog}")
+        assert next(sampling_context.generator_from_command(cmd)) == "the animal is cat"
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_variable_commands_default(self, sampling_context: SamplingContext):
+        cmd = parse("the animal is ${animal:dog}")
+        assert next(sampling_context.generator_from_command(cmd)) == "the animal is dog"
+
+    @pytest.mark.parametrize("immediate", [True, False])
+    def test_immediate_variable_commands(
+        self,
+        random_sampling_context: SamplingContext,
+        immediate: bool,
+    ):
+        prompt = "${number={1|2|3|4|5}}the number is ${number}"
+        if immediate:
+            prompt = prompt.replace("number=", "number=!")
+        cmd = parse(prompt)
+        gen = random_sampling_context.generator_from_command(cmd)
+        seen = set(islice(gen, 40))
+        if immediate:
+            # Since the variable is immediately resolved, no matter how many times
+            # we sample the random generator, we must get the same result
+            assert len(seen) == 1
+        else:
+            # Otherwise we should've seen more than one result (but since it's a
+            # random context, we can't guarantee that we'll see all 5)
+            assert len(seen) > 1
+
+    def test_immediate_literal_variable(self, random_sampling_context: SamplingContext):
+        # Just a coverage test for the optimization for literal variables
+        cmd = parse("${a =! foo}${a}")
+        assert next(random_sampling_context.generator_from_command(cmd)) == "foo"

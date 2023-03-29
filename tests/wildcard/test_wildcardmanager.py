@@ -68,7 +68,7 @@ def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager)
 
 def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
-    assert len(list(root.walk_items())) == 14
+    assert len(list(root.walk_items())) == 15
     assert set(root.collections) == {
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt

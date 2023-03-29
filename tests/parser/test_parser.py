@@ -36,7 +36,6 @@ class TestParser:
             "Test (high emphasis)",  # round brackets
             "Test (high emphasis:0.4)",  # round brackets with weight
             "Unmatched } bracket",
-            "$$ are fine outside of variants",
         ],
     )
     def test_literal_characters(self, input: str):
