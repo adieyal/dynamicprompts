@@ -92,7 +92,7 @@ def _configure_range() -> pp.ParserElement:
     # - }, which is used to indicate the end of a variant
     # Allowed:
     # - | is allowed as a separator
-    separator = pp.Word(pp.printables + " ", exclude_chars="$}")(
+    separator = pp.Word(pp.printables + " ", exclude_chars="${}")(
         "separator",
     ).leave_whitespace()
 
