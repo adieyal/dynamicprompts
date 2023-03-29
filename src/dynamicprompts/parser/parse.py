@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
+from functools import partial
 from typing import Iterable, cast
 
 import pyparsing as pp
@@ -299,13 +300,29 @@ def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod
         ) from None
 
 
-def _parse_variable_spec(variable_spec: str) -> Iterable[tuple[str, Command]]:
+def _parse_variable_spec(
+    variable_spec: str,
+    parser_config: ParserConfig,
+) -> Iterable[tuple[str, Command]]:
+    """
+    Parse a wildcard command's variable spec string to a variable->Command iterable.
+    """
     for pair in variable_spec.split(","):
         key, _, value = pair.partition("=")
-        yield key.strip(), LiteralCommand(value.strip())
+        value = value.strip()
+        command: Command
+        if value.isalnum():  # no need to bother...
+            command = LiteralCommand(value)
+        else:
+            command = parse(value, parser_config=parser_config)
+        yield key.strip(), command
 
 
-def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
+def _parse_wildcard_command(
+    parse_result: pp.ParseResults,
+    *,
+    parser_config: ParserConfig,
+) -> WildcardCommand:
     parts = parse_result.as_dict()
     wildcard = parts.get("path")
 
@@ -314,7 +331,9 @@ def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
 
     variable_spec = parts.get("variable_spec")
     if variable_spec:
-        variables = dict(_parse_variable_spec(variable_spec))
+        variables = dict(
+            _parse_variable_spec(variable_spec, parser_config=parser_config),
+        )
     else:
         variables = {}
 
@@ -409,7 +428,9 @@ def create_parser(
     prompt.ignore("//" + pp.restOfLine)
     prompt.ignore(pp.c_style_comment)
 
-    wildcard.set_parse_action(_parse_wildcard_command)
+    wildcard.set_parse_action(
+        partial(_parse_wildcard_command, parser_config=parser_config),
+    )
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)

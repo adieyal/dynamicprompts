@@ -413,6 +413,10 @@ class TestParser:
                 "(animal=fox,color=red)",
                 {"animal": LiteralCommand("fox"), "color": LiteralCommand("red")},
             ),
+            (
+                "(color={A|B|C})",
+                {"color": VariantCommand.from_literals_and_weights(list("ABC"))},
+            ),
         ],
     )
     def test_wildcard_variable_shorthand(self, var_spec: str, expected_vars: dict):
