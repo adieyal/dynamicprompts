@@ -53,7 +53,9 @@ The dynamicprompts library powers the [Dynamic Prompts](https://github.com/adiey
          * [Comparison between samplers](#comparison-between-samplers)
          * [Mixing samplers in the same prompt](#mixing-samplers-in-the-same-prompt)
       * [Syntax customisation](#syntax-customisation)
+    * [Wildcard Collections](#wildcard-collections)
     * [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
+    
 
 
 
@@ -667,6 +669,8 @@ parser_config = ParserConfig(variant_start="<", variant_end=">", wildcard_wrap="
 generator = RandomPromptGenerator(wm, parser_config=parser_config)
 
 ```
+## Wildcard Collections
+You can bootstrap your wildcard library by using our [pre-existing collections](https://github.com/adieyal/sd-dynamic-prompts/tree/main/collections). You'll find just under 80,000 wildcards divided into 1900 files. Feel free to pick and choose or take them in their entirety.
 
 ## Dynamic Prompts in the wild.
 Dynamic Prompts has been used in:
