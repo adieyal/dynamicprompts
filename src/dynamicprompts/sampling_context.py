@@ -43,6 +43,9 @@ class SamplingContext:
     rand: Random = DEFAULT_RANDOM
     variables: dict[str, Command] = dataclasses.field(default_factory=dict)
 
+    # Variables that are currently sampled, to prevent infinite recursion
+    _variables_being_sampled: set[str] = dataclasses.field(default_factory=set)
+
     def with_sampling_method(self, sampling_method: SamplingMethod) -> SamplingContext:
         return dataclasses.replace(self, default_sampling_method=sampling_method)
 
@@ -79,6 +82,14 @@ class SamplingContext:
         if not variables:  # Nothing to replace
             return self
         return dataclasses.replace(self, variables={**self.variables, **variables})
+
+    def for_sampling_variable(self, variable: str) -> SamplingContext:
+        if variable in self._variables_being_sampled:
+            raise RecursionError(f"Variable {variable} is being sampled recursively")
+        return dataclasses.replace(
+            self,
+            _variables_being_sampled=self._variables_being_sampled | {variable},
+        )
 
     def generator_from_command(self, command: Command) -> StringGen:
         samp, ctx = self.get_sampler_and_context(command)

@@ -92,4 +92,6 @@ class Sampler:
         if not command_to_sample:
             # TODO: do we want to support returning e.g. empty here (c.f. Jinja's "undefined")?
             raise KeyError(f"Variable {variable} is not defined in this context")
-        return context.generator_from_command(command_to_sample)
+        return context.for_sampling_variable(variable).generator_from_command(
+            command_to_sample,
+        )
