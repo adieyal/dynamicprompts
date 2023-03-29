@@ -123,7 +123,7 @@ def _configure_wildcard(
     wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
     wildcard = (
         wildcard_enclosure
-        + pp.Optional(sampler_symbol)("sampling_method")
+        + pp.Opt(sampler_symbol)("sampling_method")
         + wildcard_path
         + wildcard_enclosure
     )
@@ -176,21 +176,21 @@ def _configure_variants(
     variant_end = pp.Suppress(parser_config.variant_end)
 
     variant = pp.Group(
-        pp.Optional(pp.White())
+        pp.Opt(pp.White())
         + pp.Opt(weight, default=1)("weight")
         + prompt()("val")
-        + pp.Optional(pp.White()),
+        + pp.Opt(pp.White()),
     )
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
     variants = pp.Group(
         variant_start
-        + pp.Optional(pp.White())
-        + pp.Optional(sampler_symbol)("sampling_method")
+        + pp.Opt(pp.White())
+        + pp.Opt(sampler_symbol)("sampling_method")
         + pp.Opt(bound_expr)("bound_expr")
-        + pp.Optional(pp.White())
+        + pp.Opt(pp.White())
         + variants_list("variants")
-        + pp.Optional(pp.White())
+        + pp.Opt(pp.White())
         + variant_end,
     )
 
