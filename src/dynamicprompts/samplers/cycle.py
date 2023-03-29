@@ -96,7 +96,9 @@ class CyclicalSampler(Sampler):
         sampling_context: SamplingContext,
     ):
         values = sampling_context.wildcard_manager.get_all_values(command.wildcard)
-        new_context = sampling_context.with_sampling_method(SamplingMethod.CYCLICAL)
+        new_context = sampling_context.with_variables(
+            command.variables,
+        ).with_sampling_method(SamplingMethod.CYCLICAL)
         value_samplers = [new_context.sample_prompts(val) for val in values]
         value_string_gens = [to_string_gen(val) for val in value_samplers]
 

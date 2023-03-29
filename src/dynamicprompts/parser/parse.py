@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import cast
+from typing import Iterable, cast
 
 import pyparsing as pp
 
@@ -127,14 +127,21 @@ def _configure_range() -> pp.ParserElement:
 def _configure_wildcard(
     parser_config: ParserConfig,
 ) -> pp.ParserElement:
-    wildcard_path = pp.Regex(
-        r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^{}#])+",
-    )("path").leave_whitespace()
+    wildcard_path_re = r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^({}#])+"
+    wildcard_path = pp.Regex(wildcard_path_re)("path").leave_whitespace()
     wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
+    wildcard_variable_spec = (
+        OPT_WS
+        + pp.Suppress("(")
+        + pp.Regex(r"[^)]+")("variable_spec")
+        + pp.Suppress(")")
+    )
+
     wildcard = (
         wildcard_enclosure
         + pp.Opt(sampler_symbol)("sampling_method")
         + wildcard_path
+        + pp.Opt(wildcard_variable_spec)
         + wildcard_enclosure
     )
 
@@ -292,6 +299,12 @@ def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod
         ) from None
 
 
+def _parse_variable_spec(variable_spec: str) -> Iterable[tuple[str, Command]]:
+    for pair in variable_spec.split(","):
+        key, _, value = pair.partition("=")
+        yield key.strip(), LiteralCommand(value.strip())
+
+
 def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
     parts = parse_result.as_dict()
     wildcard = parts.get("path")
@@ -299,8 +312,18 @@ def _parse_wildcard_command(parse_result: pp.ParseResults) -> WildcardCommand:
     sampling_method_symbol = parts.get("sampling_method")
     sampling_method = _parse_sampling_method(sampling_method_symbol)
 
+    variable_spec = parts.get("variable_spec")
+    if variable_spec:
+        variables = dict(_parse_variable_spec(variable_spec))
+    else:
+        variables = {}
+
     assert isinstance(wildcard, str)
-    return WildcardCommand(wildcard=wildcard, sampling_method=sampling_method)
+    return WildcardCommand(
+        wildcard=wildcard,
+        sampling_method=sampling_method,
+        variables=variables,
+    )
 
 
 def _parse_bound_expr(expr, max_options):

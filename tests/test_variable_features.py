@@ -29,3 +29,13 @@ def test_discussion_61(wildcard_manager: WildcardManager):
         if expected == seen:
             break
     assert seen == expected
+
+
+def test_discussion_61_shorthand(wildcard_manager: WildcardManager):
+    cmd = parse("__publicprompts/plush-toy(animal=fox)__")
+    scon = SamplingContext(
+        default_sampling_method=SamplingMethod.RANDOM,
+        wildcard_manager=wildcard_manager,
+    )
+    prompt = next(scon.sample_prompts(cmd))
+    assert prompt.strip().lower().startswith("cute kawaii squishy fox")

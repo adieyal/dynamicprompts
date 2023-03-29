@@ -403,3 +403,20 @@ class TestParser:
         assert isinstance(acc, VariableAccessCommand)
         assert acc.name == "animal"
         assert acc.default == LiteralCommand("dog")
+
+    @pytest.mark.parametrize(
+        "var_spec, expected_vars",
+        [
+            ("", {}),
+            ("(animal=bear)", {"animal": LiteralCommand("bear")}),
+            (
+                "(animal=fox,color=red)",
+                {"animal": LiteralCommand("fox"), "color": LiteralCommand("red")},
+            ),
+        ],
+    )
+    def test_wildcard_variable_shorthand(self, var_spec: str, expected_vars: dict):
+        cmd = parse(f"__foo{var_spec}__")
+        assert isinstance(cmd, WildcardCommand)
+        assert cmd.wildcard == "foo"
+        assert cmd.variables == expected_vars

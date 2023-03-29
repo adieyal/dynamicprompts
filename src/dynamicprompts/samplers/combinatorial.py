@@ -146,6 +146,7 @@ class CombinatorialSampler(Sampler):
         command: WildcardCommand,
         context: SamplingContext,
     ) -> StringGen:
+        context = context.with_variables(command.variables)
         values = context.wildcard_manager.get_all_values(command.wildcard)
         if len(values) == 0:
             logger.warning(f"No values found for wildcard {command.wildcard}")

@@ -10,6 +10,7 @@ from dynamicprompts.enums import SamplingMethod
 class WildcardCommand(Command):
     wildcard: str
     sampling_method: SamplingMethod | None = None
+    variables: dict[str, Command] = dataclasses.field(default_factory=dict)
 
     def __post_init__(self):
         if not isinstance(self.wildcard, str):
