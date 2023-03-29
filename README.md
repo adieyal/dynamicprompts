@@ -322,7 +322,7 @@ magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-s
 magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-unsafe")
 ```
 
-You can find a longer list [here]()
+You can find a longer list [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/config/magicprompt_models.txt)
 Note that each model requires a download of large model files.
 
 ### I'm feeling lucky
