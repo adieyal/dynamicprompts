@@ -55,7 +55,7 @@ The dynamicprompts library powers the [Dynamic Prompts](https://github.com/adiey
       * [Syntax customisation](#syntax-customisation)
     * [Wildcard Collections](#wildcard-collections)
     * [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
-    
+
 
 
 
