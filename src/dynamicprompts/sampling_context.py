@@ -6,7 +6,8 @@ from itertools import islice
 from random import Random
 from typing import TYPE_CHECKING, Iterable
 
-from dynamicprompts.commands import Command
+from dynamicprompts.commands import Command, LiteralCommand
+from dynamicprompts.commands.variable_commands import VariableAssignmentCommand
 from dynamicprompts.constants import DEFAULT_RANDOM
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
@@ -40,6 +41,14 @@ class SamplingContext:
     ignore_whitespace: bool = False
     parser_config: ParserConfig = default_parser_config
     rand: Random = DEFAULT_RANDOM
+    variables: dict[str, Command] = dataclasses.field(default_factory=dict)
+
+    # Value for variables that aren't defined in the present context.
+    # None will raise an error.
+    unknown_variable_value: str | Command | None = None
+
+    # Variables that are currently sampled, to prevent infinite recursion
+    _variables_being_sampled: set[str] = dataclasses.field(default_factory=set)
 
     def with_sampling_method(self, sampling_method: SamplingMethod) -> SamplingContext:
         return dataclasses.replace(self, default_sampling_method=sampling_method)
@@ -72,6 +81,19 @@ class SamplingContext:
             sampler = self.samplers[self.default_sampling_method]
             context = self
         return sampler, context
+
+    def with_variables(self, variables: dict[str, Command]) -> SamplingContext:
+        if not variables:  # Nothing to replace
+            return self
+        return dataclasses.replace(self, variables={**self.variables, **variables})
+
+    def for_sampling_variable(self, variable: str) -> SamplingContext:
+        if variable in self._variables_being_sampled:
+            raise RecursionError(f"Variable {variable} is being sampled recursively")
+        return dataclasses.replace(
+            self,
+            _variables_being_sampled=self._variables_being_sampled | {variable},
+        )
 
     def generator_from_command(self, command: Command) -> StringGen:
         samp, ctx = self.get_sampler_and_context(command)
@@ -113,3 +135,39 @@ class SamplingContext:
         if command.sampling_method:
             return command.sampling_method
         return self.default_sampling_method
+
+    def process_variable_assignments(
+        self,
+        commands: Iterable[Command],
+    ) -> tuple[list[Command], SamplingContext]:
+        """
+        Evaluate any variable assignments in the given commands,
+        and return the resulting commands and augmented context.
+
+        If there are no variable assignments,
+        the original commands and context are returned as-is.
+        """
+        new_variables: dict[str, Command] = {}
+        new_commands = []
+        for command in commands:
+            if isinstance(command, VariableAssignmentCommand):
+                new_variables[command.name] = self.process_variable_assignment(command)
+            else:
+                new_commands.append(command)
+        if new_variables:
+            return new_commands, self.with_variables(new_variables)
+        return (new_commands, self)
+
+    def process_variable_assignment(
+        self,
+        command: VariableAssignmentCommand,
+    ) -> Command:
+        if command.immediate:
+            if isinstance(command.value, LiteralCommand):
+                # Optimization: if the variable assignment is a literal, just use that
+                return command.value
+            # Sample the variable assignment command to get the value
+            return LiteralCommand(
+                next(self.generator_from_command(command.value)),
+            )
+        return command.value

@@ -10,6 +10,10 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.commands.base import Command, SamplingMethod
+from dynamicprompts.commands.variable_commands import (
+    VariableAccessCommand,
+    VariableAssignmentCommand,
+)
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import (
     _create_weight_parser,
@@ -32,7 +36,6 @@ class TestParser:
             "Test (high emphasis)",  # round brackets
             "Test (high emphasis:0.4)",  # round brackets with weight
             "Unmatched } bracket",
-            "$$ are fine outside of variants",
         ],
     )
     def test_literal_characters(self, input: str):
@@ -382,3 +385,42 @@ class TestParser:
         assert variant.values[0].literal == "A"
         assert variant.values[1].literal == "B"
         assert variant.values[2].wildcard == "some/wildcard"
+
+    @pytest.mark.parametrize("immediate", (False, True))
+    def test_variable_commands(self, immediate: bool):
+        op = "=!" if immediate else "="
+        sequence = cast(
+            SequenceCommand,
+            parse(f"${{animal {op} cat}} the animal is ${{animal:dog}}"),
+        )
+        assert len(sequence) == 3
+        ass = sequence[0]
+        assert isinstance(ass, VariableAssignmentCommand)
+        assert ass.name == "animal"
+        assert ass.value == LiteralCommand("cat")
+        assert ass.immediate == immediate
+        acc = sequence[2]
+        assert isinstance(acc, VariableAccessCommand)
+        assert acc.name == "animal"
+        assert acc.default == LiteralCommand("dog")
+
+    @pytest.mark.parametrize(
+        "var_spec, expected_vars",
+        [
+            ("", {}),
+            ("(animal=bear)", {"animal": LiteralCommand("bear")}),
+            (
+                "(animal=fox,color=red)",
+                {"animal": LiteralCommand("fox"), "color": LiteralCommand("red")},
+            ),
+            (
+                "(color={A|B|C})",
+                {"color": VariantCommand.from_literals_and_weights(list("ABC"))},
+            ),
+        ],
+    )
+    def test_wildcard_variable_shorthand(self, var_spec: str, expected_vars: dict):
+        cmd = parse(f"__foo{var_spec}__")
+        assert isinstance(cmd, WildcardCommand)
+        assert cmd.wildcard == "foo"
+        assert cmd.variables == expected_vars
