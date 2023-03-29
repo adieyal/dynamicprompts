@@ -15,6 +15,10 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
+from dynamicprompts.commands.variable_commands import (
+    VariableAccessCommand,
+    VariableAssignmentCommand,
+)
 from dynamicprompts.parser.action_builder import ActionBuilder
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 
@@ -31,6 +35,8 @@ sampler_symbol = sampler_random | sampler_combinatorial | sampler_cyclical
 
 OPT_WS = pp.Opt(pp.White())  # Optional whitespace
 
+var_name = pp.Word(pp.alphas + "_-", pp.alphanums + "_-")
+
 sampler_symbol_to_method = {
     "~": SamplingMethod.RANDOM,
     "!": SamplingMethod.COMBINATORIAL,
@@ -44,8 +50,8 @@ class Parser:
 
     <prompt> ::= (<chunk>)*
     <variant_prompt> ::= (<variant_chunk>)*
-    <chunk> ::= <variants> | <wildcard> | <literal_sequence>
-    <variant_chunk> ::= <variants> | <wildcard> | <variant_literal_sequence>
+    <chunk> ::= <variable_assignment> | <variable_access> | <variants> | <wildcard> | <literal_sequence>
+    <variant_chunk> ::= <variable_access> | <variants> | <wildcard> | <variant_literal_sequence>
     <variants> ::= <variant_start> <sampling_method>?(<bound><separator>?)? <variants_list>? <variant_end>
     <variants_list> ::= <variant> ("|" <variant>)*
     <variant> ::= <weight>? <variant_prompt>
@@ -62,6 +68,8 @@ class Parser:
     <variant_literal>:=[^#$|<variant_start><variant_end>]+
     <literal_sequence> ::= <literal>+
     <variant_literal_sequence> ::= <variant_literal>+
+    <variable_assignment> ::= "${" <variable_name> "=" <variant_chunk> "}"
+    <variable_access> ::= "${" <variable_name> (":" <variant_chunk>)? "}"
 
     Note that whitespace is preserved in case it is significant to the user.
     """
@@ -140,7 +148,8 @@ def _configure_literal_sequence(
     # Characters that are not allowed in a literal
     # - { denotes the start of a variant (or whatever variant_start is set to  )
     # - # denotes the start of a comment
-    non_literal_chars = rf"#{parser_config.variant_start}"
+    # - $ denotes the start of a variable command (or whatever variable_start is set to)
+    non_literal_chars = rf"#{parser_config.variant_start}{parser_config.variable_start}"
 
     if is_variant_literal:
         # Inside a variant the following characters are also not allowed
@@ -194,6 +203,41 @@ def _configure_variants(
     )
 
     return variants.leave_whitespace()
+
+
+def _configure_variable_access(
+    parser_config: ParserConfig,
+    prompt: pp.ParserElement,
+) -> pp.ParserElement:
+    variable_access = pp.Group(
+        pp.Suppress(parser_config.variable_start)
+        + OPT_WS
+        + var_name("name")
+        + OPT_WS
+        + pp.Optional(pp.Literal(":") + OPT_WS + prompt()("default"))
+        + OPT_WS
+        + pp.Suppress(parser_config.variable_end),
+    )
+    return variable_access.leave_whitespace()
+
+
+def _configure_variable_assignment(
+    parser_config: ParserConfig,
+    prompt: pp.ParserElement,
+) -> pp.ParserElement:
+    variable_assignment = pp.Group(
+        pp.Suppress(parser_config.variable_start)
+        + OPT_WS
+        + var_name("name")
+        + OPT_WS
+        + pp.Literal("=")
+        + pp.Opt(pp.Literal("!"))("immediate")
+        + OPT_WS
+        + prompt()("value")
+        + OPT_WS
+        + pp.Suppress(parser_config.variable_end),
+    )
+    return variable_assignment.leave_whitespace()
 
 
 def _parse_literal_command(parse_result: pp.ParseResults) -> LiteralCommand:
@@ -282,6 +326,24 @@ def _parse_bound_expr(expr, max_options):
     return lbound, ubound, separator
 
 
+def _parse_variable_access_command(
+    parse_result: pp.ParseResults,
+) -> VariableAccessCommand:
+    parts = parse_result[0].as_dict()
+    return VariableAccessCommand(name=parts["name"], default=parts.get("default"))
+
+
+def _parse_variable_assignment_command(
+    parse_result: pp.ParseResults,
+) -> VariableAssignmentCommand:
+    parts = parse_result[0].as_dict()
+    return VariableAssignmentCommand(
+        name=parts["name"],
+        value=parts["value"],
+        immediate=("immediate" in parts),
+    )
+
+
 def create_parser(
     *,
     parser_config: ParserConfig,
@@ -291,6 +353,14 @@ def create_parser(
     prompt = pp.Forward()
     variant_prompt = pp.Forward()
 
+    variable_access = _configure_variable_access(
+        parser_config=parser_config,
+        prompt=variant_prompt,
+    )
+    variable_assignment = _configure_variable_assignment(
+        parser_config=parser_config,
+        prompt=variant_prompt,
+    )
     wildcard = _configure_wildcard(parser_config=parser_config)
     literal_sequence = _configure_literal_sequence(parser_config=parser_config)
     variant_literal_sequence = _configure_literal_sequence(
@@ -303,8 +373,10 @@ def create_parser(
         parser_config=parser_config,
     )
 
-    chunk = variants | wildcard | literal_sequence
-    variant_chunk = variants | wildcard | variant_literal_sequence
+    chunk = (
+        variable_assignment | variable_access | variants | wildcard | literal_sequence
+    )
+    variant_chunk = variable_access | variants | wildcard | variant_literal_sequence
 
     prompt <<= pp.ZeroOrMore(chunk)("prompt")
     variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
@@ -318,6 +390,8 @@ def create_parser(
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
+    variable_access.set_parse_action(_parse_variable_access_command)
+    variable_assignment.set_parse_action(_parse_variable_assignment_command)
     prompt.set_parse_action(_parse_sequence_or_single_command)
     variant_prompt.set_parse_action(_parse_sequence_or_single_command)
     return prompt

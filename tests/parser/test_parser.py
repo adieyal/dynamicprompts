@@ -10,6 +10,10 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.commands.base import Command, SamplingMethod
+from dynamicprompts.commands.variable_commands import (
+    VariableAccessCommand,
+    VariableAssignmentCommand,
+)
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import (
     _create_weight_parser,
@@ -382,3 +386,21 @@ class TestParser:
         assert variant.values[0].literal == "A"
         assert variant.values[1].literal == "B"
         assert variant.values[2].wildcard == "some/wildcard"
+
+    @pytest.mark.parametrize("immediate", (False, True))
+    def test_variable_commands(self, immediate: bool):
+        op = "=!" if immediate else "="
+        sequence = cast(
+            SequenceCommand,
+            parse(f"${{animal {op} cat}} the animal is ${{animal:dog}}"),
+        )
+        assert len(sequence) == 3
+        ass = sequence[0]
+        assert isinstance(ass, VariableAssignmentCommand)
+        assert ass.name == "animal"
+        assert ass.value == LiteralCommand("cat")
+        assert ass.immediate == immediate
+        acc = sequence[2]
+        assert isinstance(acc, VariableAccessCommand)
+        assert acc.name == "animal"
+        assert acc.default == LiteralCommand("dog")
