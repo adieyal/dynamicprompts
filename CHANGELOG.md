@@ -1,3 +1,4 @@
+0.20.2 - Fixed [#354](https://github.com/adieyal/sd-dynamic-prompts/issues/354) - No values found for wildcards on Windows
 0.20.1 - Fixed parsing bug #28
 0.20.0 - Backward incompatible rework of the wildcard machinery, with support for JSON/YAML structured wildcard files.
 0.10.6 - Fixed a bug in the parser that didn't accept whitespace before or after a variant option - see https://github.com/adieyal/sd-dynamic-prompts/issues/324
