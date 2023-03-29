@@ -43,6 +43,10 @@ class SamplingContext:
     rand: Random = DEFAULT_RANDOM
     variables: dict[str, Command] = dataclasses.field(default_factory=dict)
 
+    # Value for variables that aren't defined in the present context.
+    # None will raise an error.
+    unknown_variable_value: str | Command | None = None
+
     # Variables that are currently sampled, to prevent infinite recursion
     _variables_being_sampled: set[str] = dataclasses.field(default_factory=set)
 

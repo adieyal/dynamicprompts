@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
+from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.sampling_context import SamplingContext
@@ -659,3 +660,24 @@ class TestVariableCommands:
         # Just a coverage test for the optimization for literal variables
         cmd = parse("${a =! foo}${a}")
         assert next(random_sampling_context.generator_from_command(cmd)) == "foo"
+
+    def test_unknown_variable(self, wildcard_manager: WildcardManager):
+        ctx1 = SamplingContext(
+            default_sampling_method=SamplingMethod.RANDOM,
+            wildcard_manager=wildcard_manager,
+        )
+        ctx2 = SamplingContext(
+            default_sampling_method=SamplingMethod.RANDOM,
+            wildcard_manager=wildcard_manager,
+            unknown_variable_value="oop!",
+        )
+        ctx3 = SamplingContext(
+            default_sampling_method=SamplingMethod.RANDOM,
+            wildcard_manager=wildcard_manager,
+            unknown_variable_value=VariantCommand.from_literals_and_weights(["bloop!"]),
+        )
+        cmd = parse("${a}")
+        with pytest.raises(KeyError):
+            next(ctx1.generator_from_command(cmd))
+        assert next(ctx2.generator_from_command(cmd)) == "oop!"
+        assert next(ctx3.generator_from_command(cmd)) == "bloop!"

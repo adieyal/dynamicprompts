@@ -90,8 +90,12 @@ class Sampler:
         variable = command.name
         command_to_sample = context.variables.get(variable, command.default)
         if not command_to_sample:
-            # TODO: do we want to support returning e.g. empty here (c.f. Jinja's "undefined")?
-            raise KeyError(f"Variable {variable} is not defined in this context")
+            if context.unknown_variable_value is None:
+                raise KeyError(f"Variable {variable} is not defined in this context")
+            elif isinstance(context.unknown_variable_value, str):
+                command_to_sample = LiteralCommand(context.unknown_variable_value)
+            else:
+                command_to_sample = context.unknown_variable_value
         return context.for_sampling_variable(variable).generator_from_command(
             command_to_sample,
         )
