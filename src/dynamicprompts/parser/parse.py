@@ -29,6 +29,8 @@ sampler_combinatorial = pp.Char("!")
 sampler_cyclical = pp.Char("@")
 sampler_symbol = sampler_random | sampler_combinatorial | sampler_cyclical
 
+OPT_WS = pp.Opt(pp.White())  # Optional whitespace
+
 sampler_symbol_to_method = {
     "~": SamplingMethod.RANDOM,
     "!": SamplingMethod.COMBINATORIAL,
@@ -176,21 +178,18 @@ def _configure_variants(
     variant_end = pp.Suppress(parser_config.variant_end)
 
     variant = pp.Group(
-        pp.Opt(pp.White())
-        + pp.Opt(weight, default=1)("weight")
-        + prompt()("val")
-        + pp.Opt(pp.White()),
+        OPT_WS + pp.Opt(weight, default=1)("weight") + prompt()("val") + OPT_WS,
     )
     variants_list = pp.Group(pp.delimited_list(variant, delim="|"))
 
     variants = pp.Group(
         variant_start
-        + pp.Opt(pp.White())
+        + OPT_WS
         + pp.Opt(sampler_symbol)("sampling_method")
         + pp.Opt(bound_expr)("bound_expr")
-        + pp.Opt(pp.White())
+        + OPT_WS
         + variants_list("variants")
-        + pp.Opt(pp.White())
+        + OPT_WS
         + variant_end,
     )
 
