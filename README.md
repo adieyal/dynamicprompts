@@ -9,47 +9,140 @@
 [![PyPI](https://img.shields.io/pypi/v/dynamicprompts)](https://pypi.org/project/dynamicprompts) ![PyPI - Downloads](https://img.shields.io/pypi/dm/dynamicprompts)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/dynamicprompts)
 
+Dynamicprompts is a Python library that provides developers with a flexible and intuitive templating language for generating prompts for text-to-image generators like Stable Diffusion, MidJourney or Dall-e 2. Dynamicprompts lets you create and manage sophisticated prompt generation workflows that seamlessly integrate with your existing text-to-image generation pipelines.
 
-A library that provides tools and a templating language for designing prompts for text-to-image generators such as Stable Diffusion. This is useful if you would like to generate a number of new prompts using a template.
+It includes:
+* An easy-to-learn templating language that lets you create a number of unique prompts from a single template.
+* Support for wildcard files as placeholders in templates.
+* A mechanism for creating a wildcard library. Text, JSON, and YAML files are supported.
+* Exhaustive generation of all prompts from a template.
+* Variable assignment enabling re-usable prompt snippets. (coming soon)
+* Supports Magic Prompt which automatically spices up your prompt with modifiers
+* Provides an I'm Feeling Lucky feature which uses the semantic search on Lexica.art to find similar prompts.
+* For systems that support attention syntax, Attention Grabber will emphasis random phrases in your prompt.
+* Jinja-powered templating for advanced prompt creation.
 
-The following template
+The dynamicprompts library powers the [Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts) extension for Automatic1111.
 
-	A {house|apartment|lodge|cottage} in {summer|winter|autumn|spring} by {2$$artist1|artist2|artist3}
+# Quick overview of the templating language:
 
-will produce any of the following prompts:
+### Variants
+```
+{summer|autumn|winter|spring} is coming
+```
+Randomly generate one of:
+```
+summer is coming
+autumn is coming
+winter is coming
+spring is coming
+```
 
-> A **house** in **summer** by **artist1**, **artist2**<br>
-> A **lodge** in **autumn** by **artist3**, **artist1**<br>
-> A **cottage** in **winter** by **artist2**, **artist3**<br>
-> ...<br>
+### Choosing multiple variants
+This syntax `{2$$ and $$A|B|C}` will choose two values from the list:
+```
+A and B
+A and C
+B and A
+B and C
+C and A
+C and B
+```
 
-You can use these templates like these to search for interesting combinations of artists and styles.
+### Wildcards
+```
+__season__ is coming
+```
+Randomly selects a value from season.txt in your wildcard directory.
 
-You can also pick a random string from a file. Assuming you have the file seasons.txt in WILDCARD_DIR (see below), then:
 
-    __seasons__ is coming
+### Let's try a real-world prompt
+One prompt template can generate a family of prompts:
 
-Might generate the following:
+```
+Funky pop {yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
+```
 
-> Winter is coming<br>
-> Spring is coming<br>
-> ...<br>
+<img src="images/funkypop.jpg" style="width:50%">
 
-You can also use the same wildcard twice
+<br/>
 
-    I love __seasons__ better than __seasons__
 
-> I love Winter better than Summer<br>
-> I love Spring better than Spring<br>
+Now, how about two characters at the same time:
+
+```
+Funky pop {2$$ and $$yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
+```
+
+<img src="images/funkypop2.jpg" style="width:50%">
+
+
+<br/>
+
+### Use whitespace for readability
+```
+# Add comments like this
+Funky pop
+    {2$$ and $$
+  	    yoda
+		|darth vader
+		|jabba the hutt
+		|princess leia
+		|chewbacca
+		|luke skywalker
+	}
+	figurine, made of
+	{
+		wood
+		|plastic
+		|metal
+		|stone
+	}, product studio shot, on a white background, diffused lighting, centered
+```
+
+
+Use wildcards for re-usable lists:
+
+```
+# starwars.txt
+yoda
+darth vader
+jabba the hutt
+princess leia
+chewbacca
+luke skywalker
+```
+
+```
+# material.txt
+wood
+plastic
+metal
+stone
+```
+
+```
+# studio-shot.txt
+product studio shot, on a white background, diffused lighting, centered
+```
+
+Now compose your prompt like this:
+```
+Funky pop __starwars__ figurine, made of __material__, __studio-shot__
+```
+
+and easily change it to:
+```
+Funky pop __celebrities__ figurine, made of __material__, __studio-shot__
+```
+
+
+Hat tip to [publicprompts](https://publicprompts.art/) for the funky pop prompt.
 
 More complete documentation can be found [below](#syntax).
 
-## Dynamic Prompts in the wild.
-Dynamic Prompts has been used in:
-1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
-2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
 
-## Installation
+# Installation
 
 `pip install dynamicprompts`
 
@@ -57,23 +150,29 @@ Additional functionality (see below) can be installed with this command:
 
 `pip install "dynamicprompts[magicprompt, attentiongrabber]"`
 
-## Quick Start
+# Quick Start
 
 Use the RandomPromptGenerator to create 5 random prompts using a given template:
 
 ```python
-from pathlib import Path
-from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 
-WILDCARD_DIR = Path("/path/to/wildcards/directory")
-wm = WildcardManager(WILDCARD_DIR)
-
-generator = RandomPromptGenerator(wm)
-num_prompts = 5
-generator.generate("I love {red|green|blue} roses", num_prompts)
+generator = RandomPromptGenerator()
+generator.generate("I love {red|green|blue} roses", num_images=5)
 
 >> ['I love blue roses', 'I love red roses', 'I love green roses', 'I love red roses', 'I love red roses']
+```
+
+If you want to use wildcards, instantiate a WildcardManager:
+
+```python
+from pathlib import Path
+from dynamicprompts.generators import RandomPromptGenerator
+from dynamicprompts.wildcardmanager import WildcardManager
+
+wm = WildcardManager(Path("/path/to/wildcard/directory"))
+
+generator = RandomPromptGenerator(wildcard_manager=wm)
 ```
 
 Assuming you have a file called colours.txt in /path/to/wildcards/directory with one colour per line, e.g.
@@ -93,10 +192,9 @@ generator.generate("I love __colours__ roses", num_prompts)
 >> ['I love pink roses', 'I love violet roses', 'I love white roses', 'I love violet roses', 'I love blue roses']
 ```
 
-See more examples below.
 
 ## Combinatorial Generation
-Instead of generating random prompts from a template, combinatorial generation produced every possible prompt from the given string. For example:
+Instead of generating random prompts from a template, combinatorial generation produces every possible prompt from the given string. For example:
 
 `I {love|hate} {New York|Chicago} in {June|July|August}`
 
@@ -127,17 +225,10 @@ will produce:
 ### Usage
 
 ```python
-from pathlib import Path
-from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import CombinatorialPromptGenerator
 
-WILDCARD_DIR = Path("/path/to/wildcards/directory")
-wm = WildcardManager(WILDCARD_DIR)
-
-generator = CombinatorialPromptGenerator(wm)
-
-num_prompts = 5
-generator.generate("I love {red|green|blue} roses", num_prompts)
+generator = CombinatorialPromptGenerator()
+generator.generate("I love {red|green|blue} roses", max_prompts=5)
 
 >> ['I love red roses', 'I love green roses', 'I love blue roses']
 ```
@@ -167,33 +258,13 @@ Using [Gustavosta](https://huggingface.co/Gustavosta/MagicPrompt-Stable-Diffusio
 
 This is compatible with the wildcard syntax described above.
 
-The first time you use it, the model is downloaded. It is approximately 500mb and so will take some time depending on how fast your connection is. It will also take a few seconds on first activation as the model is loaded into memory. Note, if you're low in VRAM, you might get a Cuda error. My GPU uses less than 8GB by YMMV.
-
-Magic Prompt is not available by default, you need to install it as follows:
-
-`pip install "dynamicprompts[magicprompt]"`
-
-There a few alternatives to Gusacosta's model available. You can try:
-
-
-`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-lexart")`
-`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-safe")`
-`magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-unsafe")`
-
-Note that each model requires a download of large model files.
-
 ### Usage
 
 ```python
-from pathlib import Path
-from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 
-WILDCARD_DIR = Path("/path/to/wildcards/directory")
-wm = WildcardManager(WILDCARD_DIR)
-
-generator = RandomPromptGenerator(wm)
+generator = RandomPromptGenerator()
 magic_generator = MagicPromptGenerator(generator, device=0) # device = 0 for CUDA or -1 for CPU
 
 num_prompts = 5
@@ -202,6 +273,24 @@ generator.generate("I love {red|green|blue} roses", num_prompts)
 >> ['I love red roses trending on artstation #vividart #pixiv', 'I love red roses trending on artstation artwork', 'I love blue roses breakfast club, cute, intricate, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, unreal engine 5, 8 k, art by artgerm and greg rutkowski and alphonse mucha', 'I love green roses I love green flowers, smile, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws', 'I love red roses smile, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws']
 
 ```
+
+The first time you use it, the model is downloaded. It is approximately 500mb and so will take some time depending on how fast your connection is. It will also take a few seconds on first activation as the model is loaded into memory. Note, if you're low in VRAM, you might get a Cuda error. My GPU uses less than 8GB by YMMV.
+
+Magic Prompt is not available by default, you need to install it as follows:
+
+`pip install "dynamicprompts[magicprompt]"`
+
+### Other models
+There a few alternatives to Gustavosta's model available. You can try:
+
+```
+magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-lexart")
+magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-safe")
+magic_generator = MagicPromptGenerator(generator, "AUTOMATIC/promptgen-majinai-unsafe")
+```
+
+You can find a longer list [here]()
+Note that each model requires a download of large model files.
 
 ## I'm feeling lucky
 Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if you're looking for inspiration, or are simply too lazy to think of your own prompts. When this option is selected, the template is used as a search string. For example, prompt "Mech warrior" might return:
@@ -217,12 +306,10 @@ Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if
 ### Usage
 
 ```python
-from pathlib import Path
-from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.feelinglucky import FeelingLuckyGenerator
 
-generator = RandomPromptGenerator(wm)
+generator = RandomPromptGenerator()
 lucky_generator = FeelingLuckyGenerator(generator)
 
 num_prompts = 5
@@ -238,20 +325,14 @@ If you are using [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusi
 ### Usage
 
 ```python
-from pathlib import Path
-from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.attentiongenerator import AttentionGenerator
 
-WILDCARD_DIR = Path("/path/to/wildcards/directory")
-wm = WildcardManager(WILDCARD_DIR)
-
-generator = RandomPromptGenerator(wm)
+generator = RandomPromptGenerator()
 attention_generator = AttentionGenerator(generator)
 
-num_prompts = 1
 prompt = "a portrait an anthropomorphic panda mage casting a spell, wearing mage robes, landscape in background, cute, dnd character art portrait, by jason felix and peter mohrbacher, cinematic lighting"
-attention_generator.generate(prompt, num_prompts)
+attention_generator.generate(prompt, num_prompts=1)
 
 >> ['a portrait an anthropomorphic panda mage casting a spell, wearing (mage robes:0.77), landscape in background, cute, dnd character art portrait, by jason felix and peter mohrbacher, cinematic lighting']
 
@@ -384,12 +465,10 @@ if the 3rd row is chosen, then either Autumn or Fall will be selected. You could
 	Spring
 
 ## Comments
-Python and c-style comments are supported:
+Python-style comments are supported:
 
     Test string
     # This  a comment until the end of the line
-    // this is also a comment until the end of the line
-    {A|/* this is an inline comment */B}
 
 ## Whitespace
 In most cases, whitespace is ignored which allows you to create more expressive and readable prompts, e.g.
@@ -540,8 +619,7 @@ the combinatorial syntax is ignored and the template will be converted to:
 
 
 ## Syntax customisation
-To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`.
-
+To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`. You can also change the `__` used in wildcards. So instead of `__colours__`, you can configure wildcards to use `**`, e.g. `**colours**`
 ```python
 
 from pathlib import Path
@@ -551,28 +629,13 @@ from dynamicprompts.parser.config import ParserConfig
 
 WILDCARD_DIR = Path("/path/to/wildcards/directory")
 wm = WildcardManager(WILDCARD_DIR)
-parser_config = ParserConfig(variant_start="<", variant_end=">")
+parser_config = ParserConfig(variant_start="<", variant_end=">", wildcard_wrap="**")
 
 generator = RandomPromptGenerator(wm, parser_config=parser_config)
 
 ```
 
-Currently only variant braces can be customised, but other tokens may be implemented in future.
-
-## Prompt development
-The flexibility provided in the templating language makes it easy to start developing more sophisticated prompts, e.g,here is a prompt for an engagement ring.
-
-    Elegant solitaire engagement ring.
-    {classic|petite|thin|cigar|tapered|twisted}     # Band design
-    {silver|{white|rose|yellow}gold|platinum}       # Band metal
-    {round|faceted|honeycomb}                       # Band texture
-    band with a
-    {round|brilliant|oval|heart-shaped}             # Stone cut
-    __items/materials/gems__                        # Gem type.
-
-Below are some example prompts generated from this pattern:
-> Elegant solitaire engagement ring. tapered rose gold round band with a brilliant anthophyllite<br>
-> Elegant solitaire engagement ring. thin yellow gold faceted band with a brilliant grandidierite<br>
-> Elegant solitaire engagement ring. cigar platinum faceted band with a brilliant tusionite<br>
-> Elegant solitaire engagement ring. thin yellow gold honeycomb band with a oval bowenite<br>
-> Elegant solitaire engagement ring. classic silver round band with a heart-shaped musgravite<br>
+## Dynamic Prompts in the wild.
+Dynamic Prompts has been used in:
+1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
+2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
