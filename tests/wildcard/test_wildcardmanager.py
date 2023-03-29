@@ -108,19 +108,25 @@ def test_directory_traversal(wildcard_manager: WildcardManager):
     assert not wildcard_manager.get_all_values("..\\cant_touch_this")
 
 
-def test_clean_wildcard(wildcard_manager: WildcardManager):
+@pytest.mark.parametrize("case", ["foo/../bar"])
+def test_clean_wildcard_invalid(wildcard_manager: WildcardManager, case: str):
     clean = partial(clean_wildcard, wildcard_wrap=wildcard_manager.wildcard_wrap)
     with pytest.raises(ValueError):
-        clean("/foo")
+        clean(case)
 
-    with pytest.raises(ValueError):
-        clean("\\foo")
 
-    with pytest.raises(ValueError):
-        clean("foo/../bar")
-
+@pytest.mark.parametrize(
+    ("input", "expected"),
+    [
+        ("foo", "foo"),
+        ("foo/bar", "foo/bar"),
+        (r"foo\\\\\\\bar//", "foo/bar"),
+    ],
+)
+def test_clean_wildcard(wildcard_manager: WildcardManager, input: str, expected: str):
     ww = wildcard_manager.wildcard_wrap
-    assert clean(f"{ww}foo{ww}", wildcard_wrap=ww) == "foo"
+    assert clean_wildcard(f"{input}", wildcard_wrap=ww) == expected
+    assert clean_wildcard(f"{ww}{input}{ww}", wildcard_wrap=ww) == expected
 
 
 def test_to_wildcard(wildcard_manager: WildcardManager):

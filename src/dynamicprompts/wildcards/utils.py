@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import re
 
 from dynamicprompts.utils import removeprefix, removesuffix
 
@@ -11,16 +11,20 @@ def clean_wildcard(wildcard: str, *, wildcard_wrap: str) -> str:
 
     :return: the cleaned wildcard
     """
-    wildcard = (
-        wildcard.replace("/", os.sep)
-        .replace("\\", os.sep)  # normalize path separators
-        .rstrip(os.sep)  # remove trailing path separator (likely a typo)
-    )
+
+    # remove wrapping
     wildcard = removeprefix(wildcard, wildcard_wrap)
     wildcard = removesuffix(wildcard, wildcard_wrap)
 
-    if wildcard.startswith(os.sep):
-        raise ValueError(f"Wildcard {wildcard} cannot start with {os.sep}")
+    # normalize path separators to forward slash
+    wildcard = re.sub(r"[\\/]+", "/", wildcard)
+
+    # remove leading and trailing path separators (likely a typo)
+    wildcard = wildcard.strip("/")
+
+    # validate
     if ".." in wildcard:
         raise ValueError(f"Wildcard can not contain '..': {wildcard}")
+    if "\\" in wildcard:
+        raise ValueError(f"Wildcard can not contain '\\': {wildcard}")
     return wildcard
