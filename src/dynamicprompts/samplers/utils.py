@@ -15,7 +15,9 @@ def wildcard_to_variant(
     min_bound = min(min_bound, len(values))
     max_bound = min(max_bound, len(values))
 
-    variant_options = [VariantOption(parse(v)) for v in values]
+    variant_options = [
+        VariantOption(parse(v, parser_config=context.parser_config)) for v in values
+    ]
 
     wildcard_variant = VariantCommand(
         variant_options,
