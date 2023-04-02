@@ -41,6 +41,7 @@ The dynamic prompts library powers the [Dynamic Prompts](https://github.com/adie
       * [Magic Prompt](#magic-prompt)
        * [I'm feeling lucky](#im-feeling-lucky)
        * [Attention Generator](#attention-generator)
+    * [Jinja2 templates](#jinja2-templates)
     * [Template syntax](#template-syntax)
       * [Syntax customisation](#syntax-customisation)
     * [Wildcard Collections](#wildcard-collections)
@@ -370,6 +371,26 @@ Note, AttentionGenerator is not installed by default as it needs additional libr
 `pip install "dynamicprompts[attentiongrabber]"`
 
 One your first use it, a model will automatically be downloaded.
+
+## Jinja2 templates
+If the standard template language is not sufficient for your needs, you can try the Jinja2 generator. Jinja2 templates have familiar programming constructs such as looping, conditionals, variables, etc. Youcan find a guide on using Jinja2 templates with Dynamic Prompts, [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/jinja2.md). Here is the minimal code you need to instantiate Jinja2 generator.
+
+```python
+from dynamicprompts.generators import JinjaGenerator
+
+generator = JinjaGenerator()
+generator.generate("I love {red|green|blue} roses", num_images=5)
+
+template = """
+{% for colour in ['red', 'blue', 'green'] %}
+    {% prompt %}I love {{ colour }} roses{% endprompt %}
+{% endfor %}
+"""
+
+generator.generate(template)
+
+>> ['I love red roses', 'I love blue roses', 'I love green roses']
+```
 
 ## Template syntax
 
