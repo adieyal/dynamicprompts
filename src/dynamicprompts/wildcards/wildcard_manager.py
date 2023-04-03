@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.wildcards.collection import WildcardCollection
 from dynamicprompts.wildcards.tree import (
     WildcardTree,
-    build_tree_from_path,
+    build_tree_from_root_map,
 )
 from dynamicprompts.wildcards.utils import clean_wildcard
+
+if TYPE_CHECKING:
+    from dynamicprompts.wildcards.types import RootMap
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +23,24 @@ class WildcardManager:
         self,
         path: Path | str | None = None,
         wildcard_wrap=default_parser_config.wildcard_wrap,
+        *,
+        root_map: RootMap | None = None,
     ) -> None:
+        """
+        Initialize a wildcard manager.
+
+        You can pass in either a single Path to a directory, or a root map dictionary.
+        """
         self._path: Path | None = Path(path) if path else None
         self._wildcard_wrap = wildcard_wrap
         self._tree: WildcardTree | None = None
+        self._root_map = {}
+        if root_map:
+            if self._path:
+                raise ValueError("Cannot specify both path and roots")
+            self._root_map = root_map
+        elif self._path:
+            self._root_map = {"": [self._path]}
 
     @property
     def path(self) -> Path | None:
@@ -62,14 +79,10 @@ class WildcardManager:
         """
         Get the wildcard tree.
 
-        If the tree has not been built yet, it will be built from the configured path.
+        If the tree has not been built yet, it will be built from the configured root(s).
         """
         if self._tree is None:
-            self._tree = (
-                build_tree_from_path(self._path)
-                if self._path and self._directory_exists()
-                else WildcardTree()
-            )
+            self._tree = build_tree_from_root_map(self._root_map)
         return self._tree
 
     def clear_cache(self) -> None:
@@ -78,15 +91,10 @@ class WildcardManager:
         """
         self._tree = None
 
-    def _directory_exists(self) -> bool:
-        return bool(self._path and self._path.is_dir())
-
     def match_collections(self, wildcard: str) -> Iterable[WildcardCollection]:
         """
         Find `WildcardCollection` objects that match the given glob pattern.
         """
-        if not self._path:
-            return []
         try:
             wildcard = clean_wildcard(wildcard, wildcard_wrap=self._wildcard_wrap)
         except ValueError:

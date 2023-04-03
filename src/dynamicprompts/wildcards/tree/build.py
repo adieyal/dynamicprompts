@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import logging
 import os
+import warnings
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from dynamicprompts.wildcards.collection import WildcardCollection, WildcardTextFile
+from dynamicprompts.wildcards.collection.list import ListWildcardCollection
 from dynamicprompts.wildcards.collection.structured import parse_structured_file
 from dynamicprompts.wildcards.tree.tree import WildcardTree
+from dynamicprompts.wildcards.utils import combine_name_parts
+
+if TYPE_CHECKING:
+    from dynamicprompts.wildcards.types import CollectionableItem, RootItem, RootMap
 
 log = logging.getLogger(__name__)
 
@@ -67,3 +73,28 @@ def build_tree_from_path(root_path: Path) -> WildcardTree:
                 ),
             )
     return WildcardTree.from_map(path_to_file)
+
+
+def build_tree_from_root_map(root_map: RootMap) -> WildcardTree:
+    collection_map: dict[str, WildcardCollection] = {}
+    for root, items in root_map.items():
+        for item in items:
+            for name, collection_or_list in _mappingify_item(item).items():
+                collection = _collectionify(collection_or_list)
+                collection_map[combine_name_parts(root, name)] = collection
+    return WildcardTree.from_map(collection_map)
+
+
+def _collectionify(collection_or_list: CollectionableItem) -> WildcardCollection:
+    if isinstance(collection_or_list, list):
+        return ListWildcardCollection([str(x) for x in collection_or_list])
+    return collection_or_list
+
+
+def _mappingify_item(item: RootItem) -> dict[str, CollectionableItem]:
+    if isinstance(item, Path):
+        if item.is_dir():
+            return dict(build_tree_from_path(item).map)
+        warnings.warn(f"Root {item} is not a directory, skipping")
+        return {}
+    return item
