@@ -28,3 +28,10 @@ def clean_wildcard(wildcard: str, *, wildcard_wrap: str) -> str:
     if "\\" in wildcard:
         raise ValueError(f"Wildcard can not contain '\\': {wildcard}")
     return wildcard
+
+
+def combine_name_parts(*parts: str) -> str:
+    """
+    Combine and normalize tree node name parts.
+    """
+    return "/".join(parts).strip("/")

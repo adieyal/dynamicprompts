@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from dynamicprompts.wildcards import WildcardManager
 from dynamicprompts.wildcards.collection import WildcardTextFile
+from dynamicprompts.wildcards.collection.list import ListWildcardCollection
 from dynamicprompts.wildcards.utils import clean_wildcard
 
 from tests.conftest import WILDCARD_DATA_DIR
@@ -207,3 +208,58 @@ def test_read_write_is_idempotent(wildcard_manager: WildcardManager):
     text = wf.read_text()
     wf.write_text(text)
     assert list(wf.get_values()) == orig_values
+
+
+def test_wcm_roots():
+    """
+    Test a WildcardManager that combines multiple trees
+    :return:
+    """
+    wcm = WildcardManager(
+        root_map={
+            "elaimet": [  # finnish for "animals"
+                WILDCARD_DATA_DIR / "animals",
+                {
+                    "jannat": ListWildcardCollection(["okapi"]),
+                },  # exciting animals, incl. an exotic okapi
+            ],
+            "metasyntactic": [
+                {
+                    "foo": ListWildcardCollection(["bar", "baz"]),
+                    "fnord": ListWildcardCollection(["spam", "eggs"]),
+                },
+            ],
+            "": [
+                # The values here will test the convenience list-of-strings syntax
+                {
+                    # This will appear in the root, as expected
+                    "finnish-words": [
+                        "kolmivaihevaihtovirtakilowattituntimittari",
+                        "törkylempijävongahdus",
+                    ],
+                    # These cute animals will be merged into the `elaimet/` tree despite the root technically being something else
+                    "elaimet/sopot": ["pingviini"],
+                },
+            ],
+        },
+    )
+    assert wcm.get_collection_names() == {
+        "finnish-words",
+        "elaimet/jannat",
+        "elaimet/mammals/canine",
+        "elaimet/mammals/feline",
+        "elaimet/mystical",
+        "elaimet/sopot",
+        "metasyntactic/fnord",
+        "metasyntactic/foo",
+    }
+    assert set(wcm.get_all_values("elaimet/*")) == {
+        "cat",
+        "dog",
+        "okapi",
+        "pingviini",
+        "tiger",
+        "unicorn",
+        "wolf",
+    }
+    assert set(wcm.get_all_values("metasy*")) == {"eggs", "spam", "baz", "bar"}

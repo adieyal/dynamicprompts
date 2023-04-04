@@ -4,6 +4,7 @@ import dataclasses
 from typing import Iterable
 
 from dynamicprompts.wildcards.collection import WildcardCollection
+from dynamicprompts.wildcards.utils import combine_name_parts
 
 
 @dataclasses.dataclass(frozen=True)
@@ -23,7 +24,7 @@ class WildcardTreeNode:
         """
         Qualify a collection name with the path of this node.
         """
-        return f"{self.path}/{name}".strip("/")
+        return combine_name_parts(self.path, name)
 
     def get_full_names(self) -> Iterable[str]:
         """
