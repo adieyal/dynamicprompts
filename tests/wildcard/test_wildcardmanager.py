@@ -69,7 +69,23 @@ def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager)
 
 def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
-    assert len(list(root.walk_items())) == 15
+    assert {name for name, item in root.walk_items()} == {
+        "animals/mammals/canine",
+        "animals/mammals/feline",
+        "animals/mystical",
+        "artists/dutch",
+        "artists/finnish",
+        "clothing",
+        "colors-cold",
+        "colors-warm",
+        "flavors/bitter",
+        "flavors/sour",
+        "flavors/sweet",
+        "publicprompts/plush-toy",
+        "referencing-colors",
+        "shapes",
+        "variant",
+    }
     assert set(root.collections) == {
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt
@@ -100,8 +116,15 @@ def test_hierarchy(wildcard_manager: WildcardManager):
 
 
 def test_backslash_norm(wildcard_manager: WildcardManager):
-    assert len(wildcard_manager.get_all_values("flavors\\*")) == 7
-    # Empirically, this also works on Windows
+    assert set(wildcard_manager.get_all_values("flavors\\*")) == {
+        "chocolate",
+        "coffee",
+        "dark chocolate",
+        "grapefruit",
+        "lemon",
+        "strawberry",
+        "vanilla",
+    }
 
 
 def test_directory_traversal(wildcard_manager: WildcardManager):
