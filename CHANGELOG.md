@@ -1,3 +1,4 @@
+0.22.0 - Make WildcardManager trees easily composable - [#74](https://github.com/adieyal/dynamicprompts/pull/74)
 0.21.2 - Added missing parser config
 0.21.1 - Another fix for wildcard variants, see [#358](https://github.com/adieyal/sd-dynamic-prompts/issues/358)
 0.21.0 - Introduced setting variables and parameterised templates.
