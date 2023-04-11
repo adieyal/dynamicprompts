@@ -450,6 +450,8 @@ def parse(
     :param prompt: The prompt string to parse.
     :return: A command representing the parsed prompt.
     """
+    if prompt.isalnum():  # no need to actually parse anything
+        return LiteralCommand(prompt)
 
     tokens = create_parser(parser_config=parser_config).parse_string(
         prompt,
