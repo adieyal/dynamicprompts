@@ -4,6 +4,7 @@ import re
 import warnings
 from functools import partial
 from typing import Iterable, cast
+from weakref import WeakKeyDictionary
 
 import pyparsing as pp
 
@@ -441,6 +442,25 @@ def create_parser(
     return prompt
 
 
+# Cache of parsers, keyed by parser config. Since parser configs are immutable,
+# we can use them as keys; we still use a weak key dictionary to avoid leaking
+# memory if a custom parser config is garbage collected.
+_parser_cache: WeakKeyDictionary[ParserConfig, pp.ParserElement] = WeakKeyDictionary()
+
+
+def get_cached_parser(parser_config: ParserConfig):
+    """
+    Get a cached parser for the given parser config,
+    or create one if it doesn't exist.
+    """
+    try:
+        return _parser_cache[parser_config]
+    except KeyError:
+        parser = create_parser(parser_config=parser_config)
+        _parser_cache[parser_config] = parser
+        return parser
+
+
 def parse(
     prompt: str,
     parser_config: ParserConfig = default_parser_config,
@@ -453,14 +473,13 @@ def parse(
     if prompt.isalnum():  # no need to actually parse anything
         return LiteralCommand(prompt)
 
-    tokens = create_parser(parser_config=parser_config).parse_string(
+    tokens = get_cached_parser(parser_config).parse_string(
         prompt,
         parse_all=True,
     )
-    assert (
-        tokens and len(tokens) == 1
-    )  # If we have more than one token, the prompt is invalid...
-    tok = tokens[0]
+    if len(tokens) != 1:
+        raise ValueError(f"Could not parse prompt {prompt!r}")
 
+    tok = tokens[0]
     assert isinstance(tok, Command)
     return tok
