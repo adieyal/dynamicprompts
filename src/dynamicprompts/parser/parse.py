@@ -1,9 +1,37 @@
+"""
+A parser for a prompt grammar which is roughly as follows:
+
+<prompt> ::= (<chunk>)*
+<variant_prompt> ::= (<variant_chunk>)*
+<chunk> ::= <variable_assignment> | <variable_access> | <variants> | <wildcard> | <literal_sequence>
+<variant_chunk> ::= <variable_access> | <variants> | <wildcard> | <variant_literal_sequence>
+<variants> ::= <variant_start> <sampling_method>?(<bound><separator>?)? <variants_list>? <variant_end>
+<variants_list> ::= <variant> ("|" <variant>)*
+<variant> ::= <weight>? <variant_prompt>
+<weight> ::= <real> | <integer>
+<variant_start> ::= "{"  # Can be configured to an arbitrary string
+<variant_end> ::= "}"    # Can be configured to an arbitrary string
+<sampling_method> ::= "!"|"~"|"@"
+<bound> :: <integer>(-<integer)?$$
+<separator> ::= [^$}]+$$
+<wildcard> ::= <wildcard_enclosure> <sampling_method> <path> <wildcard_enclosure>
+<wildcard_enclosure> ::= "__" # Can be configured to an arbitrary string
+<path>::=  ~"__" + [^{}#]+"
+<literal>:=[^#<variant_start>]+
+<variant_literal>:=[^#$|<variant_start><variant_end>]+
+<literal_sequence> ::= <literal>+
+<variant_literal_sequence> ::= <variant_literal>+
+<variable_assignment> ::= "${" <variable_name> "=" <variant_chunk> "}"
+<variable_access> ::= "${" <variable_name> (":" <variant_chunk>)? "}"
+
+Note that whitespace is preserved in case it is significant to the user.
+"""
+
 from __future__ import annotations
 
 import re
-import warnings
 from functools import partial
-from typing import Iterable, cast
+from typing import Iterable
 from weakref import WeakKeyDictionary
 
 import pyparsing as pp
@@ -21,7 +49,6 @@ from dynamicprompts.commands.variable_commands import (
     VariableAccessCommand,
     VariableAssignmentCommand,
 )
-from dynamicprompts.parser.action_builder import ActionBuilder
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
@@ -44,55 +71,6 @@ sampler_symbol_to_method = {
     "!": SamplingMethod.COMBINATORIAL,
     "@": SamplingMethod.CYCLICAL,
 }
-
-
-class Parser:
-    """
-    A parser for a prompt grammar which is roughly as follows:
-
-    <prompt> ::= (<chunk>)*
-    <variant_prompt> ::= (<variant_chunk>)*
-    <chunk> ::= <variable_assignment> | <variable_access> | <variants> | <wildcard> | <literal_sequence>
-    <variant_chunk> ::= <variable_access> | <variants> | <wildcard> | <variant_literal_sequence>
-    <variants> ::= <variant_start> <sampling_method>?(<bound><separator>?)? <variants_list>? <variant_end>
-    <variants_list> ::= <variant> ("|" <variant>)*
-    <variant> ::= <weight>? <variant_prompt>
-    <weight> ::= <real> | <integer>
-    <variant_start> ::= "{"  # Can be configured to an arbitrary string
-    <variant_end> ::= "}"    # Can be configured to an arbitrary string
-    <sampling_method> ::= "!"|"~"|"@"
-    <bound> :: <integer>(-<integer)?$$
-    <separator> ::= [^$}]+$$
-    <wildcard> ::= <wildcard_enclosure> <sampling_method> <path> <wildcard_enclosure>
-    <wildcard_enclosure> ::= "__" # Can be configured to an arbitrary string
-    <path>::=  ~"__" + [^{}#]+"
-    <literal>:=[^#<variant_start>]+
-    <variant_literal>:=[^#$|<variant_start><variant_end>]+
-    <literal_sequence> ::= <literal>+
-    <variant_literal_sequence> ::= <variant_literal>+
-    <variable_assignment> ::= "${" <variable_name> "=" <variant_chunk> "}"
-    <variable_access> ::= "${" <variable_name> (":" <variant_chunk>)? "}"
-
-    Note that whitespace is preserved in case it is significant to the user.
-    """
-
-    def __init__(self, builder: ActionBuilder):
-        warnings.warn(
-            f"{self.__class__.__qualname__} is deprecated and will be removed in a future version. "
-            "Instead, directly call `parse(prompt)`.",
-            DeprecationWarning,
-        )
-
-        self._builder = builder
-        self._prompt = create_parser(parser_config=default_parser_config)
-
-    @property
-    def prompt(self):
-        return self._prompt
-
-    def parse(self, prompt: str) -> SequenceCommand:
-        tokens = self.prompt.parse_string(prompt, parse_all=True)
-        return cast(SequenceCommand, tokens[0])
 
 
 def _configure_range() -> pp.ParserElement:
