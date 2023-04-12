@@ -1,3 +1,4 @@
+0.23.0 - Parser performance improvements - see [#77](https://github.com/adieyal/dynamicprompts/pull/77#event-8976756671). Deprecated Legacy Parser and ActionBuilder APIs have now been removed. See [#78](https://github.com/adieyal/dynamicprompts/pull/78)
 0.22.0 - Make WildcardManager trees easily composable - [#74](https://github.com/adieyal/dynamicprompts/pull/74)
 0.21.2 - Added missing parser config
 0.21.1 - Another fix for wildcard variants, see [#358](https://github.com/adieyal/sd-dynamic-prompts/issues/358)
