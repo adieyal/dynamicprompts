@@ -11,7 +11,10 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler
-from dynamicprompts.samplers.utils import wildcard_to_variant
+from dynamicprompts.samplers.utils import (
+    get_wildcard_not_found_fallback,
+    wildcard_to_variant,
+)
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen, to_string_gen
 from dynamicprompts.utils import next_sampler_next_value
@@ -93,19 +96,16 @@ class CyclicalSampler(Sampler):
     def _get_wildcard(
         self,
         command: WildcardCommand,
-        sampling_context: SamplingContext,
-    ):
-        values = sampling_context.wildcard_manager.get_all_values(command.wildcard)
-        new_context = sampling_context.with_variables(
+        context: SamplingContext,
+    ) -> StringGen:
+        values = context.wildcard_manager.get_all_values(command.wildcard)
+        new_context = context.with_variables(
             command.variables,
         ).with_sampling_method(SamplingMethod.CYCLICAL)
+        if len(values) == 0:
+            yield from get_wildcard_not_found_fallback(command, new_context)
+            return
+
         value_samplers = [new_context.sample_prompts(val) for val in values]
         value_string_gens = [to_string_gen(val) for val in value_samplers]
-
-        if len(values) == 0:
-            logger.warning(f"No values found for wildcard {command.wildcard}")
-            ww = sampling_context.parser_config.wildcard_wrap
-            while True:
-                yield f"{ww}{command.wildcard}{ww}"
-        else:
-            yield from next_sampler_next_value(value_string_gens)
+        yield from next_sampler_next_value(value_string_gens)
