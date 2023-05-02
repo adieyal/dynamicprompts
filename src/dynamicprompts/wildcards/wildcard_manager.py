@@ -34,6 +34,7 @@ class WildcardManager:
         self._path: Path | None = Path(path) if path else None
         self._wildcard_wrap = wildcard_wrap
         self._tree: WildcardTree | None = None
+        self._values_cache: dict[str, list[str]] = {}
         self._root_map = {}
         if root_map:
             if self._path:
@@ -90,6 +91,7 @@ class WildcardManager:
         Clear the cache of the wildcard manager.
         """
         self._tree = None
+        self._values_cache.clear()
 
     def match_collections(self, wildcard: str) -> Iterable[WildcardCollection]:
         """
@@ -119,6 +121,9 @@ class WildcardManager:
         """
         Get all wildcard values matching the given wildcard pattern.
         """
+        if wildcard in self._values_cache:
+            return self._values_cache[wildcard]
+
         values: set[str] = set()
         for f in self.match_collections(wildcard):
             values.update(f.get_values())
@@ -136,4 +141,10 @@ class WildcardManager:
                     ", ".join(str(coll) for coll in rec_colls),
                 )
 
-        return sorted(values)
+        sorted_values = sorted(values)
+        if len(self._values_cache) > 100:
+            # Naive way to limit the size of the cache.
+            # We can't use `popitem` because it's guaranteed to be LIFO and we'd want FIFO.
+            self._values_cache.clear()
+        self._values_cache[wildcard] = sorted_values
+        return sorted_values
