@@ -70,6 +70,7 @@ def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager)
 def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
     assert {name for name, item in root.walk_items()} == {
+        "animals/all-references",
         "animals/mammals/canine",
         "animals/mammals/feline",
         "animals/mystical",
@@ -94,12 +95,16 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "shapes",  # flat list YAML
         "variant",  # .txt
     }
-    assert set(root.child_nodes["animals"].collections) == {"mystical"}
+    assert set(root.child_nodes["animals"].collections) == {
+        "all-references",
+        "mystical",
+    }
     assert set(root.child_nodes["animals"].child_nodes["mammals"].collections) == {
         "canine",
         "feline",
     }
     assert set(root.child_nodes["animals"].walk_full_names()) == {
+        "animals/all-references",
         "animals/mammals/canine",
         "animals/mammals/feline",
         "animals/mystical",
@@ -269,6 +274,7 @@ def test_wcm_roots():
     assert wcm.get_collection_names() == {
         "finnish-words",
         "elaimet/jannat",
+        "elaimet/all-references",
         "elaimet/mammals/canine",
         "elaimet/mammals/feline",
         "elaimet/mystical",
@@ -276,7 +282,7 @@ def test_wcm_roots():
         "metasyntactic/fnord",
         "metasyntactic/foo",
     }
-    assert set(wcm.get_all_values("elaimet/*")) == {
+    assert {v for v in wcm.get_all_values("elaimet/*") if not v.startswith("_")} == {
         "cat",
         "dog",
         "okapi",

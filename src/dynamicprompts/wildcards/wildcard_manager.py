@@ -122,4 +122,18 @@ class WildcardManager:
         values: set[str] = set()
         for f in self.match_collections(wildcard):
             values.update(f.get_values())
+        if not values and not wildcard.startswith("**"):
+            # If the wildcard doesn't match anything, try again with a recursive wildcard
+            rec_wildcard = f"**/{wildcard}"
+            rec_colls = list(self.match_collections(rec_wildcard))
+            for f in rec_colls:
+                values.update(f.get_values())
+            if values:
+                logger.warning(
+                    "No matches for wildcard %r, used %r to match %s",
+                    wildcard,
+                    rec_wildcard,
+                    ", ".join(str(coll) for coll in rec_colls),
+                )
+
         return sorted(values)
