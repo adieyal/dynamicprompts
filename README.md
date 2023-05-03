@@ -194,7 +194,7 @@ If you want to use wildcards, instantiate a WildcardManager:
 ```python
 from pathlib import Path
 from dynamicprompts.generators import RandomPromptGenerator
-from dynamicprompts.wildcardmanager import WildcardManager
+from dynamicprompts.wildcards.wildcard_manager import WildcardManager
 
 wm = WildcardManager(Path("/path/to/wildcard/directory"))
 
