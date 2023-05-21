@@ -43,5 +43,31 @@ class RandomPromptGenerator(PromptGenerator):
             ),
         )
 
-    def generate(self, template: str | None, num_images: int = 1) -> list[str]:
-        return list(self._context.sample_prompts((template or ""), num_images))
+    def generate(
+        self,
+        template: str | None = None,
+        num_images: int = 1,
+        *,
+        seeds: list[int] | int | None = None,
+    ) -> list[str]:
+        if not template:
+            template = ""
+
+        if seeds:
+            if isinstance(seeds, int):
+                seeds = [seeds]
+
+            if len(seeds) == 1:
+                seeds = seeds * num_images
+
+            if len(seeds) != num_images:
+                raise ValueError(f"Expected {num_images} seeds, but got {len(seeds)}")
+
+            prompts = []
+            for seed in seeds:
+                self._context.rand.seed(seed)
+                gen = self._context.sample_prompts(template, 1)
+                prompts.append(next(iter(gen)))
+            return prompts
+
+        return list(self._context.sample_prompts(template, num_images))

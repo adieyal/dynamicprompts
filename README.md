@@ -218,6 +218,30 @@ generator.generate("I love __colours__ roses", num_prompts)
 >> ['I love pink roses', 'I love violet roses', 'I love white roses', 'I love violet roses', 'I love blue roses']
 ```
 
+### Random seeds
+
+You can pass a random seed in the constructor for predictable outputs
+```
+generator = RandomPromptGenerator(wildcard_manager=wm, seed=999)
+```
+
+A list of seeds can also be provided in the `generate` method.
+
+```
+generator.generate("I love __colours__ roses", num_prompts, seeds=[1,2,3])
+```
+In this example, a seed is provided for each prompt generated. The number of seeds must equal the number of prompts, i.e. `len(seeds) == num_prompts`. If `len(seeds) == 1` then the same seed is used for every image.
+
+As a convenience, `seeds` may also be an int value.
+
+```
+generator.generate("I love __colours__ roses", num_prompts=3, seeds=5)
+```
+
+is equivalent to:
+```
+generator.generate("I love __colours__ roses", num_prompts=3, seeds=[5, 5, 5])
+```
 
 ### Combinatorial Generation
 Instead of generating random prompts from a template, combinatorial generation produces every possible prompt from the given string. For example:

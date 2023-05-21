@@ -1,3 +1,4 @@
+0.25.0 - Added the ability to pass random seeds into the random prompt generator for finer control over random prompt sampling. See the documentation for details.
 0.24.0 - The wildcard manager now has a fallback mode that searches the entire wildcard hierarchy if it can't find a wildcard. Addresses issues like this one - [#377](https://github.com/adieyal/sd-dynamic-prompts/issues/377)
 0.23.0 - Parser performance improvements - see [#77](https://github.com/adieyal/dynamicprompts/pull/77#event-8976756671). Deprecated Legacy Parser and ActionBuilder APIs have now been removed. See [#78](https://github.com/adieyal/dynamicprompts/pull/78)
 0.22.0 - Make WildcardManager trees easily composable - [#74](https://github.com/adieyal/dynamicprompts/pull/74)
