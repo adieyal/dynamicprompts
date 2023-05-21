@@ -2,8 +2,12 @@
 Tests for issues reported on the downstream sd-dynamic-prompts repo.
 """
 
+import pytest
 from dynamicprompts.commands import SequenceCommand, VariantCommand
-from dynamicprompts.generators import RandomPromptGenerator
+from dynamicprompts.generators import (
+    CombinatorialPromptGenerator,
+    RandomPromptGenerator,
+)
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.wildcards import WildcardManager
 
@@ -113,3 +117,19 @@ def test_sd_358(wildcard_manager: WildcardManager):
     combinations = [f"{c1},{c2}" for c1 in colors for c2 in colors if c1 != c2]
     # check the every prompt is a combination of two colors
     assert all(p in combinations for p in prompts)
+
+
+def test_sd_377(wildcard_manager: WildcardManager, caplog):
+    """
+    Test that references to other wildcards within wildcard files
+    are fallback-resolved to anywhere in the wildcard hierarchy.
+    """
+    if wildcard_manager.wildcard_wrap != "__":
+        pytest.skip("This test requires the __ wildcard wrap")
+    cpg = CombinatorialPromptGenerator(wildcard_manager)
+    generated = set(
+        cpg.generate(wildcard_manager.to_wildcard("animals/all-references")),
+    )
+    assert generated == {"dog", "wolf", "cat", "tiger", "unicorn"}
+    # We should get log messages
+    assert any(r.message.startswith("No matches for wildcard") for r in caplog.records)

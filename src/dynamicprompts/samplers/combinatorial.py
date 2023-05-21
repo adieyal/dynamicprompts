@@ -14,7 +14,10 @@ from dynamicprompts.commands import (
 )
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
-from dynamicprompts.samplers.utils import wildcard_to_variant
+from dynamicprompts.samplers.utils import (
+    get_wildcard_not_found_fallback,
+    wildcard_to_variant,
+)
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 
@@ -148,8 +151,9 @@ class CombinatorialSampler(Sampler):
     ) -> StringGen:
         context = context.with_variables(command.variables)
         values = context.wildcard_manager.get_all_values(command.wildcard)
-        if len(values) == 0:
-            logger.warning(f"No values found for wildcard {command.wildcard}")
+        if not values:
+            yield from get_wildcard_not_found_fallback(command, context)
+            return
 
         for val in values:
             # Parse and generate prompts from wildcard value

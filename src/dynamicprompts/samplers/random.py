@@ -9,7 +9,10 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.samplers.base import Sampler
-from dynamicprompts.samplers.utils import wildcard_to_variant
+from dynamicprompts.samplers.utils import (
+    get_wildcard_not_found_fallback,
+    wildcard_to_variant,
+)
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
@@ -107,11 +110,9 @@ class RandomSampler(Sampler):
         values = context.wildcard_manager.get_all_values(command.wildcard)
 
         if len(values) == 0:
-            logger.warning(f"No values found for wildcard {command.wildcard}")
+            yield from get_wildcard_not_found_fallback(command, context)
+            return
 
         while True:
-            if len(values) == 0:
-                yield context.wildcard_manager.to_wildcard(command.wildcard)
-            else:
-                value = self._get_wildcard_choice(context, values)
-                yield from context.sample_prompts(value, 1)
+            value = self._get_wildcard_choice(context, values)
+            yield from context.sample_prompts(value, 1)

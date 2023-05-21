@@ -1,0 +1,5 @@
+# These refer to files within this directory.
+
+__mammals/canine__
+__mammals/feline__
+__mystical__
