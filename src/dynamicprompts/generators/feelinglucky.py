@@ -23,8 +23,8 @@ class FeelingLuckyGenerator(PromptGenerator):
         else:
             self._generator = generator
 
-    def generate(self, search_query: str, num_prompts: int) -> list[str]:
-        search_query = self._generator.generate(search_query, 1)[0]
+    def generate(self, search_query: str, num_prompts: int, **kwargs) -> list[str]:
+        search_query = self._generator.generate(search_query, 1, **kwargs)[0]
 
         if search_query.strip() == "":
             query = str(random.randint(0, 10000000))

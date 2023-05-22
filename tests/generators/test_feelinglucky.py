@@ -1,30 +1,55 @@
-from unittest.mock import Mock, patch
-
+import pytest
 from dynamicprompts.generators import DummyGenerator, FeelingLuckyGenerator
 
 
-class TestFeelingLucky:
-    def test_default_generator(self):
-        generator = FeelingLuckyGenerator()
-        assert isinstance(generator._generator, DummyGenerator)
+@pytest.fixture
+def mock_generator(mocker):
+    mock = mocker.Mock()
+    mock.generate.return_value = ["Prompt"]
+    return mock
 
-    def test_generate(self):
-        results = [{"prompt": "ABC"}, {"prompt": "XYZ"}]
-        with patch("dynamicprompts.generators.feelinglucky.requests") as mock_response:
-            with patch("dynamicprompts.generators.feelinglucky.random") as mock_random:
-                mock_generator = Mock()
-                mock_generator.generate.return_value = ["Prompt"]
 
-                m = Mock()
-                m.json.return_value = {"images": results}
-                mock_response.get.return_value = m
-                mock_random.choices.return_value = [results[0]]
+@pytest.fixture
+def mock_requests(mocker):
+    mock = mocker.patch("dynamicprompts.generators.feelinglucky.requests")
+    mock.get.return_value.json.return_value = {
+        "images": [{"prompt": "ABC"}, {"prompt": "XYZ"}],
+    }
+    return mock
 
-                generator = FeelingLuckyGenerator(mock_generator)
-                prompts = generator.generate("This is a test", 1)
-                assert len(prompts) == 1
-                assert prompts[0] == results[0]["prompt"]
 
-                mock_generator.generate.assert_called_with("This is a test", 1)
+@pytest.fixture
+def mock_random(mocker):
+    mock = mocker.patch("dynamicprompts.generators.feelinglucky.random")
+    mock.choices.return_value = [{"prompt": "ABC"}]
+    return mock
 
-                mock_random.choices.assert_called_with(results, k=1)
+
+def test_default_generator():
+    generator = FeelingLuckyGenerator()
+    assert isinstance(generator._generator, DummyGenerator)
+
+
+def test_generate(mock_generator, mock_requests, mock_random):
+    generator = FeelingLuckyGenerator(mock_generator)
+    prompts = generator.generate("This is a test", 1)
+
+    assert len(prompts) == 1
+    assert prompts[0] == "ABC"
+
+    mock_generator.generate.assert_called_with("This is a test", 1)
+    mock_random.choices.assert_called_with([{"prompt": "ABC"}, {"prompt": "XYZ"}], k=1)
+
+
+def test_generate_accepts_kwargs(mock_generator, mock_requests, mock_random):
+    generator = FeelingLuckyGenerator(mock_generator)
+
+    # Call generate with an arbitrary keyword argument
+    prompts = generator.generate("This is a test", 1, some_kwarg="value")
+
+    assert len(prompts) == 1
+    assert prompts[0] == "ABC"
+
+    # Check that the generate method of the underlying generator was called with the keyword argument
+    mock_generator.generate.assert_called_with("This is a test", 1, some_kwarg="value")
+    mock_random.choices.assert_called_with([{"prompt": "ABC"}, {"prompt": "XYZ"}], k=1)

@@ -12,7 +12,7 @@ MODEL_NAME = "en_core_web_sm"
 
 
 class AttentionGenerator(PromptGenerator):
-    _prompt_generator: PromptGenerator
+    _generator: PromptGenerator
 
     def __init__(
         self,
@@ -38,9 +38,9 @@ class AttentionGenerator(PromptGenerator):
         self._nlp = spacy.load(MODEL_NAME)
 
         if generator is None:
-            self._prompt_generator = DummyGenerator()
+            self._generator = DummyGenerator()
         else:
-            self._prompt_generator = generator
+            self._generator = generator
 
         m, M = min(min_attention, max_attention), max(min_attention, max_attention)
         self._min_attention, self._max_attention = m, M
@@ -58,7 +58,7 @@ class AttentionGenerator(PromptGenerator):
         return prompt
 
     def generate(self, *args, **kwargs) -> list[str]:
-        prompts = self._prompt_generator.generate(*args, **kwargs)
+        prompts = self._generator.generate(*args, **kwargs)
         new_prompts = [self._add_emphasis(p) for p in prompts]
 
         return new_prompts

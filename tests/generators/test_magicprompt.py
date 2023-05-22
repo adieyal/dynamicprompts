@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 from functools import partial
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -121,3 +122,19 @@ def test_magic_prompt_blocklist():
         )  # Make sure we're not getting the original prompt back
         # Make sure we're not getting any of the blocked artists
         assert not any(artist in magic_prompt for artist in boring_artists)
+
+
+@pytest.mark.slow
+def test_generate_passes_kwargs():
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+
+    mock_generator = MagicMock()
+    mock_generator.generate.return_value = ["string1", "string2", "string3"]
+
+    generator = MagicPromptGenerator()
+    generator._prompt_generator = mock_generator
+
+    kwargs = {"kwarg1": "value1", "kwarg2": "value2"}
+    generator.generate("Test prompt", **kwargs)
+
+    mock_generator.generate.assert_called_with("Test prompt", **kwargs)
