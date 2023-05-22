@@ -17,9 +17,10 @@ class BatchedCombinatorialPromptGenerator(PromptGenerator):
         self,
         template: str,
         max_prompts: int = constants.MAX_IMAGES,
+        **kwargs,
     ) -> list[str]:
         images = []
 
         for _ in range(self._batches):
-            images.extend(self._generator.generate(template, max_prompts))
+            images.extend(self._generator.generate(template, max_prompts, **kwargs))
         return images

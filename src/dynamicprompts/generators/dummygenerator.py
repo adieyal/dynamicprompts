@@ -8,5 +8,6 @@ class DummyGenerator(PromptGenerator):
         self,
         template: str,
         num_images: int = 1,
+        **kwargs,
     ) -> list[str]:
         return num_images * [template]

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class FeelingLuckyGenerator(PromptGenerator):
     _generator: PromptGenerator
 
-    def __init__(self, generator: PromptGenerator | None = None) -> None:
+    def __init__(self, generator: PromptGenerator | None = None, **kwargs) -> None:
         if generator is None:
             self._generator = DummyGenerator()
         else:

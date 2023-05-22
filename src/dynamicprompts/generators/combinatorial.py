@@ -31,5 +31,8 @@ class CombinatorialPromptGenerator(PromptGenerator):
         self,
         template: str | None,
         max_prompts: int | None = constants.MAX_IMAGES,
+        **kwargs,
     ) -> list[str]:
-        return list(self._context.sample_prompts((template or ""), max_prompts))
+        return list(
+            self._context.sample_prompts((template or ""), max_prompts),
+        )

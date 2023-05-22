@@ -95,3 +95,9 @@ class TestCombinatorialGenerator:
     def test_without_wildcard_manager(self):
         generator = CombinatorialPromptGenerator()
         assert generator._context.wildcard_manager.path is None
+
+
+def test_generate_accepts_kwargs(mocker):
+    generator = CombinatorialPromptGenerator()
+    generator.generate("template", max_prompts=5, extra_arg="value")
+    # shouldn't raise an exception

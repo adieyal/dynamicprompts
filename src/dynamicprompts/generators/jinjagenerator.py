@@ -62,7 +62,7 @@ class JinjaGenerator(PromptGenerator):
         self._limit_prompts = limit_prompts
         self._ignore_whitespace = ignore_whitespace
 
-    def generate(self, template: str, num_prompts: int = 1) -> list[str]:
+    def generate(self, template: str, num_prompts: int = 1, **kwargs) -> list[str]:
         env = Environment(extensions=[PromptExtension])
         prompt_blocks: list[str] = []
         env.globals.update(

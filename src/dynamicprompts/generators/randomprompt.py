@@ -49,6 +49,7 @@ class RandomPromptGenerator(PromptGenerator):
         num_images: int = 1,
         *,
         seeds: list[int] | int | None = None,
+        **kwargs,
     ) -> list[str]:
         if not template:
             template = ""
