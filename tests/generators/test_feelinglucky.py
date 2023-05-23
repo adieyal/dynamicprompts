@@ -11,8 +11,8 @@ def mock_generator(mocker):
 
 @pytest.fixture
 def mock_requests(mocker):
-    mock = mocker.patch("dynamicprompts.generators.feelinglucky.requests")
-    mock.get.return_value.json.return_value = {
+    mock = mocker.patch("dynamicprompts.generators.feelinglucky.query_lexica")
+    mock.return_value = {
         "images": [{"prompt": "ABC"}, {"prompt": "XYZ"}],
     }
     return mock

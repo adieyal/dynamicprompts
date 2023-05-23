@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import random
 
-import requests
-
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import (
     GeneratorException,
@@ -12,6 +10,22 @@ from dynamicprompts.generators.promptgenerator import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def query_lexica(query) -> dict:
+    try:
+        import requests
+    except ImportError as ie:
+        raise GeneratorException(
+            "Could not import `requests`, Feeling Lucky generator will not work. "
+            "Install with `pip install dynamicprompts[feelinglucky]` or "
+            "`pip install requests`",
+        ) from ie
+    url = f"https://lexica.art/api/v1/search?q={query}"
+    logger.info(f"Requesting {url}")
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.json()
 
 
 class FeelingLuckyGenerator(PromptGenerator):
@@ -31,13 +45,8 @@ class FeelingLuckyGenerator(PromptGenerator):
         else:
             query = search_query
 
-        url = f"https://lexica.art/api/v1/search?q={query}"
-
         try:
-            logger.info(f"Requesting {url}")
-            response = requests.get(url)
-            response.raise_for_status()
-            data = response.json()
+            data = query_lexica(query)
             prompts = data["images"]
             selected_prompts = random.choices(prompts, k=num_prompts)
             return [p["prompt"] for p in selected_prompts]
