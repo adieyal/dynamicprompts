@@ -81,7 +81,7 @@ def test_sd_324():
 
     prompts = generator.generate(s, 10)
 
-    assert all([p in ["A", "B"] for p in prompts])
+    assert all(p in ["A", "B"] for p in prompts)
 
 
 def test_dp_28():
@@ -91,20 +91,18 @@ def test_dp_28():
 
     assert len(prompts) == 10
     assert all(
-        [
-            p
-            in [
-                "A",
-                "B",
-                "X and Y",
-                "X and Z",
-                "Y and X",
-                "Y and Z",
-                "Z and X",
-                "Z and Y",
-            ]
-            for p in prompts
-        ],
+        p
+        in [
+            "A",
+            "B",
+            "X and Y",
+            "X and Z",
+            "Y and X",
+            "Y and Z",
+            "Z and X",
+            "Z and Y",
+        ]
+        for p in prompts
     )
 
 
