@@ -390,11 +390,11 @@ attention_generator.generate(prompt, num_prompts=1)
 
 <img src="images/emphasis.png">
 
-Note, AttentionGenerator is not installed by default as it needs additional libraries to run. Use this command to install it:
+You may get better results with AttentionGenerator by installing the `spacy` NLP library. Use this command to install it:
 
-`pip install "dynamicprompts[attentiongrabber]"`
+`pip install spacy`
 
-One your first use it, a model will automatically be downloaded.
+When Spacy is available, an NLP model will automatically be downloaded on first use.
 
 ## Jinja2 templates
 If the standard template language is not sufficient for your needs, you can try the Jinja2 generator. Jinja2 templates have familiar programming constructs such as looping, conditionals, variables, etc. Youcan find a guide on using Jinja2 templates with Dynamic Prompts, [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/jinja2.md). Here is the minimal code you need to instantiate Jinja2 generator.

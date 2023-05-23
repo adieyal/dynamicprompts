@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-attentiongrabber = ["spacy~=3.4"]
+attentiongrabber = []  # empty list for backwards compatibility (no "no extra" warnings)
 magicprompt = ["transformers[torch]~=4.19"]
 feelinglucky = ["requests~=2.28"]
 dev = [
@@ -79,6 +79,10 @@ exclude = "tests"
 
 [[tool.mypy.overrides]]
 module = "transformers"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "spacy.*"
 ignore_missing_imports = true
 
 [tool.coverage.report]

@@ -1,13 +1,26 @@
 from unittest.mock import MagicMock
 
 import pytest
-from dynamicprompts.generators.attentiongenerator import AttentionGenerator
+from dynamicprompts.generators.attentiongenerator import (
+    AttentionGenerator,
+    cheap_chunker,
+)
 
 
 @pytest.fixture
 def generator():
-    pytest.importorskip("spacy")
     return AttentionGenerator()
+
+
+def test_cheap_chunker():
+    assert cheap_chunker(
+        "purple cat singing opera, artistic, painting (best quality:1.3)",
+    ) == [
+        "purple cat singing opera",
+        "artistic",
+        "painting",
+        "best quality",
+    ]
 
 
 @pytest.mark.slow
