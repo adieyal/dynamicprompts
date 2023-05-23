@@ -44,7 +44,7 @@ jobs:
             poetry.lock
             pyproject.toml
       - name: Install dependencies
-        run: python -m pip install pytest-lazy-fixture pytest-cov -e .[attentiongrabber,magicprompt]
+        run: python -m pip install pytest-lazy-fixture pytest-cov pytest-mock~=3.10 -e .[attentiongrabber,magicprompt]
       - run: pytest --cov --cov-report=term-missing --cov-report=xml .
         env:
           PYPARSINGENABLEALLWARNINGS: 1

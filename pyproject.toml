@@ -63,6 +63,7 @@ select = [
 ]
 ignore = [
     "B007",
+    "B028", # explicit stacklevel
     "B905",
     "C901", # Complexity
     "E501", # Line length
