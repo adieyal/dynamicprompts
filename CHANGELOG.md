@@ -1,3 +1,4 @@
+0.26.0 - Added fall-back sentence chunker when spacy is not installed
 0.25.1 - Added kwargs argument to promptgenerator.generate methods
 0.25.0 - Added the ability to pass random seeds into the random prompt generator for finer control over random prompt sampling. See the documentation for details.
 0.24.0 - The wildcard manager now has a fallback mode that searches the entire wildcard hierarchy if it can't find a wildcard. Addresses issues like this one - [#377](https://github.com/adieyal/sd-dynamic-prompts/issues/377)
