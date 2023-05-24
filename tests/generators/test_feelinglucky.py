@@ -1,28 +1,30 @@
+from unittest.mock import Mock, patch
+
 import pytest
 from dynamicprompts.generators import DummyGenerator, FeelingLuckyGenerator
 
 
 @pytest.fixture
-def mock_generator(mocker):
-    mock = mocker.Mock()
+def mock_generator():
+    mock = Mock()
     mock.generate.return_value = ["Prompt"]
     return mock
 
 
 @pytest.fixture
-def mock_requests(mocker):
-    mock = mocker.patch("dynamicprompts.generators.feelinglucky.query_lexica")
-    mock.return_value = {
-        "images": [{"prompt": "ABC"}, {"prompt": "XYZ"}],
-    }
-    return mock
+def mock_requests():
+    with patch("dynamicprompts.generators.feelinglucky.query_lexica") as mock:
+        mock.return_value = {
+            "images": [{"prompt": "ABC"}, {"prompt": "XYZ"}],
+        }
+        yield mock
 
 
 @pytest.fixture
-def mock_random(mocker):
-    mock = mocker.patch("dynamicprompts.generators.feelinglucky.random")
-    mock.choices.return_value = [{"prompt": "ABC"}]
-    return mock
+def mock_random():
+    with patch("dynamicprompts.generators.feelinglucky.random") as mock:
+        mock.choices.return_value = [{"prompt": "ABC"}]
+        yield mock
 
 
 def test_default_generator():
