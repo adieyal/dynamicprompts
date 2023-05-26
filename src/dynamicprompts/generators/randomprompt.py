@@ -64,11 +64,11 @@ class RandomPromptGenerator(PromptGenerator):
             if len(seeds) != num_images:
                 raise ValueError(f"Expected {num_images} seeds, but got {len(seeds)}")
 
+            gen = self._context.sample_prompts(template, num_images)
             prompts = []
             for seed in seeds:
                 self._context.rand.seed(seed)
-                gen = self._context.sample_prompts(template, 1)
                 prompts.append(next(iter(gen)))
             return prompts
-
-        return list(self._context.sample_prompts(template, num_images))
+        else:
+            return list(self._context.sample_prompts(template, num_images))

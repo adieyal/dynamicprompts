@@ -61,3 +61,12 @@ class TestRandomGenerator:
             mock_seed.assert_any_call(42)
             assert mock_seed.call_count == 2
             assert mock_seed.call_args_list[0] == mock_seed.call_args_list[1]
+
+    def test_cyclical_sampler_with_seeds(self, generator: RandomPromptGenerator):
+        template = "A {@red|green|blue} ball"
+        prompts = generator.generate(template=template, num_images=3, seeds=[1, 2, 3])
+        assert prompts == [
+            "A red ball",
+            "A green ball",
+            "A blue ball",
+        ]

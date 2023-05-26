@@ -1,3 +1,4 @@
+0.26.1 - Fixed cyclical sampling when using the RandomPromptGenerator - see [#84](https://github.com/adieyal/dynamicprompts/issues/84)
 0.26.0 - Added fall-back sentence chunker when spacy is not installed
 0.25.1 - Added kwargs argument to promptgenerator.generate methods
 0.25.0 - Added the ability to pass random seeds into the random prompt generator for finer control over random prompt sampling. See the documentation for details.
