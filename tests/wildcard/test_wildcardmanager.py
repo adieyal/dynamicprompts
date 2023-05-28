@@ -47,6 +47,27 @@ def test_get_all_values(wildcard_manager: WildcardManager):
     ]
 
 
+@pytest.mark.parametrize(
+    ("sort", "dedup", "expected"),
+    [
+        (True, True, ["blue", "green", "red", "yellow"]),
+        (False, True, ["red", "green", "blue", "yellow"]),
+        (True, False, ["blue", "green", "red", "red", "yellow"]),
+        (False, False, ["red", "green", "red", "blue", "yellow"]),
+    ],
+)
+def test_get_all_values_sorted_and_deduplicated(sort, dedup, expected):
+    colors = ["red", "green", "red", "blue", "yellow"]
+
+    wildcard_manager = WildcardManager(
+        root_map={"": [{"colors": ListWildcardCollection(colors)}]},
+    )
+
+    wildcard_manager.sort_wildcards = sort
+    wildcard_manager.dedup_wildcards = dedup
+    assert wildcard_manager.get_all_values("colors*") == expected
+
+
 def test_pantry_expansion(wildcard_manager: WildcardManager):
     """
     Test that a pantry file appears as if it was a wildcard file.
