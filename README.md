@@ -315,7 +315,10 @@ from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 
 generator = RandomPromptGenerator()
-magic_generator = MagicPromptGenerator(generator, device=0) # device = 0 for CUDA or -1 for CPU
+magic_generator = MagicPromptGenerator(
+    generator,
+    device=...,  # Torch device specifier (int, string, torch.device)
+)
 
 num_prompts = 5
 generator.generate("I love {red|green|blue} roses", num_prompts)

@@ -18,9 +18,6 @@ class TestMagicPrompt:
         generator = MagicPromptGenerator()
         assert isinstance(generator._prompt_generator, DummyGenerator)
 
-        CPU = -1
-        assert generator._device == CPU
-
 
 @pytest.mark.parametrize(
     "original_prompt",

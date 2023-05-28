@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import TYPE_CHECKING
 
 from dynamicprompts.generators.dummygenerator import DummyGenerator
 from dynamicprompts.generators.promptgenerator import PromptGenerator
@@ -21,6 +22,9 @@ except ImportError as ie:
         "You need to install the transformers library to use the MagicPrompt generator. "
         "You can do this by running `pip install -U dynamicprompts[magicprompt]`.",
     ) from ie
+
+if TYPE_CHECKING:
+    import torch
 
 DEFAULT_MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
 MAX_SEED = 2**32 - 1
@@ -100,13 +104,25 @@ class MagicPromptGenerator(PromptGenerator):
         self,
         prompt_generator: PromptGenerator | None = None,
         model_name: str = DEFAULT_MODEL_NAME,
-        device: int = -1,
+        device: int | str | torch.device | None = None,
         max_prompt_length: int = 100,
         temperature: float = 0.7,
         seed: int | None = None,
         blocklist_regex: str | None = None,
         batch_size: int = 1,
     ) -> None:
+        """
+        :param prompt_generator: The inner prompt generator to use.
+        :param model_name: The name of the model to use. Defaults to `"Gustavosta/MagicPrompt-Stable-Diffusion"`.
+        :param device:
+            Defines the device (*e.g.*, `"cpu"`, `"cuda:1"`, `"mps"`, or a GPU ordinal rank like `1`) on which
+            the model should be loaded.
+        :param max_prompt_length: The maximum length of the prompt to generate.
+        :param temperature: The sampling temperature to use when generating prompts.
+        :param seed: The seed to use when generating prompts.
+        :param blocklist_regex: A regex to use to filter out prompts that match it.
+        :param batch_size: The batch size to use when generating prompts.
+        """
         self._device = device
         self.set_model(model_name)
 
