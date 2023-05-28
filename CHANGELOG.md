@@ -1,3 +1,4 @@
+0.27.0 -  Added sort and dedup properties to wildcardcard manager. Also fixed device selection for magic prompt
 0.26.1 - Fixed cyclical sampling when using the RandomPromptGenerator - see [#84](https://github.com/adieyal/dynamicprompts/issues/84)
 0.26.0 - Added fall-back sentence chunker when spacy is not installed
 0.25.1 - Added kwargs argument to promptgenerator.generate methods
