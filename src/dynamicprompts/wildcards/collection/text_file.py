@@ -19,18 +19,18 @@ class WildcardTextFile(WildcardCollection):
     ) -> None:
         self._path = path
         self._encoding = encoding
-        self._cache: set[str] | None = None
+        self._cache: list[str] | None = None
 
     def __repr__(self) -> str:
         return f"<TxtWildcardFile: {self._path}>"
 
-    def get_values(self) -> set[str]:
+    def get_values(self) -> list[str]:
         if self._cache is not None:
             return self._cache
 
         with self._path.open(encoding=self._encoding, errors="ignore") as f:
             lines = [line.strip() for line in f if not is_empty_line(line)]
-            self._cache = set(lines)
+            self._cache = lines
             return self._cache
 
     def read_text(self) -> str:
