@@ -5,9 +5,10 @@ from unittest.mock import patch
 import pytest
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
-from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.wildcards import WildcardManager
+
+pytest.importorskip("jinja2")
 
 GET_ALL_VALUES = (
     "dynamicprompts.wildcards.wildcard_manager.WildcardManager.get_all_values"
@@ -208,6 +209,8 @@ class TestJinjaGenerator:
             generator.generate(template)
 
     def test_random(self, generator, monkeypatch):
+        from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS
+
         monkeypatch.setitem(DYNAMICPROMPTS_FUNCTIONS, "random", lambda: 0.3)
         template = """
         {% prompt %}My favourite number is {{ random() }}{% endprompt %}

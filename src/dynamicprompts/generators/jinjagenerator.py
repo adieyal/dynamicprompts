@@ -2,16 +2,12 @@ from __future__ import annotations
 
 import logging
 
-from jinja2 import Environment
-from jinja2.exceptions import TemplateSyntaxError
-
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.generators.promptgenerator import (
     GeneratorException,
     PromptGenerator,
 )
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
-from dynamicprompts.jinja_extensions import DYNAMICPROMPTS_FUNCTIONS, PromptExtension
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
 from dynamicprompts.utils import squash_whitespace
 from dynamicprompts.wildcards import WildcardManager
@@ -62,8 +58,18 @@ class JinjaGenerator(PromptGenerator):
         self._limit_prompts = limit_prompts
         self._ignore_whitespace = ignore_whitespace
 
-    def generate(self, template: str, num_prompts: int = 1, **kwargs) -> list[str]:
-        env = Environment(extensions=[PromptExtension])
+    def _build_jinja_template(self, template: str):
+        # Jinja2 and modules using it need to be late-imported here to work around issues
+        # with incompatible versions of Jinja2 being installed in some downstream users' environments
+        # (see https://github.com/adieyal/sd-dynamic-prompts/issues/476)
+        import jinja2
+
+        from dynamicprompts.jinja_extensions import (
+            DYNAMICPROMPTS_FUNCTIONS,
+            PromptExtension,
+        )
+
+        env = jinja2.Environment(extensions=[PromptExtension])
         prompt_blocks: list[str] = []
         env.globals.update(
             {
@@ -74,19 +80,19 @@ class JinjaGenerator(PromptGenerator):
                 **DYNAMICPROMPTS_FUNCTIONS,
             },
         )
-
         try:
             jinja_template = env.from_string(template)
-        except TemplateSyntaxError as e:
+        except jinja2.TemplateSyntaxError as e:
             logger.exception(e)
             raise GeneratorException(e.message) from e
+        return jinja_template, prompt_blocks
 
-        prompts = []
-        for i in range(num_prompts):
-            s = jinja_template.render(**self._context)
-            prompts.append(s)
+    def generate(self, template: str, num_prompts: int = 1, **kwargs) -> list[str]:
+        jinja_template, prompt_blocks = self._build_jinja_template(template)
 
-        if prompt_blocks:
+        prompts = [jinja_template.render(**self._context) for i in range(num_prompts)]
+
+        if prompt_blocks:  # May have been set by the templates being rendered
             prompts = prompt_blocks
 
         if self._limit_prompts:
