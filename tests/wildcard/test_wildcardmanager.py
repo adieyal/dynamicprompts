@@ -91,6 +91,7 @@ def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager)
 def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
     assert {name for name, item in root.walk_items()} == {
+        "dupes",
         "animals/all-references",
         "animals/mammals/canine",
         "animals/mammals/feline",
@@ -115,6 +116,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "referencing-colors",  # .txt
         "shapes",  # flat list YAML
         "variant",  # .txt
+        "dupes",  # .txt
     }
     assert set(root.child_nodes["animals"].collections) == {
         "all-references",
