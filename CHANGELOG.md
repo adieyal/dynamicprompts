@@ -1,3 +1,4 @@
+0.28.0 - WildcardManager no longer deduplicates wildcards. Return a list instead of a set
 0.27.1 - Late-import of jinja2 Jinja2 to work around issues with incompatible versions of Jinja2 being installed in some downstream users' environments. See [#476](https://github.com/adieyal/sd-dynamic-prompts/issues/476)
 0.27.0 - Added sort and dedup properties to wildcardcard manager. Also fixed device selection for magic prompt
 0.26.1 - Fixed cyclical sampling when using the RandomPromptGenerator - see [#84](https://github.com/adieyal/dynamicprompts/issues/84)
