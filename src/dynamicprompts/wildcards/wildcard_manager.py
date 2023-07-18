@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import random
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
@@ -37,6 +38,7 @@ class WildcardManager:
         self._values_cache: dict[str, list[str]] = {}
         self.sort_wildcards = True
         self.dedup_wildcards = True
+        self.shuffle_wildcards = False
         self._root_map = {}
         if root_map:
             if self._path:
@@ -119,10 +121,23 @@ class WildcardManager:
         """
         return set(self.tree.get_collection_names())
 
-    def get_all_values(self, wildcard: str) -> list[str]:
+    def get_all_values(self, wildcard: str):
         """
         Get all wildcard values matching the given wildcard pattern.
         """
+        wildcards = self._get_all_values(wildcard)
+
+        if self.dedup_wildcards:
+            wildcards = list(dict.fromkeys(wildcards, None))
+
+        if self.sort_wildcards:
+            wildcards = sorted(wildcards)
+        elif self.shuffle_wildcards:
+            random.shuffle(wildcards)
+
+        return wildcards
+
+    def _get_all_values(self, wildcard: str) -> list[str]:
         if wildcard in self._values_cache:
             return self._values_cache[wildcard]
 
@@ -144,16 +159,12 @@ class WildcardManager:
                 )
 
         list_values = values
-        if self.dedup_wildcards:
-            list_values = list(dict.fromkeys(list_values, None))
-
-        if self.sort_wildcards:
-            list_values = sorted(list_values)
 
         if len(self._values_cache) > 100:
             # Naive way to limit the size of the cache.
             # We can't use `popitem` because it's guaranteed to be LIFO and we'd want FIFO.
             self._values_cache.clear()
+
         self._values_cache[wildcard] = list_values
 
         return list_values

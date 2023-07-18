@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+import string
 from functools import partial
 from pathlib import Path
 
@@ -10,6 +12,11 @@ from dynamicprompts.wildcards.collection.list import ListWildcardCollection
 from dynamicprompts.wildcards.utils import clean_wildcard
 
 from tests.conftest import WILDCARD_DATA_DIR
+
+
+def random_wildcard(length):
+    letters = string.ascii_lowercase
+    return "".join(random.choice(letters) for i in range(length))
 
 
 def test_pathless_wm():
@@ -66,6 +73,24 @@ def test_get_all_values_sorted_and_deduplicated(sort, dedup, expected):
     wildcard_manager.sort_wildcards = sort
     wildcard_manager.dedup_wildcards = dedup
     assert wildcard_manager.get_all_values("colors*") == expected
+
+
+def test_get_all_values_shuffled():
+    wildcards = [random_wildcard(5) for i in range(40)]
+
+    wildcard_manager = WildcardManager(
+        root_map={"": [{"test_wildcards": ListWildcardCollection(wildcards)}]},
+    )
+    wildcard_manager.sort_wildcards = False
+    wildcard_manager.dedup_wildcards = False
+    assert wildcard_manager.get_all_values("test_wildcards") == wildcards
+    wildcard_manager.shuffle_wildcards = False
+    assert wildcard_manager.get_all_values("test_wildcards") == wildcards
+
+    wildcard_manager.shuffle_wildcards = True
+    retrieved_wildcards = wildcard_manager.get_all_values("test_wildcards")
+    assert set(retrieved_wildcards) == set(wildcards)
+    assert retrieved_wildcards != wildcards
 
 
 def test_pantry_expansion(wildcard_manager: WildcardManager):
