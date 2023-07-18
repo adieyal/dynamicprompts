@@ -121,7 +121,7 @@ class WildcardManager:
         """
         return set(self.tree.get_collection_names())
 
-    def get_all_values(self, wildcard: str):
+    def get_all_values(self, wildcard: str) -> list[str]:
         """
         Get all wildcard values matching the given wildcard pattern.
         """
