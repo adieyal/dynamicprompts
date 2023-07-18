@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamicprompts"
-version = "0.28.0"
+version = "0.29.0"
 description = "Dynamic prompts templating library for Stable Diffusion"
 homepage = "https://github.com/adieyal/dynamicprompts"
 authors = [
