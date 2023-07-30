@@ -441,3 +441,4 @@ You can bootstrap your wildcard library by using our [pre-existing collections](
 Dynamic Prompts has been used in:
 1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
 2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
+3. [ComfyUI Nodes](https://github.com/adieyal/comfyui-dynamicprompts)
