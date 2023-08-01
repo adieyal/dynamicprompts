@@ -86,7 +86,7 @@ Randomly selects a value from season.txt in your wildcard directory.
 One prompt template can generate a family of prompts:
 
 ```
-Funky pop {yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
+Funko pop {yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
 ```
 
 <img src="images/funkypop.jpg" style="width:50%">
@@ -97,7 +97,7 @@ Funky pop {yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalke
 Now, how about two characters at the same time:
 
 ```
-Funky pop {2$$ and $$yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
+Funko pop {2$$ and $$yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalker} figurine, made of {wood|plastic|metal|stone}, product studio shot, on a white background, diffused lighting, centered
 ```
 
 <img src="images/funkypop2.jpg" style="width:50%">
@@ -108,7 +108,7 @@ Funky pop {2$$ and $$yoda|darth vader|jabba the hutt|princess leia|chewbacca|luk
 ### Use whitespace for readability
 ```
 # Add comments like this
-Funky pop
+Funko pop
     {2$$ and $$
   	    yoda
 		|darth vader
@@ -154,16 +154,16 @@ product studio shot, on a white background, diffused lighting, centered
 
 Now compose your prompt like this:
 ```
-Funky pop __starwars__ figurine, made of __material__, __studio-shot__
+Funko pop __starwars__ figurine, made of __material__, __studio-shot__
 ```
 
 and easily change it to:
 ```
-Funky pop __celebrities__ figurine, made of __material__, __studio-shot__
+Funko pop __celebrities__ figurine, made of __material__, __studio-shot__
 ```
 
 
-Hat tip to [publicprompts](https://publicprompts.art/) for the funky pop prompt.
+Hat tip to [publicprompts](https://publicprompts.art/) for the funko pop prompt.
 
 The complete syntax can be found [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/docs/SYNTAX.md).
 
