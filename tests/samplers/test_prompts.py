@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import random
 from unittest.mock import patch
 
 import pytest
@@ -18,6 +17,7 @@ from dynamicprompts.samplers import (
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.values import WildcardValues
 from pytest_lazyfixture import lazy_fixture
 
 from tests.conftest import sampling_context_lazy_fixtures
@@ -32,10 +32,9 @@ from tests.utils import cross, interleave, zipstr
 
 
 @pytest.fixture
-def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
-    wildcard_colours = wildcard_manager.get_all_values("colors*")
-    shuffled_colours = wildcard_colours.copy()
-    random.shuffle(shuffled_colours)
+def data_lookups(wildcard_manager: WildcardManager) -> dict[str, WildcardValues]:
+    wildcard_colours = wildcard_manager.get_values("colors*")
+    shuffled_colours = wildcard_colours.shuffled()
 
     return {
         "wildcard_colours": wildcard_colours,
@@ -460,8 +459,8 @@ class TestPrompts:
 
         with patch.object(
             sampling_context.wildcard_manager,
-            "get_all_values",
-            side_effect=lambda name: RED_GREEN_BLUE,
+            "get_values",
+            return_value=WildcardValues.from_items(RED_GREEN_BLUE),
         ):
             with patch_random_sampler_wildcard_choice(expected):
                 prompts = list(sampling_context.sample_prompts(template, len(expected)))

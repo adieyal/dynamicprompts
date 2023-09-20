@@ -4,13 +4,43 @@ import json
 import logging
 import warnings
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 from dynamicprompts.constants import DEFAULT_ENCODING
 from dynamicprompts.wildcards.collection.base import WildcardCollection
 from dynamicprompts.wildcards.collection.list import ListWildcardCollection
+from dynamicprompts.wildcards.item import WildcardItem
 
 log = logging.getLogger(__name__)
+
+
+def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem]:
+    """
+    Parse a single list in a structured file (JSON or YAML) and yield the wildcard items.
+    """
+    for item in value:
+        if not item:
+            continue
+        if isinstance(item, str):
+            # See if we have a `1.1::foo` shorthand
+            weight_text, _, content = item.rpartition("::")
+            try:
+                yield WildcardItem(content=content, weight=float(weight_text))
+            except ValueError:
+                yield content
+            continue
+        elif isinstance(item, dict):
+            # Support {"text": "foo", "weight": 1.1} syntax
+            #     and {"content": "foo", "weight": 1.1}
+            weight = float(item.get("weight", 1))
+            content = item.get("text") or item.get("content") or ""
+            if content:
+                if weight == 1:
+                    yield content
+                else:
+                    yield WildcardItem(content=content, weight=weight)
+                continue
+        log.warning("Unsupported list item: %s", item)
 
 
 def _parse_structured_file_dict(
@@ -27,11 +57,16 @@ def _parse_structured_file_dict(
             continue
         prefix_and_name = (*prefix, name)
         name = "/".join(prefix_and_name)
-        if isinstance(value, list) and all(isinstance(x, str) for x in value):
-            yield (
-                name,
-                ListWildcardCollection(entries=value, source=(file_path, name)),
-            )
+        if isinstance(value, list):
+            try:
+                entries = list(_parse_structured_file_list(value))
+            except Exception:
+                log.warning("Unable to parse key %s in %s", name, file_path)
+            else:
+                yield (
+                    name,
+                    ListWildcardCollection(entries=entries, source=(file_path, name)),
+                )
         elif isinstance(value, dict):
             yield from _parse_structured_file_dict(
                 value,

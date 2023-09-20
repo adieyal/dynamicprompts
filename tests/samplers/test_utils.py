@@ -26,7 +26,7 @@ def test_wildcard_to_variant(sampling_context: SamplingContext):
     )
     assert variant_command.min_bound == 1
     assert variant_command.max_bound == len(
-        sampling_context.wildcard_manager.get_all_values("colors*"),
+        sampling_context.wildcard_manager.get_values("colors*"),
     )
     assert variant_command.separator == "-"
     assert variant_command.sampling_method == wildcard_command.sampling_method

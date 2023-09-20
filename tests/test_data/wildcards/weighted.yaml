@@ -1,0 +1,10 @@
+weighted-animals:
+  heavy:
+    - 50::elephant
+    - 20.5::rhino
+    - 10::hippo
+    - 5::giraffe
+  light:
+    - { weight: 1, text: mouse }
+    - { weight: 2, text: rabbit }
+    - { weight: 3, content: cat }

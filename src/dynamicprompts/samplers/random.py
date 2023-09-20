@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from random import Random
+from typing import Iterator
 
 from dynamicprompts.commands import (
     Command,
@@ -16,6 +17,7 @@ from dynamicprompts.samplers.utils import (
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
+from dynamicprompts.wildcards.values import WildcardValues
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +50,13 @@ class RandomSampler(Sampler):
             command.max_bound,
         )
 
-    def _get_wildcard_choice(self, context: SamplingContext, values: list[str]) -> str:
-        # Wraps choice for ease of testing
-        return context.rand.choice(values)
+    def _get_wildcard_choice_generator(
+        self,
+        context: SamplingContext,
+        values: WildcardValues,
+    ) -> Iterator[str]:
+        # Wrapped for ease of testing
+        return values.get_weighted_random_generator(context.rand)
 
     def _get_variant(
         self,
@@ -107,12 +113,13 @@ class RandomSampler(Sampler):
         context: SamplingContext,
     ) -> StringGen:
         context = context.with_variables(command.variables)
-        values = context.wildcard_manager.get_all_values(command.wildcard)
+        values = context.wildcard_manager.get_values(command.wildcard)
 
         if len(values) == 0:
             yield from get_wildcard_not_found_fallback(command, context)
             return
 
+        gen = self._get_wildcard_choice_generator(context, values)
         while True:
-            value = self._get_wildcard_choice(context, values)
+            value = next(gen)
             yield from context.sample_prompts(value, 1)

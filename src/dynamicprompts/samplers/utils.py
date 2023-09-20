@@ -18,12 +18,13 @@ def wildcard_to_variant(
     max_bound=1,
     separator=",",
 ) -> VariantCommand:
-    values = context.wildcard_manager.get_all_values(command.wildcard)
+    values = context.wildcard_manager.get_values(command.wildcard)
     min_bound = min(min_bound, len(values))
     max_bound = min(max_bound, len(values))
 
     variant_options = [
-        VariantOption(parse(v, parser_config=context.parser_config)) for v in values
+        VariantOption(parse(v, parser_config=context.parser_config))
+        for v in values.iterate_string_values_weighted()
     ]
 
     wildcard_variant = VariantCommand(

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any
+from typing import Any, Sequence
 
 from dynamicprompts.wildcards.collection.base import WildcardCollection
+from dynamicprompts.wildcards.item import WildcardItem
 
 
 @dataclasses.dataclass(frozen=True)
@@ -15,10 +16,10 @@ class ListWildcardCollection(WildcardCollection):
     a structured pantry JSON/YAML file.
     """
 
-    entries: list[str]
+    entries: Sequence[str | WildcardItem]
 
     # Implementation-specific hint for the source of the wildcards.
     source: Any = None
 
-    def get_values(self) -> list[str]:
+    def get_values(self) -> Sequence[str | WildcardItem]:
         return self.entries

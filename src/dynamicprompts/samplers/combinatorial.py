@@ -149,13 +149,14 @@ class CombinatorialSampler(Sampler):
         command: WildcardCommand,
         context: SamplingContext,
     ) -> StringGen:
+        # TODO: doesn't support weights
         context = context.with_variables(command.variables)
-        values = context.wildcard_manager.get_all_values(command.wildcard)
+        values = context.wildcard_manager.get_values(command.wildcard)
         if not values:
             yield from get_wildcard_not_found_fallback(command, context)
             return
 
-        for val in values:
+        for val in values.iterate_string_values_weighted():
             # Parse and generate prompts from wildcard value
             yield from context.sample_prompts(val)
 
