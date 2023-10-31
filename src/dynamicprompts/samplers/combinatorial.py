@@ -20,18 +20,9 @@ from dynamicprompts.samplers.utils import (
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.types import StringGen
+from dynamicprompts.utils import dedupe
 
 logger = logging.getLogger(__name__)
-
-
-def _dedupe(arr: list[str]) -> tuple[str, ...]:
-    seen: set[str] = set()
-    result: list[str] = []
-    for item in arr:
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
-    return tuple(result)
 
 
 def _combo_to_prompt(
@@ -138,7 +129,7 @@ class CombinatorialSampler(Sampler):
             ):
                 for combo in variant_command.get_value_combinations(bound):
                     for prompt_arr in _combo_to_prompt(context, combo):
-                        deduped_arr = _dedupe(prompt_arr)
+                        deduped_arr = dedupe(prompt_arr, key=str)
                         correct_size = len(deduped_arr) == bound
                         if correct_size and deduped_arr not in seen:
                             seen.add(deduped_arr)

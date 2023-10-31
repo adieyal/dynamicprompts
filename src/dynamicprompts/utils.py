@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import random
-from collections import OrderedDict
 from itertools import cycle
-from typing import Iterable, TypeVar
+from typing import Any, Iterable, TypeVar
 
 from dynamicprompts.types import StringGen
 
@@ -26,9 +25,15 @@ def is_empty_line(line: str | None) -> bool:
     return line is None or line.strip() == "" or line.strip().startswith("#")
 
 
-def dedupe(arr: list[str]) -> tuple[str, ...]:
-    ordered_dict = OrderedDict.fromkeys(arr)
-    return tuple(ordered_dict.keys())
+def dedupe(arr: list[T], key=lambda x: x) -> tuple[T, ...]:
+    seen_keys: set[Any] = set()
+    result: list[T] = []
+    for item in arr:
+        k = key(item)
+        if k not in seen_keys:
+            seen_keys.add(k)
+            result.append(item)
+    return tuple(result)
 
 
 def rotate_all(generators: Iterable[StringGen]) -> list[str]:
