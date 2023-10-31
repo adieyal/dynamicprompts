@@ -23,12 +23,8 @@ class TestCommandCollection:
         random_sampling_context,
     ):
         collection = CommandCollection(commands, context=random_sampling_context)
-        assert len(collection.commands) == 3
         assert len(collection.generators) == 3
-
-        assert collection.commands[0].literal == "a"
-        assert collection.commands[1].literal == "b"
-        assert collection.commands[2].literal == "c"
+        assert [c.literal for c in collection.commands] == ["a", "b", "c"]
 
         for command, generator in zip(commands, collection.generators):
             assert str(next(generator)) == command.literal

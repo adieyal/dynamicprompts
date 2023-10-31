@@ -34,10 +34,8 @@ def test_default_generator():
 
 def test_generate(mock_generator, mock_requests, mock_random):
     generator = FeelingLuckyGenerator(mock_generator)
-    prompts = generator.generate("This is a test", 1)
-
-    assert len(prompts) == 1
-    assert prompts[0] == "ABC"
+    prompts = list(generator.generate("This is a test", 1))
+    assert prompts == ["ABC"]
 
     mock_generator.generate.assert_called_with("This is a test", 1)
     mock_random.choices.assert_called_with([{"prompt": "ABC"}, {"prompt": "XYZ"}], k=1)
@@ -47,10 +45,8 @@ def test_generate_accepts_kwargs(mock_generator, mock_requests, mock_random):
     generator = FeelingLuckyGenerator(mock_generator)
 
     # Call generate with an arbitrary keyword argument
-    prompts = generator.generate("This is a test", 1, some_kwarg="value")
-
-    assert len(prompts) == 1
-    assert prompts[0] == "ABC"
+    prompts = list(generator.generate("This is a test", 1, some_kwarg="value"))
+    assert prompts == ["ABC"]
 
     # Check that the generate method of the underlying generator was called with the keyword argument
     mock_generator.generate.assert_called_with("This is a test", 1, some_kwarg="value")
