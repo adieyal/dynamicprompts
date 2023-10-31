@@ -4,7 +4,8 @@ import random
 from itertools import cycle
 from typing import Any, Iterable, TypeVar
 
-from dynamicprompts.types import StringGen
+from dynamicprompts.sampling_result import SamplingResult
+from dynamicprompts.types import ResultGen
 
 T = TypeVar("T")
 
@@ -36,21 +37,21 @@ def dedupe(arr: list[T], key=lambda x: x) -> tuple[T, ...]:
     return tuple(result)
 
 
-def rotate_all(generators: Iterable[StringGen]) -> list[str]:
+def rotate_all(generators: Iterable[ResultGen]) -> list[SamplingResult]:
     return [next(gen) for gen in generators]
 
 
 def rotate_and_join(
-    generators: Iterable[StringGen],
+    generators: Iterable[ResultGen],
     *,
     separator: str,
-) -> str:
-    return separator.join(rotate_all(generators))
+) -> SamplingResult:
+    return SamplingResult.joined(rotate_all(generators), separator=separator)
 
 
 def next_sampler_next_value(
-    samplers: Iterable[StringGen],
-) -> StringGen:
+    samplers: Iterable[ResultGen],
+) -> ResultGen:
     yield from (next(iter(sampler)) for sampler in cycle(samplers))
 
 

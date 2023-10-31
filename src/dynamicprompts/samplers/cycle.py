@@ -16,13 +16,14 @@ from dynamicprompts.samplers.utils import (
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.types import StringGen, to_string_gen
+from dynamicprompts.sampling_result import SamplingResult
+from dynamicprompts.types import ResultGen, to_result_gen
 from dynamicprompts.utils import next_sampler_next_value
 
 logger = logging.getLogger(__name__)
 
 
-def get_arrs(gen: StringGen, rest_gen: Iterable[list[str]]):
+def get_arrs(gen: ResultGen, rest_gen: Iterable[list[SamplingResult]]):
     try:
         for r in rest_gen:
             yield [next(gen)] + r
@@ -33,7 +34,7 @@ def get_arrs(gen: StringGen, rest_gen: Iterable[list[str]]):
 def _get_combination_samples(
     combo: list[Command],
     sampling_context: SamplingContext,
-) -> Generator[list[str], None, None]:
+) -> Generator[list[SamplingResult], None, None]:
     try:
         if len(combo) == 0:
             while True:
@@ -55,7 +56,7 @@ class CyclicalSampler(Sampler):
         self,
         command: VariantCommand,
         sampling_context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         is_wildcard_variant = len(command.values) == 1 and isinstance(
             command.values[0],
             WildcardCommand,
@@ -84,7 +85,7 @@ class CyclicalSampler(Sampler):
 
             combination_samplers = (
                 (
-                    command.separator.join(sample)
+                    SamplingResult.joined(sample, separator=command.separator)
                     for sample in _get_combination_samples(combo, sampling_context)
                 )
                 for combo in combinations
@@ -97,7 +98,7 @@ class CyclicalSampler(Sampler):
         self,
         command: WildcardCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         # TODO: doesn't support weights
         wc_values = context.wildcard_manager.get_values(command.wildcard)
         new_context = context.with_variables(
@@ -111,5 +112,5 @@ class CyclicalSampler(Sampler):
             new_context.sample_prompts(val)
             for val in wc_values.iterate_string_values_weighted()
         )
-        value_string_gens = (to_string_gen(val) for val in value_samplers)
-        yield from next_sampler_next_value(value_string_gens)
+        value_result_gens = [to_result_gen(val) for val in value_samplers]
+        yield from next_sampler_next_value(value_result_gens)

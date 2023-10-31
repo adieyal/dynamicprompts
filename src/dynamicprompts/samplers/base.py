@@ -14,7 +14,8 @@ from dynamicprompts.commands.variable_commands import (
     VariableAssignmentCommand,
 )
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.types import StringGen
+from dynamicprompts.sampling_result import SamplingResult
+from dynamicprompts.types import ResultGen
 from dynamicprompts.utils import rotate_and_join
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class Sampler:
         self,
         command: Command,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         # This is purposely not a dict lookup/getattr magic thing, to make
         # it easier for code completion etc. to see what's going on.
         if isinstance(command, LiteralCommand):
@@ -44,7 +45,7 @@ class Sampler:
             return self._get_variable(command, context)
         return self._unsupported_command(command)
 
-    def _unsupported_command(self, command: Command) -> StringGen:
+    def _unsupported_command(self, command: Command) -> ResultGen:
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support {command.__class__.__name__}",
         )
@@ -53,21 +54,21 @@ class Sampler:
         self,
         command: WildcardCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         return self._unsupported_command(command)
 
     def _get_variant(
         self,
         command: VariantCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         return self._unsupported_command(command)
 
     def _get_sequence(
         self,
         command: SequenceCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         tokens, context = context.process_variable_assignments(command.tokens)
         sub_generators = [context.generator_from_command(c) for c in tokens]
 
@@ -78,15 +79,15 @@ class Sampler:
         self,
         command: LiteralCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         while True:
-            yield command.literal
+            yield SamplingResult(text=command.literal)
 
     def _get_variable(
         self,
         command: VariableAccessCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         variable = command.name
         command_to_sample = context.variables.get(variable, command.default)
         if not command_to_sample:
