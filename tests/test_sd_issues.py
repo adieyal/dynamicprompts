@@ -90,20 +90,17 @@ def test_dp_28():
     prompts = generator.generate(s, 10)
 
     assert len(prompts) == 10
-    assert all(
-        p
-        in [
-            "A",
-            "B",
-            "X and Y",
-            "X and Z",
-            "Y and X",
-            "Y and Z",
-            "Z and X",
-            "Z and Y",
-        ]
-        for p in prompts
-    )
+    expected = {
+        "A",
+        "B",
+        "X and Y",
+        "X and Z",
+        "Y and X",
+        "Y and Z",
+        "Z and X",
+        "Z and Y",
+    }
+    assert all(str(p) in expected for p in prompts)
 
 
 def test_sd_358(wildcard_manager: WildcardManager):
@@ -114,7 +111,7 @@ def test_sd_358(wildcard_manager: WildcardManager):
     ) + wildcard_manager.get_values("colors-warm")
     combinations = [f"{c1},{c2}" for c1 in colors for c2 in colors if c1 != c2]
     # check the every prompt is a combination of two colors
-    assert all(p in combinations for p in prompts)
+    assert all(str(p) in combinations for p in prompts)
 
 
 def test_sd_377(wildcard_manager: WildcardManager, caplog):

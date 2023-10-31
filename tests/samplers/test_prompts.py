@@ -46,7 +46,7 @@ class TestPrompts:
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_empty(self, sampling_context: SamplingContext):
         prompts = list(sampling_context.sample_prompts("", 5))
-        assert prompts == []
+        assert [str(p) for p in prompts] == []
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -62,7 +62,9 @@ class TestPrompts:
         expected: list[str],
     ):
         template = "A literal sentence"
-        assert list(sampling_context.sample_prompts(template, 5)) == expected
+        assert [
+            str(p) for p in sampling_context.sample_prompts(template, 5)
+        ] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -78,7 +80,9 @@ class TestPrompts:
         expected: list[str],
     ):
         template = "Test [low emphasis]"
-        assert list(sampling_context.sample_prompts(template, 5)) == expected
+        assert [
+            str(p) for p in sampling_context.sample_prompts(template, 5)
+        ] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -105,7 +109,7 @@ class TestPrompts:
             prompts = list(sampling_context.sample_prompts(template, 5))
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == f"A red {e}"
+            assert str(prompt) == f"A red {e}"
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -139,7 +143,7 @@ class TestPrompts:
 
         expected_sentences = [f"A {e} rose" for e in expected]
 
-        assert list(prompts) == expected_sentences
+        assert [str(p) for p in prompts] == expected_sentences
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -193,7 +197,7 @@ class TestPrompts:
         else:
             prompts = sampling_context.sample_prompts(template, 5)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -256,7 +260,7 @@ class TestPrompts:
         else:
             prompts = sampling_context.sample_prompts(template, 5)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -316,7 +320,7 @@ class TestPrompts:
         else:
             prompts = sampling_context.sample_prompts(template, 5)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -364,7 +368,7 @@ class TestPrompts:
 
         expected = [f"A {e} square" for e in expected]
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -391,7 +395,7 @@ class TestPrompts:
 
         expected = [f"A {e} square" for e in expected]
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -437,7 +441,7 @@ class TestPrompts:
         else:
             prompts = sampling_context.sample_prompts(template, len(expected))
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -466,7 +470,7 @@ class TestPrompts:
                 prompts = list(sampling_context.sample_prompts(template, len(expected)))
             expected = [f"A {e} square" for e in expected]
 
-            assert list(prompts) == expected
+            assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -487,7 +491,7 @@ class TestPrompts:
             len(expected),
         )
 
-        assert list(prompts) == [ex.replace("__", wrap) for ex in expected]
+        assert [str(p) for p in prompts] == [ex.replace("__", wrap) for ex in expected]
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
@@ -509,7 +513,7 @@ class TestPrompts:
         with patch_random_sampler_variant_choices(expected):
             prompts = list(sampling_context.sample_prompts(template, len(expected)))
 
-        assert list(prompts) == [v[0].literal for v in expected]
+        assert [str(p) for p in prompts] == [v[0].literal for v in expected]
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
@@ -556,7 +560,7 @@ class TestPrompts:
 
             prompts = sampling_context.sample_prompts(template, len(expected))
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context"),
@@ -572,9 +576,9 @@ class TestPrompts:
     ):
         template = "A red {3$$square|circle}"
         prompts = sampling_context.sample_prompts(template, 10)
-
+        expected = ("A red square,circle", "A red circle,square")
         for el in prompts:
-            assert el in ["A red square,circle", "A red circle,square"]
+            assert str(el) in expected
 
     @pytest.mark.parametrize(
         ("sampling_context"),
@@ -590,7 +594,7 @@ class TestPrompts:
     ):
         template = "(__colors*__:2.3) "
 
-        prompts = list(sampling_context.sample_prompts(template, 20))
+        prompts = [str(p) for p in sampling_context.sample_prompts(template, 20)]
 
         for prompt in prompts:
             assert "( " not in prompt

@@ -31,19 +31,17 @@ class TestCommandCollection:
         assert collection.commands[2].literal == "c"
 
         for command, generator in zip(commands, collection.generators):
-            assert next(generator) == command.literal
+            assert str(next(generator)) == command.literal
 
         generator = collection.generators[0]
-        assert next(generator) == "a"
-        assert next(generator) == "a"
-        assert next(generator) == "a"
-        assert next(generator) == "a"
+        for x in range(4):
+            assert str(next(generator)) == "a"
 
     def test_generators_values(self, commands, combinatorial_sampling_context):
         collection = CommandCollection(commands, combinatorial_sampling_context)
 
         for command in commands:
-            assert collection.get_value(command) == command.literal
+            assert str(collection.get_value(command)) == command.literal
 
     def test_generators_for_missing_command(
         self,
@@ -70,5 +68,5 @@ class TestCommandCollection:
             combinatorial_sampling_context,
         )
 
-        assert collection.get_value(combinatorial_command) == "combinatorial"
+        assert str(collection.get_value(combinatorial_command)) == "combinatorial"
         assert collection.get_value(combinatorial_command) is None
