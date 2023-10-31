@@ -45,22 +45,22 @@ def wildcard(environment: Environment, wildcard_name: str) -> list[str]:
     wm: WildcardManager = environment.globals["wildcard_manager"]  # type: ignore
     generator: CombinatorialPromptGenerator = environment.globals["generators"]["combinatorial"]  # type: ignore
 
-    return list(generator.generate(wm.to_wildcard(wildcard_name)))
-    return combinatorial_sample(environment, wildcard_name)
+    return [str(r) for r in generator.generate(wm.to_wildcard(wildcard_name))]
 
 
 @pass_environment
 def random_sample(environment: Environment, prompt: str) -> str:
     generator = environment.globals["generators"]["random"]  # type: ignore
 
-    return list(generator.generate(prompt))[0]
+    ps = generator.generate(prompt)
+    return str(next(iter(ps)))
 
 
 @pass_environment
 def combinatorial_sample(environment: Environment, prompt: str) -> list[str]:
     generator = environment.globals["generators"]["combinatorial"]  # type: ignore
 
-    return list(generator.generate(prompt))
+    return [str(p) for p in generator.generate(prompt)]
 
 
 class PromptExtension(Extension):
