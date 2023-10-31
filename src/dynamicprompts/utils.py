@@ -10,11 +10,11 @@ T = TypeVar("T")
 
 
 def removeprefix(s: str, prefix: str) -> str:
-    return s[len(prefix) :] if s.startswith(prefix) else s
+    return s[len(prefix) :] if prefix and s.startswith(prefix) else s
 
 
 def removesuffix(s: str, suffix: str) -> str:
-    return s[: -len(suffix)] if s.endswith(suffix) else s
+    return s[: -len(suffix)] if suffix and s.endswith(suffix) else s
 
 
 def squash_whitespace(s: str) -> str:
