@@ -1,3 +1,4 @@
+0.30.0 - Removed support for python 3.7 ([#98](https://github.com/adieyal/dynamicprompts/pull/98)), wildcard files now support weights ([#97](https://github.com/adieyal/dynamicprompts/pull/97)). Also added infrastructure to return additional metadata gatherered during sampling ([#100](https://github.com/adieyal/dynamicprompts/pull/100)).
 0.29.0 - Added an option to shuffle the output of the wildcard manager
 0.28.0 - WildcardManager no longer deduplicates wildcards. Return a list instead of a set
 0.27.1 - Late-import of jinja2 Jinja2 to work around issues with incompatible versions of Jinja2 being installed in some downstream users' environments. See [#476](https://github.com/adieyal/sd-dynamic-prompts/issues/476)
