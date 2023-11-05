@@ -27,12 +27,12 @@ class CombinatorialPromptGenerator(PromptGenerator):
             parser_config=parser_config,
         )
 
-    def generate(  # type: ignore[override]
+    def generate(
         self,
         template: str | None,
         max_prompts: int | None = constants.MAX_IMAGES,
         **kwargs,
     ) -> list[str]:
-        return list(
-            self._context.sample_prompts((template or ""), max_prompts),
-        )
+        return [
+            str(p) for p in self._context.sample_prompts((template or ""), max_prompts)
+        ]

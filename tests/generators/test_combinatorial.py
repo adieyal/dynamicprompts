@@ -12,9 +12,7 @@ class TestCombinatorialGenerator:
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         prompts = list(generator.generate(prompt, 10))
-
-        assert len(prompts) == 1
-        assert prompts[0] == prompt
+        assert prompts == [prompt]
 
     def test_generate_with_wildcard(self, wildcard_manager: WildcardManager):
         prompt = "I love __food__"
@@ -26,30 +24,32 @@ class TestCombinatorialGenerator:
         )
         prompts = list(generator.generate(prompt, 10))
 
-        assert len(prompts) == 3
-        assert prompts[0] == "I love bread"
-        assert prompts[1] == "I love butter"
-        assert prompts[2] == "I love cheese"
+        assert prompts == [
+            "I love bread",
+            "I love butter",
+            "I love cheese",
+        ]
 
         prompts = list(generator.generate(prompt, 2))
 
-        assert len(prompts) == 2
-        assert prompts[0] == "I love bread"
-        assert prompts[1] == "I love butter"
+        assert prompts == [
+            "I love bread",
+            "I love butter",
+        ]
 
     def test_generate_variant_with_separator(self, wildcard_manager: WildcardManager):
         prompt = "{2$$ and $$A|B|C}"
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         prompts = list(generator.generate(prompt))
-        assert len(prompts) == 6
-
-        assert prompts[0] == "A and B"
-        assert prompts[1] == "A and C"
-        assert prompts[2] == "B and A"
-        assert prompts[3] == "B and C"
-        assert prompts[4] == "C and A"
-        assert prompts[5] == "C and B"
+        assert prompts == [
+            "A and B",
+            "A and C",
+            "B and A",
+            "B and C",
+            "C and A",
+            "C and B",
+        ]
 
     def test_generate_variant_with_pipe_separator(
         self,
@@ -59,14 +59,14 @@ class TestCombinatorialGenerator:
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
         prompts = list(generator.generate(prompt, 9))
-        assert len(prompts) == 6
-
-        assert prompts[0] == "A|B"
-        assert prompts[1] == "A|C"
-        assert prompts[2] == "B|A"
-        assert prompts[3] == "B|C"
-        assert prompts[4] == "C|A"
-        assert prompts[5] == "C|B"
+        assert prompts == [
+            "A|B",
+            "A|C",
+            "B|A",
+            "B|C",
+            "C|A",
+            "C|B",
+        ]
 
     def test_all_generations(self, wildcard_manager: WildcardManager):
         prompt = "I love __food__ and __drink__"
@@ -76,22 +76,20 @@ class TestCombinatorialGenerator:
         wildcard_manager.get_values = Mock(
             return_value=WildcardValues.from_items(["bread", "butter", "cheese"]),
         )
-        prompts = list(generator.generate(prompt, None))
+        for limit in (None, 9):
+            prompts = list(generator.generate(prompt, limit))
 
-        assert len(prompts) == 9
-        assert prompts[0] == "I love bread and bread"
-        assert prompts[1] == "I love bread and butter"
-        assert prompts[2] == "I love bread and cheese"
-        assert prompts[3] == "I love butter and bread"
-        assert prompts[4] == "I love butter and butter"
-        assert prompts[5] == "I love butter and cheese"
-        assert prompts[6] == "I love cheese and bread"
-        assert prompts[7] == "I love cheese and butter"
-        assert prompts[8] == "I love cheese and cheese"
-
-        prompts = generator.generate(prompt)
-
-        assert len(list(prompts)) == 9
+            assert prompts == [
+                "I love bread and bread",
+                "I love bread and butter",
+                "I love bread and cheese",
+                "I love butter and bread",
+                "I love butter and butter",
+                "I love butter and cheese",
+                "I love cheese and bread",
+                "I love cheese and butter",
+                "I love cheese and cheese",
+            ]
 
     def test_without_wildcard_manager(self):
         generator = CombinatorialPromptGenerator()

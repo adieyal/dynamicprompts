@@ -15,7 +15,8 @@ from dynamicprompts.samplers.utils import (
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
-from dynamicprompts.types import StringGen
+from dynamicprompts.sampling_result import SamplingResult
+from dynamicprompts.types import ResultGen
 from dynamicprompts.utils import choose_without_replacement, rotate_and_join
 from dynamicprompts.wildcards.values import WildcardValues
 
@@ -62,7 +63,7 @@ class RandomSampler(Sampler):
         self,
         command: VariantCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         if len(command.values) == 0:
             return
         elif len(command.values) == 1:
@@ -100,7 +101,7 @@ class RandomSampler(Sampler):
             ]
 
             if len(sub_generators) == 0:
-                yield ""
+                yield SamplingResult(text="")
             else:
                 yield rotate_and_join(
                     sub_generators,
@@ -111,7 +112,7 @@ class RandomSampler(Sampler):
         self,
         command: WildcardCommand,
         context: SamplingContext,
-    ) -> StringGen:
+    ) -> ResultGen:
         context = context.with_variables(command.variables)
         values = context.wildcard_manager.get_values(command.wildcard)
 

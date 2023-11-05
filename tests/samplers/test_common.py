@@ -55,7 +55,7 @@ class TestSequenceCommand:
     def test_prompts(self, sampling_context: SamplingContext):
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
         prompt = next(sampling_context.generator_from_command(sequence))
-        assert prompt == "one two three"
+        assert str(prompt) == "one two three"
 
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_custom_separator(self, sampling_context: SamplingContext):
@@ -63,7 +63,7 @@ class TestSequenceCommand:
         command2 = LiteralCommand("sentence")
         sequence = SequenceCommand([command1, command2], separator="|")
         prompt = next(sampling_context.generator_from_command(sequence))
-        assert prompt == "A|sentence"
+        assert str(prompt) == "A|sentence"
 
 
 class TestLiteralCommand:
@@ -71,7 +71,7 @@ class TestLiteralCommand:
     def test_single_literal(self, sampling_context: SamplingContext):
         literal = LiteralCommand("one")
         gen = sampling_context.generator_from_command(literal)
-        assert next(gen) == "one"
+        assert str(next(gen)) == "one"
 
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_multiple_literals(
@@ -81,7 +81,7 @@ class TestLiteralCommand:
         sequence = SequenceCommand.from_literals(["one", " ", "two", " ", "three"])
         prompts = sampling_context.generator_from_command(sequence)
 
-        assert next(prompts) == "one two three"
+        assert str(next(prompts)) == "one two three"
 
 
 class TestVariantCommand:
@@ -96,7 +96,7 @@ class TestVariantCommand:
         command = VariantCommand.from_literals_and_weights(["one"])
 
         gen = sampling_context.generator_from_command(command)
-        assert next(gen) == "one"
+        assert str(next(gen)) == "one"
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -127,7 +127,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -162,7 +162,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == f"{e} circles"
+            assert str(prompt) == f"{e} circles"
 
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_variant_with_zero_bound(
@@ -176,7 +176,7 @@ class TestVariantCommand:
         )
 
         gen = sampling_context.generator_from_command(command1)
-        assert next(gen) == ""
+        assert str(next(gen)) == ""
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -220,7 +220,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -265,7 +265,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize("separator", [",", " and "])
     @pytest.mark.parametrize(
@@ -312,7 +312,7 @@ class TestVariantCommand:
         color_pair_strings = [
             f"{c1.literal}{separator}{c2.literal}" for c1, c2 in color_pairs
         ]
-        assert prompts == color_pair_strings
+        assert [str(p) for p in prompts] == color_pair_strings
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
@@ -354,7 +354,7 @@ class TestVariantCommand:
         color_pair_strings = [
             f"{c1.literal}{separator}{c2.literal}" for c1, c2 in color_pairs
         ]
-        assert prompts == color_pair_strings
+        assert [str(p) for p in prompts] == color_pair_strings
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -397,7 +397,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -449,7 +449,7 @@ class TestVariantCommand:
             prompts = [next(gen) for _ in expected]
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == f"{e} are cool"
+            assert str(prompt) == f"{e} are cool"
 
 
 class TestWildcardsCommand:
@@ -476,7 +476,7 @@ class TestWildcardsCommand:
             prompts = [next(gen) for _ in range(len(values))]
 
         for prompt, e in zip(prompts, values):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
@@ -502,8 +502,9 @@ class TestWildcardsCommand:
         with patch_random_sampler_wildcard_choice(values):
             prompts = [next(gen) for _ in range(len(values))]
 
-        for prompt, e in zip(prompts, values):
-            assert prompt == f"{e} are cool"
+        with patch_random_sampler_wildcard_choice(values):
+            for prompt, e in zip(prompts, values):
+                assert str(prompt) == f"{e} are cool"
 
     @pytest.mark.parametrize(
         ("sampling_context", "key"),
@@ -555,7 +556,7 @@ class TestWildcardsCommand:
             raise ValueError("Invalid sampler")
 
         for prompt, e in zip(prompts, expected):
-            assert prompt == e
+            assert str(prompt) == e
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -588,7 +589,7 @@ class TestWildcardsCommand:
 
             prompts = [next(gen) for _ in range(len(expected))]
 
-            assert prompts == expected
+            assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context", "expected"),
@@ -622,19 +623,26 @@ class TestWildcardsCommand:
         wildcard_command = WildcardCommand("referencing-colors")
         sequence = SequenceCommand([wildcard_command])
         gen = sampling_context.generator_from_command(sequence)
-        assert list(islice(gen, len(expected))) == expected
+        ps = [str(p) for p in islice(gen, len(expected))]
+        assert ps == expected
 
 
 class TestVariableCommands:
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_variable_commands(self, sampling_context: SamplingContext):
         cmd = parse("${animal=cat}the animal is ${animal:dog}")
-        assert next(sampling_context.generator_from_command(cmd)) == "the animal is cat"
+        assert (
+            str(next(sampling_context.generator_from_command(cmd)))
+            == "the animal is cat"
+        )
 
     @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
     def test_variable_commands_default(self, sampling_context: SamplingContext):
         cmd = parse("the animal is ${animal:dog}")
-        assert next(sampling_context.generator_from_command(cmd)) == "the animal is dog"
+        assert (
+            str(next(sampling_context.generator_from_command(cmd)))
+            == "the animal is dog"
+        )
 
     @pytest.mark.parametrize("immediate", [True, False])
     def test_immediate_variable_commands(
@@ -660,7 +668,7 @@ class TestVariableCommands:
     def test_immediate_literal_variable(self, random_sampling_context: SamplingContext):
         # Just a coverage test for the optimization for literal variables
         cmd = parse("${a =! foo}${a}")
-        assert next(random_sampling_context.generator_from_command(cmd)) == "foo"
+        assert str(next(random_sampling_context.generator_from_command(cmd))) == "foo"
 
     def test_unknown_variable(self, wildcard_manager: WildcardManager):
         ctx1 = SamplingContext(
@@ -680,5 +688,5 @@ class TestVariableCommands:
         cmd = parse("${a}")
         with pytest.raises(KeyError):
             next(ctx1.generator_from_command(cmd))
-        assert next(ctx2.generator_from_command(cmd)) == "oop!"
-        assert next(ctx3.generator_from_command(cmd)) == "bloop!"
+        assert str(next(ctx2.generator_from_command(cmd))) == "oop!"
+        assert str(next(ctx3.generator_from_command(cmd))) == "bloop!"

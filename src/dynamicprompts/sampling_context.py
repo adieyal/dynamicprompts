@@ -11,8 +11,8 @@ from dynamicprompts.commands.variable_commands import VariableAssignmentCommand
 from dynamicprompts.constants import DEFAULT_RANDOM
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
-from dynamicprompts.types import StringGen
-from dynamicprompts.utils import squash_whitespace
+from dynamicprompts.sampling_result import SamplingResult
+from dynamicprompts.types import ResultGen
 from dynamicprompts.wildcards import WildcardManager
 
 if TYPE_CHECKING:
@@ -95,7 +95,7 @@ class SamplingContext:
             _variables_being_sampled=self._variables_being_sampled | {variable},
         )
 
-    def generator_from_command(self, command: Command) -> StringGen:
+    def generator_from_command(self, command: Command) -> ResultGen:
         samp, ctx = self.get_sampler_and_context(command)
         return samp.generator_from_command(command, ctx)
 
@@ -103,7 +103,7 @@ class SamplingContext:
         self,
         prompt: str | Command,
         num_prompts: int | None = None,
-    ) -> Iterable[str]:
+    ) -> Iterable[SamplingResult]:
         """
         Generate prompts from a prompt template.
 
@@ -125,7 +125,7 @@ class SamplingContext:
         gen = self.generator_from_command(command)
 
         if self.ignore_whitespace:
-            gen = (squash_whitespace(p) for p in gen)
+            gen = (res.whitespace_squashed() for res in gen)
 
         if num_prompts is None:
             return gen
@@ -168,6 +168,8 @@ class SamplingContext:
                 return command.value
             # Sample the variable assignment command to get the value
             return LiteralCommand(
-                next(self.generator_from_command(command.value)),
+                str(
+                    next(self.generator_from_command(command.value)),
+                ),  # TODO: sus str cast from result?
             )
         return command.value

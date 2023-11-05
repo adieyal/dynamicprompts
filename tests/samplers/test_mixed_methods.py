@@ -35,7 +35,7 @@ class TestCombinatorialParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -61,7 +61,7 @@ class TestCombinatorialParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -87,7 +87,7 @@ class TestCombinatorialParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -121,7 +121,7 @@ class TestCombinatorialParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(combinatorial_sampling_context.sample_prompts(template, 3))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choices_side_effect", "expected"),
@@ -147,7 +147,7 @@ class TestCombinatorialParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(combinatorial_sampling_context.sample_prompts(template, 10))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_method", "template", "expected"),
@@ -209,7 +209,7 @@ class TestCombinatorialParent:
         ):
             prompts = list(prompts)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choice_value", "expected"),
@@ -230,7 +230,7 @@ class TestCombinatorialParent:
             with patch_random_sampler_wildcard_choice([choice_value] * 3):
                 prompts = list(prompts)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("template", "choice_side_effect", "expected"),
@@ -260,7 +260,7 @@ class TestCombinatorialParent:
             with patch_random_sampler_wildcard_choice(choice_side_effect):
                 prompts = list(prompts)
 
-        assert list(prompts) == expected
+        assert [str(p) for p in prompts] == expected
 
 
 class TestRandomParent:
@@ -284,7 +284,7 @@ class TestRandomParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(random_sampling_context.sample_prompts(template, 3))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected
 
 
 class TestCyclicalParent:
@@ -308,4 +308,4 @@ class TestCyclicalParent:
     ):
         with patch_random_sampler_variant_choices_with_literals(choices_side_effect):
             prompts = list(cyclical_sampling_context.sample_prompts(template, 3))
-        assert prompts == expected
+        assert [str(p) for p in prompts] == expected

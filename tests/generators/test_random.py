@@ -29,7 +29,7 @@ class TestRandomGenerator:
         with patch_random_sampler_wildcard_choice(animals):
             prompts = list(generator.generate(prompt, 4))
 
-        assert prompts == [f"I saw a {animal}" for animal in animals]
+        assert [str(p) for p in prompts] == [f"I saw a {animal}" for animal in animals]
 
     def test_without_wildcard_manager(self):
         generator = RandomPromptGenerator()
@@ -66,7 +66,7 @@ class TestRandomGenerator:
     def test_cyclical_sampler_with_seeds(self, generator: RandomPromptGenerator):
         template = "A {@red|green|blue} ball"
         prompts = generator.generate(template=template, num_images=3, seeds=[1, 2, 3])
-        assert prompts == [
+        assert [str(p) for p in prompts] == [
             "A red ball",
             "A green ball",
             "A blue ball",

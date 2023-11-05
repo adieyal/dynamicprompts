@@ -21,7 +21,7 @@ def test_discussion_61(wildcard_manager: WildcardManager):
     seen = set()
     expected = {"fox", "manatee"}
     for prompt in islice(gen, 10):
-        prompt = prompt.strip().lower()
+        prompt = str(prompt).strip().lower()
         assert prompt.startswith("cute kawaii squishy")
         for ex in expected:
             if ex in prompt:
@@ -37,5 +37,5 @@ def test_discussion_61_shorthand(wildcard_manager: WildcardManager):
         default_sampling_method=SamplingMethod.RANDOM,
         wildcard_manager=wildcard_manager,
     )
-    prompt = next(scon.sample_prompts(cmd))
+    prompt = str(next(scon.sample_prompts(cmd)))
     assert prompt.strip().lower().startswith("cute kawaii squishy fox")
