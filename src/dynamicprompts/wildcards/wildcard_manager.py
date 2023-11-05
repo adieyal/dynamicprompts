@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import logging
-import random
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable
 
 from dynamicprompts.parser.config import default_parser_config
 from dynamicprompts.wildcards.collection import WildcardCollection
+from dynamicprompts.wildcards.item import WildcardItem
 from dynamicprompts.wildcards.tree import (
     WildcardTree,
     build_tree_from_root_map,
 )
 from dynamicprompts.wildcards.utils import clean_wildcard
+from dynamicprompts.wildcards.values import WildcardValues
 
 if TYPE_CHECKING:
     from dynamicprompts.wildcards.types import RootMap
@@ -35,9 +37,9 @@ class WildcardManager:
         self._path: Path | None = Path(path) if path else None
         self._wildcard_wrap = wildcard_wrap
         self._tree: WildcardTree | None = None
-        self._values_cache: dict[str, list[str]] = {}
-        self.sort_wildcards = True
-        self.dedup_wildcards = True
+        self._values_cache: dict[str, WildcardValues] = {}
+        self._sort_wildcards = True
+        self._dedup_wildcards = True
         self.shuffle_wildcards = False
         self._root_map = {}
         if root_map:
@@ -46,6 +48,30 @@ class WildcardManager:
             self._root_map = root_map
         elif self._path:
             self._root_map = {"": [self._path]}
+
+    @property
+    def sort_wildcards(self) -> bool:
+        """
+        Whether to sort wildcard values.
+        """
+        return self._sort_wildcards
+
+    @sort_wildcards.setter
+    def sort_wildcards(self, value: bool) -> None:
+        self._sort_wildcards = value
+        self.clear_cache()
+
+    @property
+    def dedup_wildcards(self) -> bool:
+        """
+        Whether to deduplicate wildcard values.
+        """
+        return self._dedup_wildcards
+
+    @dedup_wildcards.setter
+    def dedup_wildcards(self, value: bool) -> None:
+        self._dedup_wildcards = value
+        self.clear_cache()
 
     @property
     def path(self) -> Path | None:
@@ -122,26 +148,33 @@ class WildcardManager:
         return set(self.tree.get_collection_names())
 
     def get_all_values(self, wildcard: str) -> list[str]:
+        warnings.warn(
+            "WildcardManager.get_all_values is deprecated; "
+            "use get_values instead to get a WildcardValues object "
+            "that supports weighted wildcards.",
+            DeprecationWarning,
+        )
+        return list(self.get_values(wildcard).string_values)
+
+    def get_values(self, wildcard: str) -> WildcardValues:
         """
         Get all wildcard values matching the given wildcard pattern.
         """
-        wildcards = self._get_all_values(wildcard)
+        values = self._get_values(wildcard)
 
-        if self.dedup_wildcards:
-            wildcards = list(dict.fromkeys(wildcards, None))
+        if self.shuffle_wildcards:
+            values = values.shuffled()
 
-        if self.sort_wildcards:
-            wildcards = sorted(wildcards)
-        elif self.shuffle_wildcards:
-            random.shuffle(wildcards)
+        return values
 
-        return wildcards
-
-    def _get_all_values(self, wildcard: str) -> list[str]:
+    def _get_values(self, wildcard: str) -> WildcardValues:
+        """
+        Get all wildcard values matching the given wildcard pattern.
+        """
         if wildcard in self._values_cache:
             return self._values_cache[wildcard]
 
-        values: list[str] = []
+        values: list[str | WildcardItem] = []
         for f in self.match_collections(wildcard):
             values.extend(f.get_values())
         if not values and not wildcard.startswith("**"):
@@ -158,13 +191,21 @@ class WildcardManager:
                     ", ".join(str(coll) for coll in rec_colls),
                 )
 
-        list_values = values
+        wildcards = list(values)
+
+        if self.dedup_wildcards:
+            wildcards = list(dict.fromkeys(wildcards, None))
+
+        if self.sort_wildcards and not self.shuffle_wildcards:
+            wildcards = sorted(wildcards, key=str)
+
+        values_object = WildcardValues.from_items(wildcards)
 
         if len(self._values_cache) > 100:
             # Naive way to limit the size of the cache.
             # We can't use `popitem` because it's guaranteed to be LIFO and we'd want FIFO.
             self._values_cache.clear()
 
-        self._values_cache[wildcard] = list_values
+        self._values_cache[wildcard] = values_object
 
-        return list_values
+        return values_object

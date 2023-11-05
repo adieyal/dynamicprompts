@@ -17,6 +17,7 @@ from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.values import WildcardValues
 from pytest_lazyfixture import lazy_fixture
 
 from tests.conftest import (
@@ -34,16 +35,15 @@ ONE_TWO_THREEx2and = cross(ONE_TWO_THREE, ONE_TWO_THREE, sep=" and ")
 
 
 @pytest.fixture
-def data_lookups(wildcard_manager: WildcardManager) -> dict[str, list[str]]:
-    wildcard_colours = wildcard_manager.get_all_values("colors*")
-    shuffled_colours = wildcard_colours.copy()
-    random.shuffle(shuffled_colours)
-    cold_colours = wildcard_manager.get_all_values("colors-cold")
+def data_lookups(wildcard_manager: WildcardManager) -> dict[str, WildcardValues]:
+    wildcard_colours = wildcard_manager.get_values("colors*")
+    shuffled_colours = wildcard_colours.shuffled()
+    cold_colours = wildcard_manager.get_values("colors-cold")
     shuffled_cold_colours = cold_colours.copy()
 
     return {
         "wildcard_colours": wildcard_colours,
-        "wildcard_coloursx2": wildcard_colours * 2,
+        "wildcard_coloursx2": wildcard_colours + wildcard_colours,
         "shuffled_colours": shuffled_colours,
         "cold_colours": cold_colours,
         "shuffled_cold_colours": shuffled_cold_colours,
@@ -465,16 +465,17 @@ class TestWildcardsCommand:
         self,
         sampling_context: SamplingContext,
         key: str,
-        data_lookups: dict[str, list[str]],
+        data_lookups: dict[str, WildcardValues],
     ):
         command = WildcardCommand("colors*")
 
         gen = sampling_context.generator_from_command(command)
 
-        with patch_random_sampler_wildcard_choice(data_lookups[key]):
-            prompts = [next(gen) for _ in range(len(data_lookups[key]))]
+        values = data_lookups[key].string_values
+        with patch_random_sampler_wildcard_choice(values):
+            prompts = [next(gen) for _ in range(len(values))]
 
-        for prompt, e in zip(prompts, data_lookups[key]):
+        for prompt, e in zip(prompts, values):
             assert prompt == e
 
     @pytest.mark.parametrize(
@@ -489,7 +490,7 @@ class TestWildcardsCommand:
         self,
         sampling_context: SamplingContext,
         key: str,
-        data_lookups: dict[str, list[str]],
+        data_lookups: dict[str, WildcardValues],
     ):
         command = WildcardCommand("colors*")
         sequence = SequenceCommand.from_literals(
@@ -497,11 +498,11 @@ class TestWildcardsCommand:
         )
 
         gen = sampling_context.generator_from_command(sequence)
+        values = data_lookups[key].string_values
+        with patch_random_sampler_wildcard_choice(values):
+            prompts = [next(gen) for _ in range(len(values))]
 
-        with patch_random_sampler_wildcard_choice(data_lookups[key]):
-            prompts = [next(gen) for _ in range(len(data_lookups[key]))]
-
-        for prompt, e in zip(prompts, data_lookups[key]):
+        for prompt, e in zip(prompts, values):
             assert prompt == f"{e} are cool"
 
     @pytest.mark.parametrize(
@@ -527,7 +528,7 @@ class TestWildcardsCommand:
         gen = sampling_context.generator_from_command(sequence)
 
         if isinstance(sampler, RandomSampler):
-            shuffled_colours = data_lookups[key]
+            shuffled_colours = data_lookups[key].string_values
             shuffled_shapes = SHAPES.copy()
             random.shuffle(shuffled_shapes)
             with patch_random_sampler_wildcard_choice(shuffled_colours):
@@ -577,8 +578,8 @@ class TestWildcardsCommand:
     ):
         with patch.object(
             sampling_context.wildcard_manager,
-            "get_all_values",
-            return_value=["{red|pink}", "green", "blue"],
+            "get_values",
+            return_value=WildcardValues.from_items(["{red|pink}", "green", "blue"]),
         ):
             wildcard_command = WildcardCommand("colours")
             sequence = SequenceCommand([wildcard_command])

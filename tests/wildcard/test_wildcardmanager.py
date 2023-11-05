@@ -22,7 +22,7 @@ def random_wildcard(length):
 def test_pathless_wm():
     wm = WildcardManager()
     assert not wm.path
-    assert not wm.get_all_values("test")
+    assert not wm.get_values("test")
     assert not list(wm.match_collections("test"))
 
 
@@ -37,13 +37,13 @@ def test_is_wildcard(wildcard_manager: WildcardManager):
 
 
 def test_get_all_values(wildcard_manager: WildcardManager):
-    assert wildcard_manager.get_all_values("color*") == [
+    assert wildcard_manager.get_values("color*").string_values == [
         "blue",
         "green",
         "red",
         "yellow",
     ]
-    assert wildcard_manager.get_all_values("flavors/*") == [
+    assert wildcard_manager.get_values("flavors/*").string_values == [
         "chocolate",  # sweet
         "coffee",  # bitter (from pantry JSON)
         "dark chocolate",  # bitter (from pantry JSON)
@@ -72,7 +72,7 @@ def test_get_all_values_sorted_and_deduplicated(sort, dedup, expected):
 
     wildcard_manager.sort_wildcards = sort
     wildcard_manager.dedup_wildcards = dedup
-    assert wildcard_manager.get_all_values("colors*") == expected
+    assert wildcard_manager.get_values("colors*").string_values == expected
 
 
 def test_get_all_values_shuffled():
@@ -83,12 +83,14 @@ def test_get_all_values_shuffled():
     )
     wildcard_manager.sort_wildcards = False
     wildcard_manager.dedup_wildcards = False
-    assert wildcard_manager.get_all_values("test_wildcards") == wildcards
+    assert wildcard_manager.get_values("test_wildcards").string_values == wildcards
     wildcard_manager.shuffle_wildcards = False
-    assert wildcard_manager.get_all_values("test_wildcards") == wildcards
+    assert wildcard_manager.get_values("test_wildcards").string_values == wildcards
 
     wildcard_manager.shuffle_wildcards = True
-    retrieved_wildcards = wildcard_manager.get_all_values("test_wildcards")
+    retrieved_wildcards = wildcard_manager.get_values(
+        "test_wildcards",
+    ).string_values
     assert set(retrieved_wildcards) == set(wildcards)
     assert retrieved_wildcards != wildcards
 
@@ -97,12 +99,16 @@ def test_pantry_expansion(wildcard_manager: WildcardManager):
     """
     Test that a pantry file appears as if it was a wildcard file.
     """
-    assert wildcard_manager.get_all_values("flavors/bitter") == [
+    assert wildcard_manager.get_values("flavors/bitter").string_values == [
         "coffee",
         "dark chocolate",
     ]
-    assert wildcard_manager.get_all_values("clothing") == ["Pants", "Shoes", "T-shirt"]
-    assert "Akseli Gallen-Kallela" in wildcard_manager.get_all_values("artists/finnish")
+    assert wildcard_manager.get_values("clothing").string_values == [
+        "Pants",
+        "Shoes",
+        "T-shirt",
+    ]
+    assert "Akseli Gallen-Kallela" in wildcard_manager.get_values("artists/finnish")
 
 
 def test_match_files_with_missing_wildcard(wildcard_manager: WildcardManager):
@@ -110,7 +116,7 @@ def test_match_files_with_missing_wildcard(wildcard_manager: WildcardManager):
 
 
 def test_get_all_values_with_missing_wildcard(wildcard_manager: WildcardManager):
-    assert wildcard_manager.get_all_values("__invalid_wildcard__") == []
+    assert not wildcard_manager.get_values("__invalid_wildcard__")
 
 
 def test_hierarchy(wildcard_manager: WildcardManager):
@@ -133,6 +139,8 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "referencing-colors",
         "shapes",
         "variant",
+        "weighted-animals/heavy",
+        "weighted-animals/light",
     }
     assert set(root.collections) == {
         "clothing",  # from pantry YAML
@@ -169,7 +177,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
 
 
 def test_backslash_norm(wildcard_manager: WildcardManager):
-    assert set(wildcard_manager.get_all_values("flavors\\*")) == {
+    assert set(wildcard_manager.get_values("flavors\\*")) == {
         "chocolate",
         "coffee",
         "dark chocolate",
@@ -181,8 +189,8 @@ def test_backslash_norm(wildcard_manager: WildcardManager):
 
 
 def test_directory_traversal(wildcard_manager: WildcardManager):
-    assert not wildcard_manager.get_all_values("../cant_touch_this")
-    assert not wildcard_manager.get_all_values("..\\cant_touch_this")
+    assert not wildcard_manager.get_values("../cant_touch_this")
+    assert not wildcard_manager.get_values("..\\cant_touch_this")
 
 
 @pytest.mark.parametrize("case", ["foo/../bar"])
@@ -253,15 +261,15 @@ def test_wildcard_symlinks(tmp_path: Path):
 
     # Check that regular and symlinked files are available.
     assert (
-        set(wcm.get_all_values("animals/internet"))
-        == set(wcm.get_all_values("friendos"))
+        set(wcm.get_values("animals/internet"))
+        == set(wcm.get_values("friendos"))
         == internet_animals
     )
 
     # Wilderness available via symlink?
-    assert set(wcm.get_all_values("wild")) == wild_things
+    assert set(wcm.get_values("wild")) == wild_things
     # ... No directory traversal though!
-    assert not wcm.get_all_values("../outside/wilderness")
+    assert not wcm.get_values("../outside/wilderness")
 
     # Now, let's get extra wild and symlink an entire directory...
     wildly_dir = wildcards_dir / "wildly"
@@ -270,7 +278,7 @@ def test_wildcard_symlinks(tmp_path: Path):
     wilder_file = wildly_dir / "wilder.txt"
     wilder_file.write_text("whoa!!!")
     wcm.clear_cache()
-    assert set(wcm.get_all_values("wildly/*")) == {
+    assert set(wcm.get_values("wildly/*")) == {
         *wild_things,
         "whoa!!!",
     }
@@ -330,7 +338,9 @@ def test_wcm_roots():
         "metasyntactic/fnord",
         "metasyntactic/foo",
     }
-    assert {v for v in wcm.get_all_values("elaimet/*") if not v.startswith("_")} == {
+    assert {
+        v for v in wcm.get_values("elaimet/*").string_values if not v.startswith("_")
+    } == {
         "cat",
         "dog",
         "okapi",
@@ -339,4 +349,16 @@ def test_wcm_roots():
         "unicorn",
         "wolf",
     }
-    assert set(wcm.get_all_values("metasy*")) == {"eggs", "spam", "baz", "bar"}
+    assert set(wcm.get_values("metasy*")) == {"eggs", "spam", "baz", "bar"}
+
+
+def test_weight_parsing(wildcard_manager: WildcardManager):
+    """
+    Test that parsing the various formats that have weights set do work correctly.
+    """
+    name_to_entry = {
+        str(e): e for e in wildcard_manager.get_values("weighted-animals/*")
+    }
+    assert name_to_entry["cat"].weight == 3
+    assert name_to_entry["elephant"].weight == 50
+    assert name_to_entry["rhino"].weight == 20.5

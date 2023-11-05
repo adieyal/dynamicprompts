@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable
 
+from dynamicprompts.wildcards.item import WildcardItem
+
 
 class WildcardCollection(ABC):
     """
@@ -10,7 +12,7 @@ class WildcardCollection(ABC):
     """
 
     @abstractmethod
-    def get_values(self) -> Iterable[str]:
+    def get_values(self) -> Iterable[str | WildcardItem]:
         """
         Get the contents of this collection.
         """

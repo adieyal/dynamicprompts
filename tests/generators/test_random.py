@@ -1,3 +1,4 @@
+from collections import Counter
 from unittest.mock import patch
 
 import pytest
@@ -69,4 +70,15 @@ class TestRandomGenerator:
             "A red ball",
             "A green ball",
             "A blue ball",
+        ]
+
+    def test_weighted_wildcard(self, generator: RandomPromptGenerator):
+        prompt = "I saw a __weighted-animals/heavy__"
+        prompts = Counter(generator.generate(prompt, 1500))
+        # Over 1500 generations with a non-biased RNG we should always the correct order...
+        assert [s for s, n in prompts.most_common()] == [
+            "I saw a elephant",
+            "I saw a rhino",
+            "I saw a hippo",
+            "I saw a giraffe",
         ]

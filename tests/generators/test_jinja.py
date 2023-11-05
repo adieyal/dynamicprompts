@@ -7,12 +7,11 @@ from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.values import WildcardValues
 
 pytest.importorskip("jinja2")
 
-GET_ALL_VALUES = (
-    "dynamicprompts.wildcards.wildcard_manager.WildcardManager.get_all_values"
-)
+GET_VALUES = "dynamicprompts.wildcards.wildcard_manager.WildcardManager.get_values"
 
 
 @pytest.fixture
@@ -121,11 +120,19 @@ class TestJinjaGenerator:
         {{% endfor %}}
         """
 
-        with patch(GET_ALL_VALUES) as mock_values:
-            mock_values.side_effect = (
-                ["pink", "yellow", wildcard_manager.to_wildcard("blacks"), "purple"],
-                ["black", "grey"],
-            )
+        with patch(GET_VALUES) as mock_values:
+            mock_values.side_effect = [
+                WildcardValues.from_items(i)
+                for i in (
+                    [
+                        "pink",
+                        "yellow",
+                        wildcard_manager.to_wildcard("blacks"),
+                        "purple",
+                    ],
+                    ["black", "grey"],
+                )
+            ]
 
             assert generator.generate(template) == [
                 "My favourite colour is pink",
@@ -146,12 +153,15 @@ class TestJinjaGenerator:
         {{% endfor %}}
         """
 
-        with patch(GET_ALL_VALUES) as mock_values:
-            mock_values.side_effect = (
-                ["pink", "yellow", wildcard_manager.to_wildcard("black"), "purple"],
-                ["black", wildcard_manager.to_wildcard("greys")],
-                ["light grey", "dark grey"],
-            )
+        with patch(GET_VALUES) as mock_values:
+            mock_values.side_effect = [
+                WildcardValues.from_items(i)
+                for i in (
+                    ["pink", "yellow", wildcard_manager.to_wildcard("black"), "purple"],
+                    ["black", wildcard_manager.to_wildcard("greys")],
+                    ["light grey", "dark grey"],
+                )
+            ]
 
             assert generator.generate(template) == [
                 "My favourite colour is pink",

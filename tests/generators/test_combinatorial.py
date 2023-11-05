@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.values import WildcardValues
 
 
 class TestCombinatorialGenerator:
@@ -20,8 +21,8 @@ class TestCombinatorialGenerator:
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        wildcard_manager.get_all_values = Mock(
-            return_value=["bread", "butter", "cheese"],
+        wildcard_manager.get_values = Mock(
+            return_value=WildcardValues.from_items(["bread", "butter", "cheese"]),
         )
         prompts = list(generator.generate(prompt, 10))
 
@@ -72,8 +73,8 @@ class TestCombinatorialGenerator:
 
         generator = CombinatorialPromptGenerator(wildcard_manager)
 
-        wildcard_manager.get_all_values = Mock(
-            return_value=["bread", "butter", "cheese"],
+        wildcard_manager.get_values = Mock(
+            return_value=WildcardValues.from_items(["bread", "butter", "cheese"]),
         )
         prompts = list(generator.generate(prompt, None))
 

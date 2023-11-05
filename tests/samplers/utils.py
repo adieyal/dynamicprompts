@@ -53,8 +53,8 @@ def patch_random_sampler_wildcard_choice(choices: list[str]):
     # Good to go
     return patch.object(
         RandomSampler,
-        "_get_wildcard_choice",
-        side_effect=choices,
+        "_get_wildcard_choice_generator",
+        return_value=iter(choices),
     )
 
 

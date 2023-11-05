@@ -62,7 +62,7 @@ def test_sd_212(wildcard_manager: WildcardManager):
 def test_sd_307(wildcard_manager: WildcardManager):
     generator = RandomPromptGenerator(wildcard_manager)
     prompts = generator.generate("{2$$__colors-cold__}", 2)
-    colors = wildcard_manager.get_all_values("colors-cold")
+    colors = wildcard_manager.get_values("colors-cold")
     combinations = [f"{c1},{c2}" for c1 in colors for c2 in colors if c1 != c2]
     # check the every prompt is a combination of two colors
     assert all(p in combinations for p in prompts)
@@ -109,9 +109,9 @@ def test_dp_28():
 def test_sd_358(wildcard_manager: WildcardManager):
     generator = RandomPromptGenerator(wildcard_manager)
     prompts = generator.generate("{2$$__referencing-colors__}", 2)
-    colors = wildcard_manager.get_all_values(
+    colors = wildcard_manager.get_values(
         "colors-cold",
-    ) + wildcard_manager.get_all_values("colors-warm")
+    ) + wildcard_manager.get_values("colors-warm")
     combinations = [f"{c1},{c2}" for c1 in colors for c2 in colors if c1 != c2]
     # check the every prompt is a combination of two colors
     assert all(p in combinations for p in prompts)

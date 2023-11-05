@@ -98,14 +98,18 @@ class CyclicalSampler(Sampler):
         command: WildcardCommand,
         context: SamplingContext,
     ) -> StringGen:
-        values = context.wildcard_manager.get_all_values(command.wildcard)
+        # TODO: doesn't support weights
+        wc_values = context.wildcard_manager.get_values(command.wildcard)
         new_context = context.with_variables(
             command.variables,
         ).with_sampling_method(SamplingMethod.CYCLICAL)
-        if len(values) == 0:
+        if len(wc_values) == 0:
             yield from get_wildcard_not_found_fallback(command, new_context)
             return
 
-        value_samplers = [new_context.sample_prompts(val) for val in values]
-        value_string_gens = [to_string_gen(val) for val in value_samplers]
+        value_samplers = (
+            new_context.sample_prompts(val)
+            for val in wc_values.iterate_string_values_weighted()
+        )
+        value_string_gens = (to_string_gen(val) for val in value_samplers)
         yield from next_sampler_next_value(value_string_gens)
