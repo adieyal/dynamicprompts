@@ -141,15 +141,17 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "variant",
         "weighted-animals/heavy",
         "weighted-animals/light",
+        "wrappers",
     }
     assert set(root.collections) == {
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt
         "colors-warm",  # .txt
+        "dupes",  # .txt
         "referencing-colors",  # .txt
         "shapes",  # flat list YAML
         "variant",  # .txt
-        "dupes",  # .txt
+        "wrappers",  # .txt
     }
     assert set(root.child_nodes["animals"].collections) == {
         "all-references",
