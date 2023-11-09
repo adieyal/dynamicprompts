@@ -22,13 +22,17 @@ def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem
         if not item:
             continue
         if isinstance(item, str):
-            # See if we have a `1.1::foo` shorthand
-            weight_text, _, content = item.rpartition("::")
-            try:
-                yield WildcardItem(content=content, weight=float(weight_text))
-            except ValueError:
-                yield content
-            continue
+            # See if the item _could_ have a prefix weight before attempting to parse.
+            if item[0].isdigit() and "::" in item:
+                weight_text, _, content = item.rpartition("::")
+                try:
+                    yield WildcardItem(content=content, weight=float(weight_text))
+                    continue
+                except ValueError:
+                    # When failing to parse the weight,
+                    # fall through to yielding the item as-is.
+                    pass
+            yield item
         elif isinstance(item, dict):
             # Support {"text": "foo", "weight": 1.1} syntax
             #     and {"content": "foo", "weight": 1.1}
