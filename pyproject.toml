@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamicprompts"
-version = "0.30.0"
+dynamic = ["version"]
 description = "Dynamic prompts templating library for Stable Diffusion"
 homepage = "https://github.com/adieyal/dynamicprompts"
 authors = [
@@ -39,6 +39,9 @@ dev = [
     "pytest-lazy-fixture~=0.6",
     "pytest~=7.2",
 ]
+
+[tool.hatch.version]
+path = "src/dynamicprompts/__init__.py"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
