@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -48,3 +50,30 @@ jobs:
         env:
           PYPARSINGENABLEALLWARNINGS: 1
       - uses: codecov/codecov-action@v3
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+    needs:
+      - test
+      - lint
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/p/dynamicprompts/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: |
+            pyproject.toml
+      - run: python -m pip install hatch
+      - run: hatch build -t wheel
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          print-hash: true
