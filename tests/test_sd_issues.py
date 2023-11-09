@@ -10,6 +10,7 @@ from dynamicprompts.generators import (
 )
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.collection.structured import _parse_structured_file_list
 
 
 def test_sd_223():
@@ -128,3 +129,12 @@ def test_sd_377(wildcard_manager: WildcardManager, caplog):
     assert generated == {"dog", "wolf", "cat", "tiger", "unicorn"}
     # We should get log messages
     assert any(r.message.startswith("No matches for wildcard") for r in caplog.records)
+
+
+def test_sd_665():
+    # https://github.com/adieyal/sd-dynamic-prompts/issues/665
+
+    expr = "{3::|looking up view|looking down view|birds-eye view}"
+    wi = list(_parse_structured_file_list([expr]))
+    assert len(wi) == 1
+    assert wi[0] == expr
