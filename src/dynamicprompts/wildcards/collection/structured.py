@@ -33,6 +33,7 @@ def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem
                     # fall through to yielding the item as-is.
                     pass
             yield item
+            continue
         elif isinstance(item, dict):
             # Support {"text": "foo", "weight": 1.1} syntax
             #     and {"content": "foo", "weight": 1.1}
