@@ -1,3 +1,5 @@
+0.30.3 - Fix spurious warnings introduced by #103 (#105)
+0.30.2 - No code changes.
 0.30.1 - Made weighted wildcard shorthand parsing a little more robust (#103)
 0.30.0 - Removed support for python 3.7 ([#98](https://github.com/adieyal/dynamicprompts/pull/98)), wildcard files now support weights ([#97](https://github.com/adieyal/dynamicprompts/pull/97)). Also added infrastructure to return additional metadata gatherered during sampling ([#100](https://github.com/adieyal/dynamicprompts/pull/100)).
 0.29.0 - Added an option to shuffle the output of the wildcard manager
