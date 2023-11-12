@@ -138,3 +138,11 @@ def test_sd_665():
     wi = list(_parse_structured_file_list([expr]))
     assert len(wi) == 1
     assert wi[0] == expr
+
+
+def test_sd_672(wildcard_manager: WildcardManager):
+    # https://github.com/adieyal/sd-dynamic-prompts/discussions/672
+
+    tpl = "{|hot,}{|summer,}{|blue sky,}"
+    generator = CombinatorialPromptGenerator(wildcard_manager)
+    assert any("," in prompt for prompt in generator.generate(tpl))
