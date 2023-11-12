@@ -35,7 +35,18 @@ class SamplingResult:
     ) -> SamplingResult:
         from dynamicprompts.utils import removeprefix, removesuffix
 
-        joined = separator.join(r.text for r in results)
+        results_list = list(results)
+
+        if len(results_list) == 1:
+            # Special case: when we have a single result,
+            # there's no point in joining anything, or doing
+            # the special handling to strip separators (since
+            # we never added any).  This means that a separator
+            # in the input will be preserved; this is intentional.
+            return results_list[0]
+
+        joined = separator.join(r.text for r in results_list)
+
         if separator:
             joined = removeprefix(joined, separator)
             joined = removesuffix(joined, separator)
