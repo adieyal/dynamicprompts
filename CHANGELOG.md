@@ -1,3 +1,4 @@
+0.30.4 - Fix corner case regression introduced in 0.30.0 (#107)
 0.30.3 - Fix spurious warnings introduced by #103 (#105)
 0.30.2 - No code changes.
 0.30.1 - Made weighted wildcard shorthand parsing a little more robust (#103)
