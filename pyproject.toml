@@ -34,6 +34,7 @@ dependencies = [
 attentiongrabber = []  # empty list for backwards compatibility (no "no extra" warnings)
 magicprompt = ["transformers[torch]~=4.19"]
 feelinglucky = ["requests~=2.28"]
+yaml = ["pyyaml~=6.0"]
 dev = [
     "pytest-cov~=4.0",
     "pytest-lazy-fixture~=0.6",
@@ -82,6 +83,10 @@ exclude = "tests"
 
 [[tool.mypy.overrides]]
 module = "transformers"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "torch"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

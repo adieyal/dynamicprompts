@@ -26,7 +26,7 @@ jobs:
           cache: "pip"
           cache-dependency-path: |
             pyproject.toml
-      - run: python -m pip install mypy -e .[dev,attentiongrabber,magicprompt,feelinglucky]
+      - run: python -m pip install mypy -e .[dev,attentiongrabber,feelinglucky,yaml]
       - run: mypy --install-types --non-interactive src
   test:
     runs-on: ${{ matrix.os }}
@@ -45,7 +45,7 @@ jobs:
           cache-dependency-path: |
             pyproject.toml
       - name: Install dependencies
-        run: python -m pip install -e .[dev,attentiongrabber,magicprompt,feelinglucky]
+        run: python -m pip install -e .[dev,attentiongrabber,feelinglucky,yaml]
       - run: pytest --cov --cov-report=term-missing --cov-report=xml .
         env:
           PYPARSINGENABLEALLWARNINGS: 1
@@ -67,9 +67,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: |
-            pyproject.toml
       - run: python -m pip install hatch
       - run: hatch build -t wheel
       - name: Publish package distributions to PyPI
