@@ -687,7 +687,15 @@ class TestWildcardsCommand:
         else:
             assert resolved_value == "cat"        
         
-    # test wildcard with variables and *
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_nested_wildcards_in_single_file(self, sampling_context: SamplingContext):
+        cmd = parse("${car=!{porsche|john_deere}}a __cars/${car}/types__ made by __cars/${car}/name__")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        assert  resolved_value in [
+            "a sports car made by Porsche",
+            "a tractor made by John Deere"
+        ]
+        
 
 
 class TestVariableCommands:

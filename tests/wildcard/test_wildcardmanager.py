@@ -132,6 +132,15 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "animals/reptiles/snakes",
         "artists/dutch",
         "artists/finnish",
+        "cars/ford/colors",
+        "cars/ford/name",
+        "cars/ford/types",
+        "cars/john_deere/colors",
+        "cars/john_deere/name",
+        "cars/john_deere/types",
+        "cars/porsche/colors",
+        "cars/porsche/name",
+        "cars/porsche/types",
         "clothing",
         "colors-cold",
         "colors-warm",
@@ -146,7 +155,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "weighted-animals/light",
     }
     assert set(root.collections) == {
-        "animal",
+        "animal",        
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt
         "colors-warm",  # .txt
