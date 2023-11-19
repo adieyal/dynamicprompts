@@ -13,6 +13,7 @@ from dynamicprompts.commands import (
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
+    replace_wildcard_variables,
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
@@ -100,6 +101,7 @@ class CyclicalSampler(Sampler):
         context: SamplingContext,
     ) -> ResultGen:
         # TODO: doesn't support weights
+        command = replace_wildcard_variables(command=command, context=context)
         wc_values = context.wildcard_manager.get_values(command.wildcard)
         new_context = context.with_variables(
             command.variables,

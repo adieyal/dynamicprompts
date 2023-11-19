@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
+from dynamicprompts.commands.variable_commands import VariableAssignmentCommand
 from dynamicprompts.enums import SamplingMethod
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
@@ -625,6 +626,68 @@ class TestWildcardsCommand:
         gen = sampling_context.generator_from_command(sequence)
         ps = [str(p) for p in islice(gen, len(expected))]
         assert ps == expected
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_nested_variable(self, sampling_context: SamplingContext):
+        cmd = parse("${temp=cold}wearing __colors-${temp}__ suede shoes")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert resolved_value == "wearing blue suede shoes" or resolved_value == "wearing green suede shoes"
+        else:
+            assert resolved_value == "wearing blue suede shoes"
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_default_variable(self, sampling_context: SamplingContext):
+        cmd = parse("wearing __colors-${temp:cold}__ suede shoes")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert resolved_value == "wearing blue suede shoes" or resolved_value == "wearing green suede shoes"
+        else:
+            assert resolved_value == "wearing blue suede shoes"
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_undefined_variable(self, sampling_context: SamplingContext):
+        cmd = parse("wearing __colors-${temp}__ suede shoes")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        assert resolved_value == "wearing {wildcard_wrap}colors-temp{wildcard_wrap} suede shoes".format(wildcard_wrap=sampling_context.wildcard_manager.wildcard_wrap)
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_multiple_variables(self, sampling_context: SamplingContext):
+        cmd = parse("${genus=mammals}${species=feline}__animals/${genus:reptiles}/${species:snakes}__")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert  resolved_value in ["cat", "tiger"]
+        else:
+            assert resolved_value == "cat"
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_variable_and_glob(self, sampling_context: SamplingContext):
+        cmd = parse("${genus=reptiles}__animals/${genus}/*__")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert  resolved_value in ["cobra", "gecko", "iguana", "python"]
+        else:
+            assert resolved_value == "cobra"        
+    
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_wildcard_with_variable_in_nested_wildcard(self, sampling_context: SamplingContext):
+        cmd = parse("${genus=mammals}__animal__")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert  resolved_value in ["cat", "tiger", "dog", "wolf"]
+        else:
+            assert resolved_value == "cat"
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_nested_wildcard_with_parameterized_variable(self, sampling_context: SamplingContext):
+        cmd = parse("__animal(genus=mammals)__")
+        resolved_value =  str(next(sampling_context.generator_from_command(cmd)))
+        if isinstance(sampling_context.default_sampler, RandomSampler):
+            assert  resolved_value in ["cat", "tiger", "dog", "wolf"]
+        else:
+            assert resolved_value == "cat"        
+        
+    # test wildcard with variables and *
 
 
 class TestVariableCommands:
