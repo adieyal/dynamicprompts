@@ -3,6 +3,8 @@ from __future__ import annotations
 import dataclasses
 from typing import Iterable
 
+from dynamicprompts.commands.wrap_command import split_wrapper_string
+
 
 @dataclasses.dataclass(frozen=True)
 class SamplingResult:
@@ -25,6 +27,23 @@ class SamplingResult:
         from dynamicprompts.utils import squash_whitespace
 
         return dataclasses.replace(self, text=squash_whitespace(self.text))
+
+    def text_replaced(self, new_text: str) -> SamplingResult:
+        return dataclasses.replace(self, text=new_text)
+
+    def as_wrapper(self):
+        """
+        Return a function that wraps a SamplingResult with this one,
+        partitioning this result's text along the wrap marker.
+        """
+        prefix, suffix = split_wrapper_string(self.text)
+        prefix_res = self.text_replaced(prefix)
+        suffix_res = self.text_replaced(suffix)
+
+        def wrapper(inner: SamplingResult) -> SamplingResult:
+            return SamplingResult.joined([prefix_res, inner, suffix_res], separator="")
+
+        return wrapper
 
     @classmethod
     def joined(
