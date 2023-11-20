@@ -62,7 +62,7 @@ class TestVariant:
         variant_command = VariantCommand.from_literals_and_weights(ONE_TWO_THREE)
 
         assert [
-            v.literal for v, in variant_command.get_value_combinations(1)
+            v.literal for (v,) in variant_command.get_value_combinations(1)
         ] == ONE_TWO_THREE
 
         assert [
