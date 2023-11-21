@@ -70,7 +70,7 @@ def replace_wildcard_variables(
     *,
     context: SamplingContext,
 ) -> WildcardCommand:
-    if not command.wildcard.__contains__(context.parser_config.variable_start):
+    if context.parser_config.variable_start not in command.wildcard:
         return command
 
     prompt = pp.SkipTo(context.parser_config.variable_end)
