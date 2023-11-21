@@ -6,17 +6,20 @@ from unittest.mock import MagicMock
 
 import pytest
 
-pytest.importorskip("dynamicprompts.generators.magicprompt")
+
+@pytest.fixture(autouse=True)
+def mock_import_transformers(monkeypatch):
+    from dynamicprompts.generators import magicprompt
+
+    monkeypatch.setattr(magicprompt, "_import_transformers", MagicMock())
 
 
-@pytest.mark.slow
-class TestMagicPrompt:
-    def test_default_generator(self):
-        from dynamicprompts.generators.dummygenerator import DummyGenerator
-        from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+def test_default_generator():
+    from dynamicprompts.generators.dummygenerator import DummyGenerator
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 
-        generator = MagicPromptGenerator()
-        assert isinstance(generator._prompt_generator, DummyGenerator)
+    generator = MagicPromptGenerator()
+    assert isinstance(generator._prompt_generator, DummyGenerator)
 
 
 @pytest.mark.parametrize(
@@ -121,7 +124,6 @@ def test_magic_prompt_blocklist():
         assert not any(artist in magic_prompt for artist in boring_artists)
 
 
-@pytest.mark.slow
 def test_generate_passes_kwargs():
     from dynamicprompts.generators.magicprompt import MagicPromptGenerator
 

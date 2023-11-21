@@ -8,6 +8,7 @@ from dynamicprompts.commands import (
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
+    WrapCommand,
 )
 from dynamicprompts.commands.variable_commands import (
     VariableAccessCommand,
@@ -43,6 +44,8 @@ class Sampler:
             )
         if isinstance(command, VariableAccessCommand):
             return self._get_variable(command, context)
+        if isinstance(command, WrapCommand):
+            return self._get_wrap(command, context)
         return self._unsupported_command(command)
 
     def _unsupported_command(self, command: Command) -> ResultGen:
@@ -100,3 +103,10 @@ class Sampler:
         return context.for_sampling_variable(variable).generator_from_command(
             command_to_sample,
         )
+
+    def _get_wrap(
+        self,
+        command: WrapCommand,
+        context: SamplingContext,
+    ) -> ResultGen:
+        return self._unsupported_command(command)
