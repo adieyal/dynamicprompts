@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
 
 import pyparsing as pp
-import re
 
-from dynamicprompts.commands import LiteralCommand, VariantCommand, VariantOption, WildcardCommand
-from dynamicprompts.parser.parse import parse, _configure_variable_access, _configure_wildcard, _parse_variable_access_command
+from dynamicprompts.commands import (
+    LiteralCommand,
+    VariantCommand,
+    VariantOption,
+    WildcardCommand,
+)
+from dynamicprompts.parser.parse import (
+    _configure_variable_access,
+    _configure_wildcard_path,
+    parse,
+)
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
 from dynamicprompts.types import ResultGen
@@ -55,47 +64,54 @@ def get_wildcard_not_found_fallback(
     while True:
         yield res
 
+
 def replace_wildcard_variables(
-    command: WildcardCommand, 
-    *, 
+    command: WildcardCommand,
+    *,
     context: SamplingContext,
-) -> WildcardCommand:    
+) -> WildcardCommand:
+    if not command.wildcard.__contains__(context.parser_config.variable_start):
+        return command
+
     prompt = pp.SkipTo(context.parser_config.variable_end)
     variable_access = _configure_variable_access(
         parser_config=context.parser_config,
-        prompt=prompt
+        prompt=prompt,
     )
-    variable_access.set_parse_action(_variable_replacement(context.variables))
+    variable_access.set_parse_action(
+        partial(_replace_variable, variables=context.variables),
+    )
+    wildcard = _configure_wildcard_path(
+        parser_config=context.parser_config,
+        variable_ref=variable_access,
+    )
 
-    wildcard_path_re = r"((?!" + re.escape(context.parser_config.wildcard_wrap) + r")[^(${}#])+"
-    wildcard_path = pp.Regex(wildcard_path_re).leave_whitespace()
-    wildcard = pp.Combine(pp.OneOrMore(variable_access | wildcard_path))("path")
-   
-    wildcard_result = wildcard.parse_string(command.wildcard)
+    try:
+        wildcard_result = wildcard.parse_string(command.wildcard)
+        return command.with_content("".join(wildcard_result))
+    except Exception as ex:
+        logger.warning("Unable to parse wildcard path %s", command.wildcard)
+        return command
 
-    return WildcardCommand(wildcard="".join(wildcard_result), sampling_method=command.sampling_method, variables=command.variables)
-    
-def _variable_replacement(variables: dict):
-    def var_replace(string, location, token):
-        if (isinstance(token, pp.ParseResults)):
-            var_parts = token[0].as_dict()
-            var_name = var_parts.get("name")
-            if (var_name != None):
-                var_name = var_name.strip()
 
-            default = var_parts.get("default")
-            if (default != None):
-                default = default.strip()
-            
-        else:
-            var_name = token
-        
-        variable = None
-        if (var_name != None):
+def _replace_variable(string, location, token, *, variables: dict):
+    if isinstance(token, pp.ParseResults):
+        var_parts = token[0].as_dict()
+        var_name = var_parts.get("name")
+        if var_name:
+            var_name = var_name.strip()
 
-          variable = variables.get(var_name)
+        default = var_parts.get("default")
+        if default:
+            default = default.strip()
 
-          if (isinstance(variable, LiteralCommand)):
-              variable = variable.literal
-        return variable or default or var_name
-    return var_replace    
+    else:
+        var_name = token
+
+    variable = None
+    if var_name:
+        variable = variables.get(var_name)
+
+        if isinstance(variable, LiteralCommand):
+            variable = variable.literal
+    return variable or default or var_name

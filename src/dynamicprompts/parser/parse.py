@@ -111,10 +111,10 @@ def _configure_wildcard(
     parser_config: ParserConfig,
     variable_ref: pp.ParserElement,
 ) -> pp.ParserElement:
-    wildcard_path_re = r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^(${}#])+"
-    wildcard_path = pp.Regex(wildcard_path_re).leave_whitespace()
-
-    wildcard = pp.Combine(pp.OneOrMore(variable_ref | wildcard_path))("path")
+    wildcard = _configure_wildcard_path(
+        parser_config=parser_config,
+        variable_ref=variable_ref,
+    )
 
     wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
     wildcard_variable_spec = (
@@ -133,6 +133,17 @@ def _configure_wildcard(
     )
 
     return wildcard("wildcard").leave_whitespace()
+
+
+def _configure_wildcard_path(
+    parser_config: ParserConfig,
+    variable_ref: pp.ParserElement,
+) -> pp.ParserElement:
+    wildcard_path_literal_re = (
+        r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^(${}#])+"
+    )
+    wildcard_path = pp.Regex(wildcard_path_literal_re).leave_whitespace()
+    return pp.Combine(pp.OneOrMore(variable_ref | wildcard_path))("path")
 
 
 def _configure_literal_sequence(
@@ -218,6 +229,7 @@ def _configure_variable_access(
         + pp.Suppress(parser_config.variable_end),
     )
     return variable_access.leave_whitespace()
+
 
 def _configure_variable_assignment(
     parser_config: ParserConfig,
@@ -416,10 +428,23 @@ def create_parser(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
-    
-    variable_ref = pp.Combine(_configure_variable_access(parser_config=parser_config, prompt=pp.SkipTo(parser_config.variable_end))).leave_whitespace()
-    variable_ref.set_parse_action(lambda s,l,t: parser_config.variable_start + "".join(t) + parser_config.variable_end)
-    
+
+    variable_ref = pp.Combine(
+        _configure_variable_access(
+            parser_config=parser_config,
+            prompt=pp.SkipTo(parser_config.variable_end),
+        ),
+    ).leave_whitespace()
+
+    # by default, the variable starting "${" and end "}" characters are
+    # stripped with variable access. This restores them so that the
+    # variable can be properly recognized at a later stage
+    variable_ref.set_parse_action(
+        lambda s, l, t: parser_config.variable_start
+        + "".join(t)
+        + parser_config.variable_end,
+    )
+
     variable_assignment = _configure_variable_assignment(
         parser_config=parser_config,
         prompt=variant_prompt,
@@ -428,7 +453,10 @@ def create_parser(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
-    wildcard = _configure_wildcard(parser_config=parser_config, variable_ref=variable_ref)
+    wildcard = _configure_wildcard(
+        parser_config=parser_config,
+        variable_ref=variable_ref,
+    )
     literal_sequence = _configure_literal_sequence(parser_config=parser_config)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
@@ -466,7 +494,7 @@ def create_parser(
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
-    variable_access.set_parse_action(_parse_variable_access_command)    
+    variable_access.set_parse_action(_parse_variable_access_command)
     variable_assignment.set_parse_action(_parse_variable_assignment_command)
     prompt.set_parse_action(_parse_sequence_or_single_command)
     variant_prompt.set_parse_action(_parse_sequence_or_single_command)

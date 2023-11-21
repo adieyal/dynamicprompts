@@ -13,8 +13,8 @@ from dynamicprompts.commands import (
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
+    replace_wildcard_variables,
     wildcard_to_variant,
-    replace_wildcard_variables
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult

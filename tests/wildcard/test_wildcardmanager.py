@@ -156,7 +156,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "wrappers",
     }
     assert set(root.collections) == {
-        "animal",        
+        "animal",
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt
         "colors-warm",  # .txt
@@ -184,7 +184,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "animals/mammals/feline",
         "animals/mystical",
         "animals/reptiles/lizards",
-        "animals/reptiles/snakes"
+        "animals/reptiles/snakes",
     }
     assert set(root.child_nodes["flavors"].collections) == {
         "sour",  # .txt
