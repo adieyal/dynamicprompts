@@ -440,7 +440,9 @@ def create_parser(
     # stripped with variable access. This restores them so that the
     # variable can be properly recognized at a later stage
     variable_ref.set_parse_action(
-        lambda string, location, token: f"{parser_config.variable_start}{''.join(token)}{parser_config.variable_end}",
+        lambda string,
+        location,
+        token: f"{parser_config.variable_start}{''.join(token)}{parser_config.variable_end}",
     )
 
     variable_assignment = _configure_variable_assignment(

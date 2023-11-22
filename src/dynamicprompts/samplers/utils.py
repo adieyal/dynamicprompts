@@ -114,6 +114,4 @@ def _replace_variable(string, location, token, *, variables: dict):
 
         if isinstance(variable, LiteralCommand):
             variable = variable.literal
-        if not isinstance(variable, str):
-            raise NotImplementedError("evaluating complex commands within wildcards is not supported right now")    
     return variable or default or var_name
