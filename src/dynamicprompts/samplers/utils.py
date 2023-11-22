@@ -89,8 +89,8 @@ def replace_wildcard_variables(
     try:
         wildcard_result = wildcard.parse_string(command.wildcard)
         return command.with_content("".join(wildcard_result))
-    except Exception as ex:
-        logger.warning("Unable to parse wildcard path %s", command.wildcard)
+    except Exception:
+        logger.warning("Unable to parse wildcard %r", command.wildcard, exc_info=True)
         return command
 
 
@@ -114,4 +114,6 @@ def _replace_variable(string, location, token, *, variables: dict):
 
         if isinstance(variable, LiteralCommand):
             variable = variable.literal
+        if not isinstance(variable, str):
+            raise NotImplementedError("evaluating complex commands within wildcards is not supported right now")    
     return variable or default or var_name
