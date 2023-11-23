@@ -48,6 +48,10 @@ class TestParser:
         [
             "colours",
             "path/to/colours",
+            "path/to/${subject}",
+            "${pallette}_colours",
+            "${pallette:warm}_colours",
+            "locations/${room: dining room }/furniture",
             "änder",
         ],
     )

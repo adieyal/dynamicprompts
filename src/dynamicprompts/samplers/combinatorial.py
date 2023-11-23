@@ -16,6 +16,7 @@ from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
+    replace_wildcard_variables,
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
@@ -143,6 +144,7 @@ class CombinatorialSampler(Sampler):
         context: SamplingContext,
     ) -> ResultGen:
         # TODO: doesn't support weights
+        command = replace_wildcard_variables(command=command, context=context)
         context = context.with_variables(command.variables)
         values = context.wildcard_manager.get_values(command.wildcard)
         if not values:
