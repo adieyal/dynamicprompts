@@ -66,6 +66,11 @@ def _parse_structured_file_dict(
 
         prefix_and_name = (*prefix, name)
         name = "/".join(prefix_and_name)
+
+        if isinstance(value, str):
+            # Parse a single string as a list of one item.
+            value = [value]
+
         if isinstance(value, list):
             try:
                 entries = list(_parse_structured_file_list(value))

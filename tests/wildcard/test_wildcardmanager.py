@@ -132,6 +132,7 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "animals/reptiles/snakes",
         "artists/dutch",
         "artists/finnish",
+        "artists/moonbase",
         "cars/ford/colors",
         "cars/ford/name",
         "cars/ford/types",
@@ -192,8 +193,9 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "bitter",  # from .json
     }
     assert set(root.child_nodes["artists"].collections) == {
-        "finnish",  # from root pantry YAML's nested dict
         "dutch",  # from root pantry YAML's nested dict
+        "finnish",  # from root pantry YAML's nested dict
+        "moonbase",  # from root pantry YAML's nested dict
     }
 
 
@@ -389,3 +391,9 @@ def test_weight_parsing(wildcard_manager: WildcardManager):
     assert name_to_entry["cat"].weight == 3
     assert name_to_entry["elephant"].weight == 50
     assert name_to_entry["rhino"].weight == 20.5
+
+
+def test_single_string_in_structured_parsed_as_list(wildcard_manager: WildcardManager):
+    assert wildcard_manager.get_values("artists/moonbase").string_values == [
+        "john madden",
+    ]
