@@ -60,6 +60,10 @@ def _parse_structured_file_dict(
     for name, value in data.items():
         if not isinstance(name, str):
             continue
+
+        if not value:
+            continue
+
         prefix_and_name = (*prefix, name)
         name = "/".join(prefix_and_name)
         if isinstance(value, list):

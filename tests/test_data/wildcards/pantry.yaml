@@ -13,3 +13,4 @@ artists:
     - Vincent van Gogh
   1234: 5678  # this is ignored
   flurp: 12345  # this too
+  flem: ""  # and this
