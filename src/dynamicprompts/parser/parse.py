@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import re
 from functools import partial
+from pprint import pprint
 from typing import Iterable
 from weakref import WeakKeyDictionary
 
@@ -106,21 +107,21 @@ def _configure_range() -> pp.ParserElement:
 
 def _configure_wildcard(
     parser_config: ParserConfig,
+    prompt: pp.ParserElement,
 ) -> pp.ParserElement:
-    wildcard_path_re = r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^({}#])+"
-    wildcard_path = pp.Regex(wildcard_path_re)("path").leave_whitespace()
     wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
     wildcard_variable_spec = (
         OPT_WS
-        + pp.Suppress("(")
+        + pp.Literal("(")
         + pp.Regex(r"[^)]+")("variable_spec")
         + pp.Suppress(")")
     )
+    wc_path = prompt()("path")    
 
     wildcard = (
         wildcard_enclosure
         + pp.Opt(sampler_symbol)("sampling_method")
-        + wildcard_path
+        + wc_path
         + pp.Opt(wildcard_variable_spec)
         + wildcard_enclosure
     )
@@ -131,6 +132,7 @@ def _configure_wildcard(
 def _configure_literal_sequence(
     parser_config: ParserConfig,
     is_variant_literal: bool = False,
+    is_wildcard_literal: bool = False
 ) -> pp.ParserElement:
     # Characters that are not allowed in a literal
     # - { denotes the start of a variant (or whatever variant_start is set to  )
@@ -144,6 +146,12 @@ def _configure_literal_sequence(
         # - | denotes the end of a variant option
         # - $ denotes the end of a bound expression
         non_literal_chars += rf"|${parser_config.variant_end}"
+
+    if is_wildcard_literal:
+        # Inside a wildcard the following characters are also not allowed
+        # - ( denotes the beginning of wildcard variable parameters
+        # - ) denotes the end of wildcard variable parameters
+        non_literal_chars += rf")("    
 
     non_literal_chars = re.escape(non_literal_chars)
     literal = pp.Regex(
@@ -304,7 +312,7 @@ def _parse_wildcard_command(
 ) -> WildcardCommand:
     parts = parse_result.as_dict()
     wildcard = parts.get("path")
-
+    
     sampling_method_symbol = parts.get("sampling_method")
     sampling_method = _parse_sampling_method(sampling_method_symbol)
 
@@ -316,7 +324,9 @@ def _parse_wildcard_command(
     else:
         variables = {}
 
-    assert isinstance(wildcard, str)
+    assert isinstance(wildcard, (Command, str))
+    if isinstance(wildcard, LiteralCommand):
+        wildcard = wildcard.literal
     return WildcardCommand(
         wildcard=wildcard,
         sampling_method=sampling_method,
@@ -368,11 +378,12 @@ def _parse_variable_assignment_command(
 def create_parser(
     *,
     parser_config: ParserConfig,
-) -> pp.ParserElement:
+) -> pp.ParserElement:    
     bound_expr = _configure_range()
 
     prompt = pp.Forward()
     variant_prompt = pp.Forward()
+    wildcard_prompt = pp.Forward()
 
     variable_access = _configure_variable_access(
         parser_config=parser_config,
@@ -382,8 +393,12 @@ def create_parser(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
-    wildcard = _configure_wildcard(parser_config=parser_config)
+    wildcard = _configure_wildcard(
+        parser_config=parser_config,
+        prompt=wildcard_prompt
+    )    
     literal_sequence = _configure_literal_sequence(parser_config=parser_config)
+    wildcard_literal_sequence = _configure_literal_sequence(parser_config=parser_config, is_wildcard_literal=True)
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
         parser_config=parser_config,
@@ -398,9 +413,11 @@ def create_parser(
         variable_assignment | variable_access | variants | wildcard | literal_sequence
     )
     variant_chunk = variable_access | variants | wildcard | variant_literal_sequence
+    wildcard_chunk = (variable_access | variants | wildcard_literal_sequence | variant_literal_sequence)
 
     prompt <<= pp.ZeroOrMore(chunk)("prompt")
     variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
+    wildcard_prompt <<= pp.OneOrMore(wildcard_chunk, stop_on=pp.Char("("))("prompt")
 
     # Configure comments
     prompt.ignore("#" + pp.restOfLine)
@@ -412,11 +429,13 @@ def create_parser(
     )
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
+    wildcard_literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
     variable_access.set_parse_action(_parse_variable_access_command)
     variable_assignment.set_parse_action(_parse_variable_assignment_command)
     prompt.set_parse_action(_parse_sequence_or_single_command)
     variant_prompt.set_parse_action(_parse_sequence_or_single_command)
+    wildcard_prompt.set_parse_action(_parse_sequence_or_single_command)
     return prompt
 
 

@@ -142,8 +142,10 @@ class CombinatorialSampler(Sampler):
         context: SamplingContext,
     ) -> ResultGen:
         # TODO: doesn't support weights
+        wildcard_path = next(context.sample_prompts(command.wildcard, 1)).text
         context = context.with_variables(command.variables)
-        values = context.wildcard_manager.get_values(command.wildcard)
+        values = context.wildcard_manager.get_values(wildcard_path)
+        
         if not values:
             yield from get_wildcard_not_found_fallback(command, context)
             return
