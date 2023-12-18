@@ -89,6 +89,13 @@ class TestParser:
                     LiteralCommand("/furniture")
                 ]
             ),
+            (
+                "light/source/{indoor|outdoor}",
+                [
+                    LiteralCommand("light/source/"),
+                    VariantCommand.from_literals_and_weights(["indoor", "outdoor"])
+                ]
+            )
         ],
     )
     def test_wildcard_dynamic(self, input: str, expected_commands: list[Command]):
