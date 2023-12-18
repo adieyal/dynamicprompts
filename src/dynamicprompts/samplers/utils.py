@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 
-from dynamicprompts.commands import Command, VariantCommand, VariantOption, WildcardCommand
+from dynamicprompts.commands import (
+    Command,
+    VariantCommand,
+    VariantOption,
+    WildcardCommand,
+)
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult

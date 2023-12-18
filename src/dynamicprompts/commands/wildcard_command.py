@@ -14,4 +14,6 @@ class WildcardCommand(Command):
 
     def __post_init__(self):
         if not isinstance(self.wildcard, (Command, str)):
-            raise TypeError(f"Wildcard must be a Command or str, not {type(self.wildcard)}")
+            raise TypeError(
+                f"Wildcard must be a Command or str, not {type(self.wildcard)}",
+            )

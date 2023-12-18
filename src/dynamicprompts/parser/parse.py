@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import re
 from functools import partial
-from pprint import pprint
 from typing import Iterable
 from weakref import WeakKeyDictionary
 
@@ -116,7 +115,7 @@ def _configure_wildcard(
         + pp.Regex(r"[^)]+")("variable_spec")
         + pp.Suppress(")")
     )
-    wc_path = prompt()("path")    
+    wc_path = prompt()("path")
 
     wildcard = (
         wildcard_enclosure
@@ -132,7 +131,7 @@ def _configure_wildcard(
 def _configure_literal_sequence(
     parser_config: ParserConfig,
     is_variant_literal: bool = False,
-    is_wildcard_literal: bool = False
+    is_wildcard_literal: bool = False,
 ) -> pp.ParserElement:
     # Characters that are not allowed in a literal
     # - { denotes the start of a variant (or whatever variant_start is set to  )
@@ -151,7 +150,7 @@ def _configure_literal_sequence(
         # Inside a wildcard the following characters are also not allowed
         # - ( denotes the beginning of wildcard variable parameters
         # - ) denotes the end of wildcard variable parameters
-        non_literal_chars += rf")("    
+        non_literal_chars += r")("
 
     non_literal_chars = re.escape(non_literal_chars)
     literal = pp.Regex(
@@ -312,7 +311,7 @@ def _parse_wildcard_command(
 ) -> WildcardCommand:
     parts = parse_result.as_dict()
     wildcard = parts.get("path")
-    
+
     sampling_method_symbol = parts.get("sampling_method")
     sampling_method = _parse_sampling_method(sampling_method_symbol)
 
@@ -363,13 +362,18 @@ def _parse_variable_access_command(
     parts = parse_result[0].as_dict()
     return VariableAccessCommand(name=parts["name"], default=parts.get("default"))
 
+
 def _parse_wildcard_variable_access_command(
     parse_result: pp.ParseResults,
-) -> VariableAccessCommand:   
-    parts = parse_result[0].as_dict()    
+) -> VariableAccessCommand:
+    parts = parse_result[0].as_dict()
     name = parts["name"]
     default = parts.get("default") or LiteralCommand(name)
-    return VariableAccessCommand(name=name, default=LiteralCommand(default.literal.strip()))
+    return VariableAccessCommand(
+        name=name,
+        default=LiteralCommand(default.literal.strip()),
+    )
+
 
 def _parse_variable_assignment_command(
     parse_result: pp.ParseResults,
@@ -385,7 +389,7 @@ def _parse_variable_assignment_command(
 def create_parser(
     *,
     parser_config: ParserConfig,
-) -> pp.ParserElement:    
+) -> pp.ParserElement:
     bound_expr = _configure_range()
 
     prompt = pp.Forward()
@@ -406,10 +410,13 @@ def create_parser(
     )
     wildcard = _configure_wildcard(
         parser_config=parser_config,
-        prompt=wildcard_prompt
-    )    
+        prompt=wildcard_prompt,
+    )
     literal_sequence = _configure_literal_sequence(parser_config=parser_config)
-    wildcard_literal_sequence = _configure_literal_sequence(parser_config=parser_config, is_wildcard_literal=True)
+    wildcard_literal_sequence = _configure_literal_sequence(
+        parser_config=parser_config,
+        is_wildcard_literal=True,
+    )
     variant_literal_sequence = _configure_literal_sequence(
         is_variant_literal=True,
         parser_config=parser_config,
@@ -424,7 +431,12 @@ def create_parser(
         variable_assignment | variable_access | variants | wildcard | literal_sequence
     )
     variant_chunk = variable_access | variants | wildcard | variant_literal_sequence
-    wildcard_chunk = (wildcard_variable_access | variants | wildcard_literal_sequence | variant_literal_sequence)
+    wildcard_chunk = (
+        wildcard_variable_access
+        | variants
+        | wildcard_literal_sequence
+        | variant_literal_sequence
+    )
 
     prompt <<= pp.ZeroOrMore(chunk)("prompt")
     variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")

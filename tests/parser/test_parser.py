@@ -47,7 +47,7 @@ class TestParser:
         "input",
         [
             "colours",
-            "path/to/colours",            
+            "path/to/colours",
             "änder",
         ],
     )
@@ -59,43 +59,43 @@ class TestParser:
 
     @pytest.mark.parametrize(
         "input, expected_commands",
-        [            
+        [
             (
-                "path/to/${subject}", 
+                "path/to/${subject}",
                 [
                     LiteralCommand("path/to/"),
                     VariableAccessCommand("subject", LiteralCommand("subject")),
-                ]
+                ],
             ),
             (
-                "${pallette}_colours",  
+                "${pallette}_colours",
                 [
                     VariableAccessCommand("pallette", LiteralCommand("pallette")),
                     LiteralCommand("_colours"),
-                ]
+                ],
             ),
             (
-                "${pallette:warm}_colours",  
+                "${pallette:warm}_colours",
                 [
                     VariableAccessCommand("pallette", LiteralCommand("warm")),
                     LiteralCommand("_colours"),
-                ]
+                ],
             ),
             (
-                "locations/${room: dining room }/furniture", 
+                "locations/${room: dining room }/furniture",
                 [
                     LiteralCommand("locations/"),
                     VariableAccessCommand("room", LiteralCommand("dining room")),
-                    LiteralCommand("/furniture")
-                ]
+                    LiteralCommand("/furniture"),
+                ],
             ),
             (
                 "light/source/{indoor|outdoor}",
                 [
                     LiteralCommand("light/source/"),
-                    VariantCommand.from_literals_and_weights(["indoor", "outdoor"])
-                ]
-            )
+                    VariantCommand.from_literals_and_weights(["indoor", "outdoor"]),
+                ],
+            ),
         ],
     )
     def test_wildcard_dynamic(self, input: str, expected_commands: list[Command]):
@@ -104,7 +104,7 @@ class TestParser:
         assert isinstance(wildcard_command.wildcard, SequenceCommand)
         wildcard_sequence = cast(SequenceCommand, wildcard_command.wildcard)
         assert wildcard_sequence.tokens == expected_commands
-        assert wildcard_command.sampling_method is None    
+        assert wildcard_command.sampling_method is None
 
     @pytest.mark.parametrize(
         "input, sampling_method, wildcard",
