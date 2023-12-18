@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from dynamicprompts.commands import VariantCommand, VariantOption, WildcardCommand
+from dynamicprompts.commands import Command, VariantCommand, VariantOption, WildcardCommand
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
@@ -45,8 +45,11 @@ def get_wildcard_not_found_fallback(
     """
     Logs a warning, then infinitely yields the wrapped wildcard.
     """
-    logger.warning(f"No values found for wildcard {command.wildcard}")
-    wrapped_wildcard = context.wildcard_manager.to_wildcard(command.wildcard)
+    wildcard = command.wildcard
+    if isinstance(wildcard, Command):
+        wildcard = next(context.sample_prompts(wildcard, 1)).text
+    logger.warning(f"No values found for wildcard {wildcard}")
+    wrapped_wildcard = context.wildcard_manager.to_wildcard(wildcard)
     res = SamplingResult(text=wrapped_wildcard)
     while True:
         yield res

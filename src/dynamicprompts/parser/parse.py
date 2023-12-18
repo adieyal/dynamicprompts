@@ -363,6 +363,13 @@ def _parse_variable_access_command(
     parts = parse_result[0].as_dict()
     return VariableAccessCommand(name=parts["name"], default=parts.get("default"))
 
+def _parse_wildcard_variable_access_command(
+    parse_result: pp.ParseResults,
+) -> VariableAccessCommand:   
+    parts = parse_result[0].as_dict()    
+    name = parts["name"]
+    default = parts.get("default") or LiteralCommand(name)
+    return VariableAccessCommand(name=name, default=default)
 
 def _parse_variable_assignment_command(
     parse_result: pp.ParseResults,
@@ -386,6 +393,10 @@ def create_parser(
     wildcard_prompt = pp.Forward()
 
     variable_access = _configure_variable_access(
+        parser_config=parser_config,
+        prompt=variant_prompt,
+    )
+    wildcard_variable_access = _configure_variable_access(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
@@ -413,7 +424,7 @@ def create_parser(
         variable_assignment | variable_access | variants | wildcard | literal_sequence
     )
     variant_chunk = variable_access | variants | wildcard | variant_literal_sequence
-    wildcard_chunk = (variable_access | variants | wildcard_literal_sequence | variant_literal_sequence)
+    wildcard_chunk = (wildcard_variable_access | variants | wildcard_literal_sequence | variant_literal_sequence)
 
     prompt <<= pp.ZeroOrMore(chunk)("prompt")
     variant_prompt <<= pp.ZeroOrMore(variant_chunk)("prompt")
@@ -432,6 +443,7 @@ def create_parser(
     wildcard_literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
     variable_access.set_parse_action(_parse_variable_access_command)
+    wildcard_variable_access.set_parse_action(_parse_wildcard_variable_access_command)
     variable_assignment.set_parse_action(_parse_variable_assignment_command)
     prompt.set_parse_action(_parse_sequence_or_single_command)
     variant_prompt.set_parse_action(_parse_sequence_or_single_command)
