@@ -369,7 +369,7 @@ def _parse_wildcard_variable_access_command(
     parts = parse_result[0].as_dict()    
     name = parts["name"]
     default = parts.get("default") or LiteralCommand(name)
-    return VariableAccessCommand(name=name, default=default)
+    return VariableAccessCommand(name=name, default=LiteralCommand(default.literal.strip()))
 
 def _parse_variable_assignment_command(
     parse_result: pp.ParseResults,
