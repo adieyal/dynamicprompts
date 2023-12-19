@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import logging
+from functools import partial
+
+import pyparsing as pp
 
 from dynamicprompts.commands import (
     Command,
@@ -24,7 +27,8 @@ def wildcard_to_variant(
     max_bound=1,
     separator=",",
 ) -> VariantCommand:
-    values = context.wildcard_manager.get_values(command.wildcard)
+    wildcard = next(context.sample_prompts(command.wildcard, 1)).text
+    values = context.wildcard_manager.get_values(wildcard)
     min_bound = min(min_bound, len(values))
     max_bound = min(max_bound, len(values))
 

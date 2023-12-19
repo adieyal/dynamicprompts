@@ -9,22 +9,13 @@ from dynamicprompts.generators.promptgenerator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 
-try:
+if TYPE_CHECKING:
+    import torch
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
         Pipeline,
-        pipeline,
-        set_seed,
     )
-except ImportError as ie:
-    raise ImportError(
-        "You need to install the transformers library to use the MagicPrompt generator. "
-        "You can do this by running `pip install -U dynamicprompts[magicprompt]`.",
-    ) from ie
-
-if TYPE_CHECKING:
-    import torch
 
 DEFAULT_MODEL_NAME = "Gustavosta/MagicPrompt-Stable-Diffusion"
 MAX_SEED = 2**32 - 1
@@ -71,6 +62,18 @@ def clean_up_magic_prompt(orig_prompt: str, prompt: str) -> str:
     return prompt
 
 
+def _import_transformers():  # pragma: no cover
+    try:
+        import transformers
+
+        return transformers
+    except ImportError as ie:
+        raise ImportError(
+            "You need to install the transformers library to use the MagicPrompt generator. "
+            "You can do this by running `pip install -U dynamicprompts[magicprompt]`.",
+        ) from ie
+
+
 class MagicPromptGenerator(PromptGenerator):
     generator: Pipeline | None = None
     tokenizer: AutoTokenizer | None = None
@@ -83,13 +86,14 @@ class MagicPromptGenerator(PromptGenerator):
         logger.warning("First load of MagicPrompt may take a while.")
 
         if MagicPromptGenerator.generator is None:
-            tokenizer = AutoTokenizer.from_pretrained(model_name)
-            model = AutoModelForCausalLM.from_pretrained(model_name)
+            transformers = _import_transformers()
+            tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+            model = transformers.AutoModelForCausalLM.from_pretrained(model_name)
             tokenizer.pad_token_id = model.config.eos_token_id
 
             MagicPromptGenerator.tokenizer = tokenizer
             MagicPromptGenerator.model = model
-            MagicPromptGenerator.generator = pipeline(
+            MagicPromptGenerator.generator = transformers.pipeline(
                 task="text-generation",
                 tokenizer=tokenizer,
                 model=model,
@@ -123,6 +127,7 @@ class MagicPromptGenerator(PromptGenerator):
         :param blocklist_regex: A regex to use to filter out prompts that match it.
         :param batch_size: The batch size to use when generating prompts.
         """
+        transformers = _import_transformers()
         self._device = device
         self.set_model(model_name)
 
@@ -140,7 +145,7 @@ class MagicPromptGenerator(PromptGenerator):
             self._blocklist_regex = None
 
         if seed is not None:
-            set_seed(int(seed))
+            transformers.set_seed(int(seed))
 
         self._batch_size = batch_size
 

@@ -123,12 +123,24 @@ def test_hierarchy(wildcard_manager: WildcardManager):
     root = wildcard_manager.tree.root
     assert {name for name, item in root.walk_items()} == {
         "dupes",
+        "animal",
         "animals/all-references",
         "animals/mammals/canine",
         "animals/mammals/feline",
         "animals/mystical",
+        "animals/reptiles/lizards",
+        "animals/reptiles/snakes",
         "artists/dutch",
         "artists/finnish",
+        "cars/ford/colors",
+        "cars/ford/name",
+        "cars/ford/types",
+        "cars/john_deere/colors",
+        "cars/john_deere/name",
+        "cars/john_deere/types",
+        "cars/porsche/colors",
+        "cars/porsche/name",
+        "cars/porsche/types",
         "clothing",
         "colors-cold",
         "colors-warm",
@@ -141,15 +153,18 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "variant",
         "weighted-animals/heavy",
         "weighted-animals/light",
+        "wrappers",
     }
     assert set(root.collections) == {
+        "animal",
         "clothing",  # from pantry YAML
         "colors-cold",  # .txt
         "colors-warm",  # .txt
+        "dupes",  # .txt
         "referencing-colors",  # .txt
         "shapes",  # flat list YAML
         "variant",  # .txt
-        "dupes",  # .txt
+        "wrappers",  # .txt
     }
     assert set(root.child_nodes["animals"].collections) == {
         "all-references",
@@ -159,11 +174,17 @@ def test_hierarchy(wildcard_manager: WildcardManager):
         "canine",
         "feline",
     }
+    assert set(root.child_nodes["animals"].child_nodes["reptiles"].collections) == {
+        "lizards",
+        "snakes",
+    }, "animals/reptiles does not match"
     assert set(root.child_nodes["animals"].walk_full_names()) == {
         "animals/all-references",
         "animals/mammals/canine",
         "animals/mammals/feline",
         "animals/mystical",
+        "animals/reptiles/lizards",
+        "animals/reptiles/snakes",
     }
     assert set(root.child_nodes["flavors"].collections) == {
         "sour",  # .txt
@@ -334,6 +355,8 @@ def test_wcm_roots():
         "elaimet/mammals/canine",
         "elaimet/mammals/feline",
         "elaimet/mystical",
+        "elaimet/reptiles/lizards",
+        "elaimet/reptiles/snakes",
         "elaimet/sopot",
         "metasyntactic/fnord",
         "metasyntactic/foo",
@@ -342,9 +365,13 @@ def test_wcm_roots():
         v for v in wcm.get_values("elaimet/*").string_values if not v.startswith("_")
     } == {
         "cat",
+        "cobra",
         "dog",
+        "gecko",
+        "iguana",
         "okapi",
         "pingviini",
+        "python",
         "tiger",
         "unicorn",
         "wolf",

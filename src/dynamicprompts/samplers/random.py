@@ -8,6 +8,7 @@ from dynamicprompts.commands import (
     Command,
     VariantCommand,
     WildcardCommand,
+    WrapCommand,
 )
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
@@ -125,3 +126,11 @@ class RandomSampler(Sampler):
         while True:
             value = next(gen)
             yield from context.sample_prompts(value, 1)
+
+    def _get_wrap(self, command: WrapCommand, context: SamplingContext) -> ResultGen:
+        wrapper_gen = context.generator_from_command(command.wrapper)
+        inner_gen = context.generator_from_command(command.inner)
+        wrapper_result: SamplingResult
+        inner_result: SamplingResult
+        for wrapper_result, inner_result in zip(wrapper_gen, inner_gen):
+            yield wrapper_result.as_wrapper()(inner_result)

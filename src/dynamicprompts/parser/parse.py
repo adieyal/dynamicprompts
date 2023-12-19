@@ -23,6 +23,7 @@ A parser for a prompt grammar which is roughly as follows:
 <variant_literal_sequence> ::= <variant_literal>+
 <variable_assignment> ::= "${" <variable_name> "=" <variant_chunk> "}"
 <variable_access> ::= "${" <variable_name> (":" <variant_chunk>)? "}"
+<wrap_command> ::= "%{" <variant_chunk> "$$" <variant_chunk> "}"
 
 Note that whitespace is preserved in case it is significant to the user.
 """
@@ -44,6 +45,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     VariantOption,
     WildcardCommand,
+    WrapCommand,
 )
 from dynamicprompts.commands.variable_commands import (
     VariableAccessCommand,
@@ -62,6 +64,8 @@ sampler_combinatorial = pp.Char("!")
 sampler_cyclical = pp.Char("@")
 sampler_symbol = sampler_random | sampler_combinatorial | sampler_cyclical
 
+variant_delim = pp.Suppress("$$")
+
 OPT_WS = pp.Opt(pp.White())  # Optional whitespace
 
 var_name = pp.Word(pp.alphas + "_-", pp.alphanums + "_-")
@@ -75,7 +79,6 @@ sampler_symbol_to_method = {
 
 def _configure_range() -> pp.ParserElement:
     hyphen = pp.Suppress("-")
-    variant_delim = pp.Suppress("$$")
 
     # Exclude:
     # - $, which is used to indicate the end of the separator definition i.e. {1$$ and $$X|Y|Z}
@@ -128,6 +131,17 @@ def _configure_wildcard(
     return wildcard("wildcard").leave_whitespace()
 
 
+def _configure_wildcard_path(
+    parser_config: ParserConfig,
+    variable_ref: pp.ParserElement,
+) -> pp.ParserElement:
+    wildcard_path_literal_re = (
+        r"((?!" + re.escape(parser_config.wildcard_wrap) + r")[^(${}#])+"
+    )
+    wildcard_path = pp.Regex(wildcard_path_literal_re).leave_whitespace()
+    return pp.Combine(pp.OneOrMore(variable_ref | wildcard_path))("path")
+
+
 def _configure_literal_sequence(
     parser_config: ParserConfig,
     is_variant_literal: bool = False,
@@ -137,7 +151,12 @@ def _configure_literal_sequence(
     # - { denotes the start of a variant (or whatever variant_start is set to  )
     # - # denotes the start of a comment
     # - $ denotes the start of a variable command (or whatever variable_start is set to)
-    non_literal_chars = rf"#{parser_config.variant_start}{parser_config.variable_start}"
+    # - % denotes the start of a wrap command (or whatever wrap_start is set to)
+    non_literal_chars = (
+        rf"#{parser_config.variant_start}"
+        rf"{parser_config.variable_start}"
+        rf"{parser_config.wrap_start}"
+    )
 
     if is_variant_literal:
         # Inside a variant the following characters are also not allowed
@@ -232,6 +251,23 @@ def _configure_variable_assignment(
         + pp.Suppress(parser_config.variable_end),
     )
     return variable_assignment.leave_whitespace()
+
+
+def _configure_wrap_command(
+    parser_config: ParserConfig,
+    prompt: pp.ParserElement,
+) -> pp.ParserElement:
+    wrap_command = pp.Group(
+        pp.Suppress(parser_config.wrap_start)
+        + OPT_WS
+        + prompt()("wrapper")
+        + OPT_WS
+        + variant_delim
+        + OPT_WS
+        + prompt()("inner")
+        + pp.Suppress(parser_config.wrap_end),
+    )
+    return wrap_command.leave_whitespace()
 
 
 def _parse_literal_command(parse_result: pp.ParseResults) -> LiteralCommand:
@@ -386,6 +422,16 @@ def _parse_variable_assignment_command(
     )
 
 
+def _parse_wrap_command(
+    parse_result: pp.ParseResults,
+) -> WrapCommand:
+    parts = parse_result[0].as_dict()
+    return WrapCommand(
+        inner=parts["inner"],
+        wrapper=parts["wrapper"],
+    )
+
+
 def create_parser(
     *,
     parser_config: ParserConfig,
@@ -408,7 +454,11 @@ def create_parser(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
-    wildcard = _configure_wildcard(
+    wrap_command = _configure_wrap_command(
+        parser_config=parser_config,
+        prompt=variant_prompt,
+    )
+    wildcard = _configure_wildcard(        
         parser_config=parser_config,
         prompt=wildcard_prompt,
     )
@@ -428,9 +478,16 @@ def create_parser(
     )
 
     chunk = (
-        variable_assignment | variable_access | variants | wildcard | literal_sequence
+        variable_assignment
+        | variable_access
+        | wrap_command
+        | variants
+        | wildcard
+        | literal_sequence
     )
-    variant_chunk = variable_access | variants | wildcard | variant_literal_sequence
+    variant_chunk = (
+        variable_access | wrap_command | variants | wildcard | variant_literal_sequence
+    )
     wildcard_chunk = (
         wildcard_variable_access
         | variants
@@ -459,6 +516,7 @@ def create_parser(
     variable_assignment.set_parse_action(_parse_variable_assignment_command)
     prompt.set_parse_action(_parse_sequence_or_single_command)
     variant_prompt.set_parse_action(_parse_sequence_or_single_command)
+    wrap_command.set_parse_action(_parse_wrap_command)
     wildcard_prompt.set_parse_action(_parse_sequence_or_single_command)
     return prompt
 

@@ -1,0 +1,31 @@
+cars:
+  ford:
+    name:
+      - Ford
+    types:
+      - muscle car
+      - compact car
+      - roadster
+    colors:
+      - white
+      - black
+      - brown
+      - red
+
+  porsche:
+    name:
+      - Porsche
+    types:
+      - sports car
+    colors:
+      - red
+      - black
+
+  john_deere:
+    name:
+      - John Deere
+    types:
+      - tractor
+    colors:
+      - green
+      - yellow

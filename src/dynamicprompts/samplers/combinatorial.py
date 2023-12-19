@@ -10,6 +10,7 @@ from dynamicprompts.commands import (
     SequenceCommand,
     VariantCommand,
     WildcardCommand,
+    WrapCommand,
 )
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
@@ -160,3 +161,9 @@ class CombinatorialSampler(Sampler):
         context: SamplingContext,
     ) -> ResultGen:
         yield SamplingResult(text=command.literal)
+
+    def _get_wrap(self, command: WrapCommand, context: SamplingContext) -> ResultGen:
+        for wrapper_result in context.sample_prompts(command.wrapper):
+            wrap = wrapper_result.as_wrapper()
+            for inner in context.sample_prompts(command.inner):
+                yield wrap(inner)

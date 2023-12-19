@@ -47,7 +47,7 @@ class TestParser:
         "input",
         [
             "colours",
-            "path/to/colours",
+            "path/to/colours",           
             "änder",
         ],
     )
