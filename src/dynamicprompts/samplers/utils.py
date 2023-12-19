@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
-
-import pyparsing as pp
 
 from dynamicprompts.commands import (
     Command,

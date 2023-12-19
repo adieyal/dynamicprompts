@@ -458,7 +458,7 @@ def create_parser(
         parser_config=parser_config,
         prompt=variant_prompt,
     )
-    wildcard = _configure_wildcard(        
+    wildcard = _configure_wildcard(
         parser_config=parser_config,
         prompt=wildcard_prompt,
     )
