@@ -240,6 +240,7 @@ def _configure_variable_assignment(
         + OPT_WS
         + var_name("name")
         + OPT_WS
+        + pp.Opt(pp.Literal("?"))("preserve")
         + pp.Literal("=")
         + pp.Opt(pp.Literal("!"))("immediate")
         + OPT_WS
@@ -401,6 +402,7 @@ def _parse_variable_assignment_command(
     return VariableAssignmentCommand(
         name=parts["name"],
         value=parts["value"],
+        preserve=("preserve" in parts),
         immediate=("immediate" in parts),
     )
 
