@@ -392,12 +392,12 @@ class TestParser:
 
     @pytest.mark.parametrize(
         ("immediate", "preserve"),
-        [ 
+        [
             (False, False),
             (False, True),
             (True, False),
             (True, True),
-        ]
+        ],
     )
     def test_variable_commands(self, immediate: bool, preserve: bool):
         op = "?" if preserve else ""

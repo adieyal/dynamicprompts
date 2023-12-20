@@ -5,10 +5,10 @@ drink:
     beverage:
       - '${temp=hot} ${season=winter} ${location?=north} __drink/beverage__'
 
-    north:      
+    north:
       - tea
     south:
-      - coffee      
+      - coffee
 
   summer:
     beverage:
@@ -18,17 +18,16 @@ drink:
       - pop
     south:
       - sweet tea
-      - soda     
+      - soda
 
-  container: 
+  container:
     hot:
       - mug
     cold:
       - glass
 
   temp:
-    hot: 
+    hot:
       - hot
     cold:
       - iced
-        
