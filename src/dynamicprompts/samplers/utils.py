@@ -58,7 +58,7 @@ def get_wildcard_not_found_fallback(
     """
     Logs a warning, then infinitely yields the wrapped wildcard.
     """
-    logger.warning(f"No values found for wildcard {command.wildcard}")
+    logger.warning(f"No values found for wildcard {command.wildcard!r}")
     wrapped_wildcard = context.wildcard_manager.to_wildcard(command.wildcard)
     res = SamplingResult(text=wrapped_wildcard)
     while True:
