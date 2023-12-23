@@ -24,7 +24,7 @@ def wildcard_to_variant(
     max_bound=1,
     separator=",",
 ) -> VariantCommand:
-    wildcard = next(context.sample_prompts(command.wildcard, 1)).text
+    wildcard = next(iter(context.sample_prompts(command.wildcard, 1))).text
     values = context.wildcard_manager.get_values(wildcard)
     min_bound = min(min_bound, len(values))
     max_bound = min(max_bound, len(values))
@@ -51,9 +51,10 @@ def get_wildcard_not_found_fallback(
     """
     Logs a warning, then infinitely yields the wrapped wildcard.
     """
-    wildcard = command.wildcard
-    if isinstance(wildcard, Command):
-        wildcard = next(context.sample_prompts(wildcard, 1)).text
+    if isinstance(command.wildcard, Command):
+        wildcard = next(iter(context.sample_prompts(command.wildcard, 1))).text
+    else:
+        wildcard = str(command.wildcard)
     logger.warning(f"No values found for wildcard {wildcard}")
     wrapped_wildcard = context.wildcard_manager.to_wildcard(wildcard)
     res = SamplingResult(text=wrapped_wildcard)

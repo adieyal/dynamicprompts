@@ -100,7 +100,7 @@ class CyclicalSampler(Sampler):
         context: SamplingContext,
     ) -> ResultGen:
         # TODO: doesn't support weights
-        wildcard_path = next(context.sample_prompts(command.wildcard, 1)).text
+        wildcard_path = next(iter(context.sample_prompts(command.wildcard, 1))).text
         wc_values = context.wildcard_manager.get_values(wildcard_path)
         new_context = context.with_variables(
             command.variables,

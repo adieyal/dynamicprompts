@@ -114,7 +114,7 @@ class RandomSampler(Sampler):
         command: WildcardCommand,
         context: SamplingContext,
     ) -> ResultGen:
-        wildcard_path = next(context.sample_prompts(command.wildcard, 1)).text
+        wildcard_path = next(iter(context.sample_prompts(command.wildcard, 1))).text
         context = context.with_variables(command.variables)
         values = context.wildcard_manager.get_values(wildcard_path)
 
