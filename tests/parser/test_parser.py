@@ -390,17 +390,14 @@ class TestParser:
         assert variant.values[1].literal == "B"
         assert variant.values[2].wildcard == "some/wildcard"
 
+    @pytest.mark.parametrize("immediate", (False, True), ids=("delayed", "immediate"))
     @pytest.mark.parametrize(
-        ("immediate", "preserve"),
-        [
-            (False, False),
-            (False, True),
-            (True, False),
-            (True, True),
-        ],
+        "overwrite",
+        (False, True),
+        ids=("preserve existing value", "overwrite existing value"),
     )
-    def test_variable_commands(self, immediate: bool, preserve: bool):
-        op = "?" if preserve else ""
+    def test_variable_commands(self, immediate: bool, overwrite: bool):
+        op = "?" if not overwrite else ""
         op += "=!" if immediate else "="
         sequence = cast(
             SequenceCommand,
@@ -411,7 +408,7 @@ class TestParser:
         assert isinstance(ass, VariableAssignmentCommand)
         assert ass.name == "animal"
         assert ass.value == LiteralCommand("cat")
-        assert ass.preserve == preserve
+        assert ass.overwrite == overwrite
         assert ass.immediate == immediate
         acc = sequence[2]
         assert isinstance(acc, VariableAccessCommand)

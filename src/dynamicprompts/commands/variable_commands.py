@@ -10,7 +10,7 @@ class VariableAssignmentCommand(Command):
     name: str
     value: Command
     immediate: bool
-    preserve: bool = False
+    overwrite: bool = True
     sampling_method = None
 
 
