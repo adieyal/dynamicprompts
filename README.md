@@ -47,9 +47,6 @@ The dynamic prompts library powers the [Dynamic Prompts](https://github.com/adie
     * [Wildcard Collections](#wildcard-collections)
     * [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
 
-
-
-
 ## Quick overview of the templating language:
 
 ### Variants
@@ -165,7 +162,7 @@ Funko pop __celebrities__ figurine, made of __material__, __studio-shot__
 
 Hat tip to [publicprompts](https://publicprompts.art/) for the funko pop prompt.
 
-The complete syntax can be found [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/docs/SYNTAX.md).
+The complete syntax can be found [here](docs/SYNTAX.md).
 
 
 ## Installation
@@ -421,7 +418,7 @@ generator.generate(template)
 
 ## Template syntax
 
-You can find the complete syntax guide [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/docs/SYNTAX.md)
+You can find the complete syntax guide [here](docs/SYNTAX.md)
 
 ### Syntax customisation
 To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`. You can also change the `__` used in wildcards. So instead of `__colours__`, you can configure wildcards to use `**`, e.g. `**colours**`
