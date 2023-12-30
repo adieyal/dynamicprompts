@@ -11,5 +11,7 @@ artists:
     - Piet Mondrian
     - Rembrandt van Rijn
     - Vincent van Gogh
+  moonbase: john madden  # interpreted as a single john madden
   1234: 5678  # this is ignored
   flurp: 12345  # this too
+  flem: ""  # and this
