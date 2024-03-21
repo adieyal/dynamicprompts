@@ -36,6 +36,7 @@ This guide will walk you through the template language used to generate dynamic 
   - [Default values](#default-values)
   - [Preserving Existing Values](#preserving-existing-values)
 - [Whitespace and comments](#whitespace-and-comments)
+- [Wrap command](#wrap-command)
 - [Samplers](#samplers)
   - [Random Sampler](#random-sampler)
   - [Combinatorial Sampler](#combinatorial-sampler)
@@ -536,6 +537,27 @@ public-prompts:
       physically based rendering,
       square image
 ```
+
+## Wrap command
+
+The wrap command lets you use a template, e.g. from a wildcard file, and wrap it around another prompt,
+as an alternative approach to parametrized templates.
+
+This is similar to the [Styles feature in A1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Features#styles).
+This is useful if you want to use a template to generate a complex structure and then use that structure in a prompt.
+
+The syntax for wraps is
+
+```
+%{something wrapping ..., very cool, neat$$this internal prompt}
+```
+
+This would result in the prompt `something wrapping this internal prompt, very cool, neat`.
+
+Both sides of the wrap command are evaluated before the wrap itself is, so this can be combined with other features like wildcards and variables.
+
+Various ellipsis characters are supported for the `...` placeholder, but `...` (3 ASCII periods)
+might be the easiest to use.
 
 ## Samplers
 
