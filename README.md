@@ -28,24 +28,33 @@ The dynamic prompts library powers the [Dynamic Prompts](https://github.com/adie
 
 ## Table of contents
 
-- [Dynamic Prompts](#dynamic-prompts)
-  - [Quick overview of the templating language:](#quick-overview-of-the-templating-language)
-    - [Variants](#variants)
-    - [Choosing multiple variants](#choosing-multiple-variants)
-    - [Wildcards](#wildcards)
-    - [Let's try a real-world prompt](#lets-try-a-real-world-prompt)
-    - [Use whitespace for readability](#use-whitespace-for-readability)
-  - [Installation](#installation)
-  - [Quick Start](#quick-start)
-    - [Combinatorial Generation](#combinatorial-generation)
-    - [Magic Prompt](#magic-prompt)
-    - [I'm feeling lucky](#im-feeling-lucky)
-    - [Attention Generator](#attention-generator)
-  - [Jinja2 templates](#jinja2-templates)
-  - [Template syntax](#template-syntax)
-    - [Syntax customisation](#syntax-customisation)
-  - [Wildcard Collections](#wildcard-collections)
-  - [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
+<!-- toc -->
+
+- [Quick overview of the templating language:](#quick-overview-of-the-templating-language)
+  - [Variants](#variants)
+  - [Choosing multiple variants](#choosing-multiple-variants)
+  - [Wildcards](#wildcards)
+  - [Let's try a real-world prompt](#lets-try-a-real-world-prompt)
+  - [Use whitespace for readability](#use-whitespace-for-readability)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [Random seeds](#random-seeds)
+  - [Combinatorial Generation](#combinatorial-generation)
+    - [Usage](#usage)
+  - [Magic Prompt](#magic-prompt)
+    - [Usage](#usage-1)
+    - [Other models](#other-models)
+  - [I'm feeling lucky](#im-feeling-lucky)
+    - [Usage](#usage-2)
+  - [Attention Generator](#attention-generator)
+    - [Usage](#usage-3)
+- [Jinja2 templates](#jinja2-templates)
+- [Template syntax](#template-syntax)
+  - [Syntax customisation](#syntax-customisation)
+- [Wildcard Collections](#wildcard-collections)
+- [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
+
+<!-- tocstop -->
 
 ## Quick overview of the templating language:
 
