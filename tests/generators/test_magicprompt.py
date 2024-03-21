@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import os
 import random
 from functools import partial
 from unittest.mock import MagicMock
 
 import pytest
 
+actually_test_transformers = bool(os.environ.get("DP_ACTUALLY_TEST_TRANSFORMERS"))
+
 
 @pytest.fixture(autouse=True)
 def mock_import_transformers(monkeypatch):
+    if actually_test_transformers:  # Skip mock import
+        return
     from dynamicprompts.generators import magicprompt
 
     monkeypatch.setattr(magicprompt, "_import_transformers", MagicMock())
@@ -20,6 +25,13 @@ def test_default_generator():
 
     generator = MagicPromptGenerator()
     assert isinstance(generator._prompt_generator, DummyGenerator)
+
+    if actually_test_transformers:
+        prefix = "magical reality photo of a cat in"
+        pgen = generator.generate(prefix, max_attempts=5)
+        for prompt in pgen:
+            print(prompt)  # noqa: T201
+            assert prompt.startswith(prefix)
 
 
 @pytest.mark.parametrize(
