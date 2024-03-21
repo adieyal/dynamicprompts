@@ -1,6 +1,5 @@
 # Dynamic Prompts
 
-
 ![MIT](https://img.shields.io/github/license/adieyal/dynamicprompts)
 &nbsp;-&nbsp;
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/adieyal/dynamicprompts/test.yml)
@@ -14,46 +13,50 @@ Dynamic prompts is a Python library that provides developers with a **flexible a
 <img src="images/famous_people_small.jpg">
 
 It includes:
-* An easy-to-learn templating language that lets you create a number of unique prompts from a single template.
-* Support for wildcard files as placeholders in templates.
-* A mechanism for creating a wildcard library. Text, JSON, and YAML files are supported.
-* Exhaustive generation of all prompts from a template.
-* Variable assignment enabling re-usable prompt snippets.
-* Supports Magic Prompt which automatically spices up your prompt with modifiers
-* Provides an I'm Feeling Lucky feature which uses the semantic search on Lexica.art to find similar prompts.
-* For systems that support attention syntax, Attention Grabber will emphasis random phrases in your prompt.
-* Jinja-powered templating for advanced prompt creation.
+
+- An easy-to-learn templating language that lets you create a number of unique prompts from a single template.
+- Support for wildcard files as placeholders in templates.
+- A mechanism for creating a wildcard library. Text, JSON, and YAML files are supported.
+- Exhaustive generation of all prompts from a template.
+- Variable assignment enabling re-usable prompt snippets.
+- Supports Magic Prompt which automatically spices up your prompt with modifiers
+- Provides an I'm Feeling Lucky feature which uses the semantic search on Lexica.art to find similar prompts.
+- For systems that support attention syntax, Attention Grabber will emphasis random phrases in your prompt.
+- Jinja-powered templating for advanced prompt creation.
 
 The dynamic prompts library powers the [Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts) extension for Automatic1111.
 
 ## Table of contents
 
-* [Dynamic Prompts](#dynamic-prompts)
-   * [Quick overview of the templating language:](#quick-overview-of-the-templating-language)
-      * [Variants](#variants)
-      * [Choosing multiple variants](#choosing-multiple-variants)
-      * [Wildcards](#wildcards)
-      * [Let's try a real-world prompt](#lets-try-a-real-world-prompt)
-      * [Use whitespace for readability](#use-whitespace-for-readability)
-   * [Installation](#installation)
-   * [Quick Start](#quick-start)
-      * [Combinatorial Generation](#combinatorial-generation)
-      * [Magic Prompt](#magic-prompt)
-       * [I'm feeling lucky](#im-feeling-lucky)
-       * [Attention Generator](#attention-generator)
-    * [Jinja2 templates](#jinja2-templates)
-    * [Template syntax](#template-syntax)
-      * [Syntax customisation](#syntax-customisation)
-    * [Wildcard Collections](#wildcard-collections)
-    * [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
+- [Dynamic Prompts](#dynamic-prompts)
+  - [Quick overview of the templating language:](#quick-overview-of-the-templating-language)
+    - [Variants](#variants)
+    - [Choosing multiple variants](#choosing-multiple-variants)
+    - [Wildcards](#wildcards)
+    - [Let's try a real-world prompt](#lets-try-a-real-world-prompt)
+    - [Use whitespace for readability](#use-whitespace-for-readability)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+    - [Combinatorial Generation](#combinatorial-generation)
+    - [Magic Prompt](#magic-prompt)
+    - [I'm feeling lucky](#im-feeling-lucky)
+    - [Attention Generator](#attention-generator)
+  - [Jinja2 templates](#jinja2-templates)
+  - [Template syntax](#template-syntax)
+    - [Syntax customisation](#syntax-customisation)
+  - [Wildcard Collections](#wildcard-collections)
+  - [Dynamic Prompts in the wild.](#dynamic-prompts-in-the-wild)
 
 ## Quick overview of the templating language:
 
 ### Variants
+
 ```
 {summer|autumn|winter|spring} is coming
 ```
+
 Randomly generate one of:
+
 ```
 summer is coming
 autumn is coming
@@ -62,7 +65,9 @@ spring is coming
 ```
 
 ### Choosing multiple variants
+
 This syntax `{2$$ and $$A|B|C}` will choose two values from the list:
+
 ```
 A and B
 A and C
@@ -73,13 +78,15 @@ C and B
 ```
 
 ### Wildcards
+
 ```
 __season__ is coming
 ```
+
 Randomly selects a value from season.txt in your wildcard directory.
 
-
 ### Let's try a real-world prompt
+
 One prompt template can generate a family of prompts:
 
 ```
@@ -90,7 +97,6 @@ Funko pop {yoda|darth vader|jabba the hutt|princess leia|chewbacca|luke skywalke
 
 <br/>
 
-
 Now, how about two characters at the same time:
 
 ```
@@ -99,10 +105,10 @@ Funko pop {2$$ and $$yoda|darth vader|jabba the hutt|princess leia|chewbacca|luk
 
 <img src="images/funkypop2.jpg" style="width:50%">
 
-
 <br/>
 
 ### Use whitespace for readability
+
 ```
 # Add comments like this
 Funko pop
@@ -122,7 +128,6 @@ Funko pop
 		|stone
 	}, product studio shot, on a white background, diffused lighting, centered
 ```
-
 
 Use wildcards for re-usable lists:
 
@@ -150,20 +155,20 @@ product studio shot, on a white background, diffused lighting, centered
 ```
 
 Now compose your prompt like this:
+
 ```
 Funko pop __starwars__ figurine, made of __material__, __studio-shot__
 ```
 
 and easily change it to:
+
 ```
 Funko pop __celebrities__ figurine, made of __material__, __studio-shot__
 ```
 
-
 Hat tip to [publicprompts](https://publicprompts.art/) for the funko pop prompt.
 
 The complete syntax can be found [here](docs/SYNTAX.md).
-
 
 ## Installation
 
@@ -218,6 +223,7 @@ generator.generate("I love __colours__ roses", num_prompts)
 ### Random seeds
 
 You can pass a random seed in the constructor for predictable outputs
+
 ```
 generator = RandomPromptGenerator(wildcard_manager=wm, seed=999)
 ```
@@ -227,6 +233,7 @@ A list of seeds can also be provided in the `generate` method.
 ```
 generator.generate("I love __colours__ roses", num_prompts, seeds=[1,2,3])
 ```
+
 In this example, a seed is provided for each prompt generated. The number of seeds must equal the number of prompts, i.e. `len(seeds) == num_prompts`. If `len(seeds) == 1` then the same seed is used for every image.
 
 As a convenience, `seeds` may also be an int value.
@@ -236,16 +243,19 @@ generator.generate("I love __colours__ roses", num_prompts=3, seeds=5)
 ```
 
 is equivalent to:
+
 ```
 generator.generate("I love __colours__ roses", num_prompts=3, seeds=[5, 5, 5])
 ```
 
 ### Combinatorial Generation
+
 Instead of generating random prompts from a template, combinatorial generation produces every possible prompt from the given string. For example:
 
 `I {love|hate} {New York|Chicago} in {June|July|August}`
 
 will produce:
+
 > I love New York in June<br>
 > I love New York in July<br>
 > I love New York in August<br>
@@ -264,6 +274,7 @@ If a `__wildcard__` is provided, then a new prompt will be produced for every va
 `My favourite season is __seasons__`
 
 will produce:
+
 > My favourite season is Summer<br>
 > My favourite season is August<br>
 > My favourite season is Winter<br>
@@ -295,8 +306,8 @@ If colours.txt contains 10 different colours, a combinatorial enumeration of tha
 > My favourite colours are red, blue, and purple<br>
 > ...<br>
 
-
 ### Magic Prompt
+
 Using [Gustavosta](https://huggingface.co/Gustavosta/MagicPrompt-Stable-Diffusion)'s MagicPrompt model, automatically generate new prompts from the input. Trained on 80,000 prompts from [Lexica.art](lexica.art), it can help give you interesting new prompts on a given subject. Here are some automatically generated variations for "dogs playing football":
 
 > dogs playing football, in the streets of a japanese town at night, with people watching in wonder, in the style of studio ghibli and makoto shinkai, highly detailed digital art, trending on artstation<br>
@@ -331,6 +342,7 @@ Magic Prompt is not available by default, you need to install it as follows:
 `pip install "dynamicprompts[magicprompt]"`
 
 #### Other models
+
 There a few alternatives to Gustavosta's model available. You can try:
 
 ```
@@ -343,6 +355,7 @@ You can find a longer list [here](https://github.com/adieyal/sd-dynamic-prompts/
 Note that each model requires a download of large model files.
 
 ### I'm feeling lucky
+
 Use the [lexica.art](https://lexica.art) API to create random prompts. Useful if you're looking for inspiration, or are simply too lazy to think of your own prompts. When this option is selected, the template is used as a search string. For example, prompt "Mech warrior" might return:
 
 > A large robot stone statue in the middle of a forest by Greg Rutkowski, Sung Choi, Mitchell Mohrhauser, Maciej Kuciara, Johnson Ting, Maxim Verehin, Peter Konig, final fantasy , 8k photorealistic, cinematic lighting, HD, high details, atmospheric,
@@ -370,6 +383,7 @@ lucky_generator.generate("I love {red|green|blue} roses", num_prompts)
 ```
 
 ### Attention Generator
+
 If you are using [Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) or a similar frontend to Stable Diffusion that uses attention syntax, e.g. `(some text:1.4)`, AttentionGenerator will randomly add attention to various phrases in your prompt. This injects a small amount of randomness into your prompt.
 
 #### Usage
@@ -397,6 +411,7 @@ You may get better results with AttentionGenerator by installing the `spacy` NLP
 When Spacy is available, an NLP model will automatically be downloaded on first use.
 
 ## Jinja2 templates
+
 If the standard template language is not sufficient for your needs, you can try the Jinja2 generator. Jinja2 templates have familiar programming constructs such as looping, conditionals, variables, etc. Youcan find a guide on using Jinja2 templates with Dynamic Prompts, [here](https://github.com/adieyal/sd-dynamic-prompts/blob/main/jinja2.md). Here is the minimal code you need to instantiate Jinja2 generator.
 
 ```python
@@ -421,7 +436,9 @@ generator.generate(template)
 You can find the complete syntax guide [here](docs/SYNTAX.md)
 
 ### Syntax customisation
+
 To address potential syntax clashes with other tools it is possible to change various tokens. Instead of `{red|green|blue}` you can configure the library to use the `<` `>` pair instead, e.g. `<red|green|blue>`. You can also change the `__` used in wildcards. So instead of `__colours__`, you can configure wildcards to use `**`, e.g. `**colours**`
+
 ```python
 
 from dynamicprompts.generators import RandomPromptGenerator
@@ -431,11 +448,15 @@ parser_config = ParserConfig(variant_start="<", variant_end=">", wildcard_wrap="
 generator = RandomPromptGenerator(parser_config=parser_config)
 
 ```
+
 ## Wildcard Collections
+
 You can bootstrap your wildcard library by using our [pre-existing collections](https://github.com/adieyal/sd-dynamic-prompts/tree/main/collections). You'll find just under 80,000 wildcards divided into 1900 files. Feel free to pick and choose or take them in their entirety.
 
 ## Dynamic Prompts in the wild.
+
 Dynamic Prompts has been used in:
+
 1. [SD Dynamic Prompts](https://github.com/adieyal/sd-dynamic-prompts/edit/main/README.md) Auto1111 extension
 2. Deforum 0.7 [colab](https://colab.research.google.com/drive/1qtYHUwFl9ocLyzDRL1_MlpQluV32ndoT?usp=sharing)
 3. [ComfyUI Nodes](https://github.com/adieyal/comfyui-dynamicprompts)

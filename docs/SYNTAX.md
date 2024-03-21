@@ -3,6 +3,7 @@
 This guide will walk you through the template language used to generate dynamic prompts. It covers various features such as variants, wildcards, variables, and parameterized templates.
 
 ## Table of contents
+
 - [Syntax Guide](#syntax-guide)
   - [Table of contents](#table-of-contents)
   - [Variants](#variants)
@@ -40,7 +41,6 @@ This guide will walk you through the template language used to generate dynamic 
     - [Combinatorial Sampler](#combinatorial-sampler)
     - [Cyclical Sampler](#cyclical-sampler)
 
-
 ## Variants
 
 Variants allow you to randomly generate one or more options from a list of possibilities. They can be weighted, and you can control the number of options to be chosen.
@@ -55,10 +55,10 @@ To create a variant, wrap your options in curly brackets {} and separate them wi
 
 This will randomly generate one of the following:
 
-* summer is coming
-* autumn is coming
-* winter is coming
-* spring is coming
+- summer is coming
+- autumn is coming
+- winter is coming
+- spring is coming
 
 ### Weighting Options
 
@@ -82,11 +82,11 @@ My favourite ice-cream flavours are {2$$chocolate|vanilla|strawberry}
 
 This will generate one of the following:
 
-* My favourite ice-cream flavours are chocolate, vanilla
-* My favourite ice-cream flavours are chocolate, strawberry
-* My favourite ice-cream flavours are vanilla, chocolate
-* ...
-etc
+- My favourite ice-cream flavours are chocolate, vanilla
+- My favourite ice-cream flavours are chocolate, strawberry
+- My favourite ice-cream flavours are vanilla, chocolate
+- ...
+  etc
 
 Values are chosen without replacement, so you won't get repeats.
 
@@ -100,10 +100,10 @@ My favourite ice-cream flavours are {2$$ and $$chocolate|vanilla|strawberry}
 
 This will generate one of the following:
 
-* My favourite ice-cream flavours are chocolate and vanilla
-* My favourite ice-cream flavours are chocolate and strawberry
-* My favourite ice-cream flavours are vanilla and chocolate
-* ...
+- My favourite ice-cream flavours are chocolate and vanilla
+- My favourite ice-cream flavours are chocolate and strawberry
+- My favourite ice-cream flavours are vanilla and chocolate
+- ...
 
 ### Range of Options
 
@@ -115,13 +115,13 @@ My favourite ice-cream flavours are {1-2$$ and $$chocolate|vanilla|strawberry}
 
 This will generate:
 
-* My favourite ice-cream flavours are chocolate
-* My favourite ice-cream flavours are strawberry
-* My favourite ice-cream flavours are vanilla
-* My favourite ice-cream flavours are chocolate and vanilla
-* My favourite ice-cream flavours are chocolate and strawberry
-* My favourite ice-cream flavours are vanilla and chocolate
-* ...
+- My favourite ice-cream flavours are chocolate
+- My favourite ice-cream flavours are strawberry
+- My favourite ice-cream flavours are vanilla
+- My favourite ice-cream flavours are chocolate and vanilla
+- My favourite ice-cream flavours are chocolate and strawberry
+- My favourite ice-cream flavours are vanilla and chocolate
+- ...
 
 #### Omitting Bounds
 
@@ -163,10 +163,10 @@ spring
 
 This prompt will randomly generate one of the following:
 
-* summer is coming
-* autumn is coming
-* winter is coming
-* spring is coming
+- summer is coming
+- autumn is coming
+- winter is coming
+- spring is coming
 
 ### Wildcards in Variants
 
@@ -198,11 +198,11 @@ spring
 
 The possible outputs are:
 
-* summer is coming
-* autumn is coming
-* fall is coming
-* winter is coming
-* spring is coming
+- summer is coming
+- autumn is coming
+- fall is coming
+- winter is coming
+- spring is coming
 
 ### Nested Wildcards
 
@@ -284,10 +284,10 @@ The colour of my shirt is __colours*__
 
 Possible outputs are:
 
-* The colour of my shirt is blue
-* The colour of my shirt is green
-* The colour of my shirt is red
-* The colour of my shirt is yellow
+- The colour of my shirt is blue
+- The colour of my shirt is green
+- The colour of my shirt is red
+- The colour of my shirt is yellow
 
 #### Recursive globbing
 
@@ -337,11 +337,10 @@ The last two entries are ignore since they don't store arrays.
 A handy feature of YAML files is that they provide an easy way to add weights to wildcards, something which isn't possible using standard text files. Here is an example:
 
 ```yaml
-{
-  2::red
-  | 3::blue
-  | 1:: green
-}
+{ ? 2::red
+    | 3::blue
+    | 1:
+  : green }
 ```
 
 #### JSON files
@@ -400,11 +399,10 @@ In ${season}, I wear ${season} shirts and ${season} trousers
 
 This will generate:
 
-* In summer, I wear summer shirts and summer trousers
-* In autumn, I wear autumn shirts and autumn trousers
-* In winter, I wear winter shirts and winter trousers
-* In spring, I wear spring shirts and spring trousers
-
+- In summer, I wear summer shirts and summer trousers
+- In autumn, I wear autumn shirts and autumn trousers
+- In winter, I wear winter shirts and winter trousers
+- In spring, I wear spring shirts and spring trousers
 
 ### Non-immediate Evaluation
 
@@ -467,19 +465,19 @@ Now if you forget to create the season variable, the prompt will be `In summer, 
 
 ### Preserving Existing Values
 
-Within a parameterized template, there may be cases where you want to assign a variable instead of providing a default value in order to achieve better consistency across nested parameterized templates. When assigning a variable a value, you can indicate that you do not want to overwrite an existing value  by placing a `?` before the `=` in the assignment.
+Within a parameterized template, there may be cases where you want to assign a variable instead of providing a default value in order to achieve better consistency across nested parameterized templates. When assigning a variable a value, you can indicate that you do not want to overwrite an existing value by placing a `?` before the `=` in the assignment.
 
 For instance, given the following example parameterized templates with variables:
 
 ```yaml
 examples:
   prompt:
-    - '${subject?=!{man|woman}} ${weather?=!{sun|rain}} ${drink?=!{__examples/drink__}} a ${subject} standing in the ${weather} drinking ${drink}'
+    - "${subject?=!{man|woman}} ${weather?=!{sun|rain}} ${drink?=!{__examples/drink__}} a ${subject} standing in the ${weather} drinking ${drink}"
   drink:
     - coffee
     - tea
   winter:
-    - '${weather=snow} ${drink=hot chocolate} __examples/prompt__'
+    - "${weather=snow} ${drink=hot chocolate} __examples/prompt__"
 ```
 
 Then the following prompts would produce results similar to the following:

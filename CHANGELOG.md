@@ -28,7 +28,7 @@
 0.10.1 - Added limit_prompts to JinjaGenerator. When set to True, `.generate(..., num_images=X)` will produced at most X prompts
 0.10.0 - Added added the ability to combine random and combinatorial prompts. Also added a cyclical sampler - see documentation for details
 0.9.1 - WildcardManager now uses the current working directory by default if a path is not provided
-0.9.0 - Configurable wildcard symbols - it's possible to change from the default __ to any arbitrary string
+0.9.0 - Configurable wildcard symbols - it's possible to change from the default `__` to any arbitrary string
 0.8.0 - Added syntax for changing samplers within prompt sub-trees.
 0.7.1 - Fixed missing parser_config argument in CombinatorialPromptGenerator
 0.7.0 - Configurable variant braces
