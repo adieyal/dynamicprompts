@@ -758,6 +758,43 @@ class TestVariableCommands:
         cmd = parse("${a =! foo}${a}")
         assert str(next(random_sampling_context.generator_from_command(cmd))) == "foo"
 
+    @pytest.mark.parametrize(
+        "prompt, possible_results",
+        [
+            (
+                "${season=summer} ${temp=cold} ${location=north}__drink/beverage__",
+                ("a glass of iced tea", "a glass of iced pop"),
+            ),
+            (
+                "${season=summer} ${temp=cold} ${location=south}__drink/winter/beverage__",
+                ("a mug of hot coffee"),
+            ),
+            (
+                "${season=summer} ${temp=cold}__drink/winter/beverage__",
+                ("a mug of hot tea"),
+            ),
+            (
+                "__drink/summer/beverage__",
+                ("a glass of iced sweet tea", "a glass of iced soda"),
+            ),
+            (
+                "${location=north}__drink/summer/beverage__",
+                ("a glass of iced tea", "a glass of iced pop"),
+            ),
+        ],
+    )
+    def test_preserve_variable(
+        self,
+        random_sampling_context: SamplingContext,
+        prompt: str,
+        possible_results: list[str],
+    ):
+        cmd = parse(prompt)
+        resolved_value = str(
+            next(random_sampling_context.generator_from_command(cmd)),
+        ).strip()
+        assert resolved_value in possible_results
+
     def test_unknown_variable(self, wildcard_manager: WildcardManager):
         ctx1 = SamplingContext(
             default_sampling_method=SamplingMethod.RANDOM,

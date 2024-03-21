@@ -1,0 +1,33 @@
+drink:
+  beverage:
+    - '${season?=!{winter|summer}} ${temp?=!{hot|cold}} ${location?=!{north|south}} a __drink/container/${temp}__ of __drink/temp/${temp}__ __drink/${season}/${location}__'
+  winter:
+    beverage:
+      - '${temp=hot} ${season=winter} ${location?=north} __drink/beverage__'
+
+    north:
+      - tea
+    south:
+      - coffee
+
+  summer:
+    beverage:
+      - '${temp=cold} ${season=summer} ${location?=south} __drink/beverage__'
+    north:
+      - tea
+      - pop
+    south:
+      - sweet tea
+      - soda
+
+  container:
+    hot:
+      - mug
+    cold:
+      - glass
+
+  temp:
+    hot:
+      - hot
+    cold:
+      - iced

@@ -162,6 +162,8 @@ class SamplingContext:
         self,
         command: VariableAssignmentCommand,
     ) -> Command:
+        if not command.overwrite and command.name in self.variables:
+            return self.variables[command.name]
         if command.immediate:
             if isinstance(command.value, LiteralCommand):
                 # Optimization: if the variable assignment is a literal, just use that

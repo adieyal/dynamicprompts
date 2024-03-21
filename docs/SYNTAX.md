@@ -3,34 +3,42 @@
 This guide will walk you through the template language used to generate dynamic prompts. It covers various features such as variants, wildcards, variables, and parameterized templates.
 
 ## Table of contents
-   * [Variants](#variants)
-      * [Basic Syntax](#basic-syntax)
-      * [Weighting Options](#weighting-options)
-      * [Choosing Multiple Values](#choosing-multiple-values)
-      * [Custom Separator](#custom-separator)
-      * [Range of Options](#range-of-options)
-         * [Omitting Bounds](#omitting-bounds)
-         * [Limitations](#limitations)
-   * [Wildcards](#wildcards)
-      * [Basic Syntax](#basic-syntax-1)
-      * [Wildcards in Variants](#wildcards-in-variants)
-      * [Variants in Wildcards](#variants-in-wildcards)
-      * [Nested Wildcards](#nested-wildcards)
-      * [Resolving Wildcards with Globbing](#resolving-wildcards-with-globbing)
-         * [Basic Syntax](#basic-syntax-2)
-         * [Example](#example)
-      * [File formats](#file-formats)
-         * [Text files](#text-files)
-         * [YAML files](#yaml-files)
-         * [JSON files](#json-files)
-   * [Variables](#variables)
-      * [Immediate Evaluation](#immediate-evaluation)
-      * [Non-immediate Evaluation](#non-immediate-evaluation)
-   * [Parameterized Templates](#parameterized-templates)
-      * [Basic Syntax](#basic-syntax-3)
-      * [Default values](#default-values)
-   * [Whitespace and comments](#whitespace-and-comments)
-   * [Samplers](#samplers)
+- [Syntax Guide](#syntax-guide)
+  - [Table of contents](#table-of-contents)
+  - [Variants](#variants)
+    - [Basic Syntax](#basic-syntax)
+    - [Weighting Options](#weighting-options)
+    - [Choosing Multiple Values](#choosing-multiple-values)
+    - [Custom Separator](#custom-separator)
+    - [Range of Options](#range-of-options)
+      - [Omitting Bounds](#omitting-bounds)
+      - [Limitations](#limitations)
+  - [Wildcards](#wildcards)
+    - [Basic Syntax](#basic-syntax-1)
+    - [Wildcards in Variants](#wildcards-in-variants)
+    - [Variants in Wildcards](#variants-in-wildcards)
+    - [Nested Wildcards](#nested-wildcards)
+    - [Resolving Wildcards with Globbing](#resolving-wildcards-with-globbing)
+      - [Basic Syntax](#basic-syntax-2)
+      - [Example](#example)
+      - [Recursive globbing](#recursive-globbing)
+    - [File formats](#file-formats)
+      - [Text files](#text-files)
+      - [YAML files](#yaml-files)
+        - [Weighted options in YAML](#weighted-options-in-yaml)
+      - [JSON files](#json-files)
+  - [Variables](#variables)
+    - [Immediate Evaluation](#immediate-evaluation)
+    - [Non-immediate Evaluation](#non-immediate-evaluation)
+  - [Parameterized Templates](#parameterized-templates)
+    - [Basic Syntax](#basic-syntax-3)
+    - [Default values](#default-values)
+    - [Preserving Existing Values](#preserving-existing-values)
+  - [Whitespace and comments](#whitespace-and-comments)
+  - [Samplers](#samplers)
+    - [Random Sampler](#random-sampler)
+    - [Combinatorial Sampler](#combinatorial-sampler)
+    - [Cyclical Sampler](#cyclical-sampler)
 
 
 ## Variants
@@ -444,7 +452,7 @@ __season_clothes(season=winter)__
 Note - for now you can only pass a literal string into the template rather than an expression. This syntax will also work
 
 ```
-${season={summer|autumn|winter|spring} __season_clothes__
+${season={summer|autumn|winter|spring}} __season_clothes__
 ```
 
 ### Default values
@@ -456,6 +464,37 @@ In ${season:summer}, I wear ${season:summer} shirts and ${season:summer} trouser
 ```
 
 Now if you forget to create the season variable, the prompt will be `In summer, I wear summer shirts and summer trousers`
+
+### Preserving Existing Values
+
+Within a parameterized template, there may be cases where you want to assign a variable instead of providing a default value in order to achieve better consistency across nested parameterized templates. When assigning a variable a value, you can indicate that you do not want to overwrite an existing value  by placing a `?` before the `=` in the assignment.
+
+For instance, given the following example parameterized templates with variables:
+
+```yaml
+examples:
+  prompt:
+    - '${subject?=!{man|woman}} ${weather?=!{sun|rain}} ${drink?=!{__examples/drink__}} a ${subject} standing in the ${weather} drinking ${drink}'
+  drink:
+    - coffee
+    - tea
+  winter:
+    - '${weather=snow} ${drink=hot chocolate} __examples/prompt__'
+```
+
+Then the following prompts would produce results similar to the following:
+
+> `${subject=boy} __examples/prompt__`
+> a boy standing in the rain drinking tea
+
+> `${subject=cowboy} ${weather=sun} ${drink=sasparilla} __examples/prompt__`
+> a cowboy standing in the sun drinking sasparilla
+
+> `__examples/winter__`
+> a woman standing in the snow drinking hot chocolate
+
+> `${subject=boy} ${weather=rain} ${drink=iced tea} __vartest/winter__`
+> a boy standing in the snow drinking hot chocolate
 
 ## Whitespace and comments
 
