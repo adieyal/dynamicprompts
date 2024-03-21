@@ -48,10 +48,6 @@ class TestParser:
         [
             "colours",
             "path/to/colours",
-            "path/to/${subject}",
-            "${pallette}_colours",
-            "${pallette:warm}_colours",
-            "locations/${room: dining room }/furniture",
             "änder",
         ],
     )
@@ -59,6 +55,55 @@ class TestParser:
         wildcard_command = parse(f"__{input}__")
         assert isinstance(wildcard_command, WildcardCommand)
         assert wildcard_command.wildcard == input
+        assert wildcard_command.sampling_method is None
+
+    @pytest.mark.parametrize(
+        "input, expected_commands",
+        [
+            (
+                "path/to/${subject}",
+                [
+                    LiteralCommand("path/to/"),
+                    VariableAccessCommand("subject", LiteralCommand("subject")),
+                ],
+            ),
+            (
+                "${pallette}_colours",
+                [
+                    VariableAccessCommand("pallette", LiteralCommand("pallette")),
+                    LiteralCommand("_colours"),
+                ],
+            ),
+            (
+                "${pallette:warm}_colours",
+                [
+                    VariableAccessCommand("pallette", LiteralCommand("warm")),
+                    LiteralCommand("_colours"),
+                ],
+            ),
+            (
+                "locations/${room: dining room }/furniture",
+                [
+                    LiteralCommand("locations/"),
+                    VariableAccessCommand("room", LiteralCommand("dining room")),
+                    LiteralCommand("/furniture"),
+                ],
+            ),
+            (
+                "light/source/{indoor|outdoor}",
+                [
+                    LiteralCommand("light/source/"),
+                    VariantCommand.from_literals_and_weights(["indoor", "outdoor"]),
+                ],
+            ),
+        ],
+    )
+    def test_wildcard_dynamic(self, input: str, expected_commands: list[Command]):
+        wildcard_command = parse(f"__{input}__")
+        assert isinstance(wildcard_command, WildcardCommand)
+        assert isinstance(wildcard_command.wildcard, SequenceCommand)
+        wildcard_sequence = cast(SequenceCommand, wildcard_command.wildcard)
+        assert wildcard_sequence.tokens == expected_commands
         assert wildcard_command.sampling_method is None
 
     @pytest.mark.parametrize(

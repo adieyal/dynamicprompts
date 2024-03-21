@@ -13,7 +13,6 @@ from dynamicprompts.commands import (
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
-    replace_wildcard_variables,
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
@@ -115,9 +114,9 @@ class RandomSampler(Sampler):
         command: WildcardCommand,
         context: SamplingContext,
     ) -> ResultGen:
-        command = replace_wildcard_variables(command=command, context=context)
+        wildcard_path = next(iter(context.sample_prompts(command.wildcard, 1))).text
         context = context.with_variables(command.variables)
-        values = context.wildcard_manager.get_values(command.wildcard)
+        values = context.wildcard_manager.get_values(wildcard_path)
 
         if len(values) == 0:
             yield from get_wildcard_not_found_fallback(command, context)
