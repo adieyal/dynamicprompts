@@ -15,14 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pre-commit/action@v3.0.0
+      - uses: pre-commit/action@v3.0.1
         env:
           RUFF_OUTPUT_FORMAT: github
   mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
@@ -51,7 +51,7 @@ jobs:
       - run: pytest --cov --cov-report=term-missing --cov-report=xml .
         env:
           PYPARSINGENABLEALLWARNINGS: 1
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs:
@@ -66,7 +66,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: python -m pip install hatch

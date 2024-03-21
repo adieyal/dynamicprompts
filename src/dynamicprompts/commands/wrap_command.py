@@ -12,11 +12,11 @@ log = logging.getLogger(__name__)
 WRAP_MARKER_CHARACTERS = {
     "\u1801",  # Mongolian ellipsis
     "\u2026",  # Horizontal ellipsis
-    "\u22EE",  # Vertical ellipsis
-    "\u22EF",  # Midline horizontal ellipsis
-    "\u22F0",  # Up right diagonal ellipsis
-    "\u22F1",  # Down right diagonal ellipsis
-    "\uFE19",  # Presentation form for vertical horizontal ellipsis
+    "\u22ee",  # Vertical ellipsis
+    "\u22ef",  # Midline horizontal ellipsis
+    "\u22f0",  # Up right diagonal ellipsis
+    "\u22f1",  # Down right diagonal ellipsis
+    "\ufe19",  # Presentation form for vertical horizontal ellipsis
 }
 
 WRAP_MARKER_RE = re.compile(
