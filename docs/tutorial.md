@@ -18,7 +18,6 @@ What if we wanted an image of a platinum ring as well? We can use the Dynamic Pr
 
 Dynamic Prompts would then generate one of:
 
-
     A diamond ring set on a gold band
 
 and
@@ -30,7 +29,6 @@ and
 Gold comes in various varieties, let's add those as well:
 
     A diamond ring set on a {{rose|yellow|white} gold|platinum} band.
-
 
 Notice how we nested a variant for the type of gold, i.e. `{rose|yellow|white}` inside the main variant.
 So now, when generating an image, one of the following prompts is created:
@@ -62,7 +60,6 @@ This template could produce any of these prompts:
     A emerald ring set on a thin platinum band
     etc.
 
-
 That second prompt isn't grammatically correct, it doesn't matter to Stable Diffusion, but if you prefer correct grammar, you can write something like:
 
     {A diamond|A ruby|An emerald} ring set on a {classic|thin|thick}
@@ -73,6 +70,7 @@ That second prompt isn't grammatically correct, it doesn't matter to Stable Diff
     band
 
 ## Wildcards
+
 What if we had many gems that we would like to use in our rings? You can certainly add them as variants along with rubies and emeralds, but this may become cumbersome with many variants. In this case, we can use a wildcard.
 
 First, we create a file called `gems.txt` inside the wildcards folder. The location depends on the frontend you're using for Dynamic Prompts.
@@ -151,7 +149,6 @@ Some examples of prompts that are generated:
 
     surfer in space, intricate detail, airbrush painting, illustration, by Fritz Wegner,Dawu Yu
 
-
 The default separator is a `,` - if you prefer to use `and` then change the prompt like this:
 
     surfer in space, intricate detail, airbrush painting, illustration, by {2$$ and $$__artists/illustrations/childrens_books__}
@@ -194,13 +191,11 @@ Here are some example prompts that I get when using Magic Prompt:
 
     A mech-warrior in a post-apocalyptic setting. realistic shaded lighting poster by Ilya Kuvshinov katsuhiro, magali villeneuve, artgerm, Jeremy Lipkin and Michael Garmash, Rob Rey and Kentarï¿½ Miura style, trending on art station
 
-
 When I have a subject in mind but I'm not yet sure about how I want the final image to look, I usually play around with magic prompt until I find something I like. I then use the generated prompt and tune from there.
 
 ## I'm feeling lucky
 
 Another way of getting inspiration is through the I'm feeling lucky function. Instead of using a neural network, I'm feeling lucky uses the search engine on [Lexica.art](http://lexica.art) to find prompts that match your input. Quality may vary, but it is also a fun way to explore the latent space.
-
 
 Using `mech-warrior` as my prompt, I get the following:
 
@@ -234,8 +229,8 @@ We add randomly add emphasis. For these images, I kept the seed constant so that
 
     a detailed manga illustration character full body portrait of a dark haired cyborg anime man who has a red mechanical eye, trending on artstation, digital art, 4 k resolution, detailed, high quality, sharp focus, hq artwork, insane detail, concept art, character concept, (character illustration:1.26), full body illustration, cinematic, dramatic lighting
 
-
 These changes are far more subtle and can be helpful if you want to explore slight changes to your image.
+
 # Conclusion
 
 This tutorial has covered the basics. There are additional features to try out once you feel comfortable using the tool.
