@@ -1,3 +1,10 @@
+- 0.31.0
+  - Feature: Add Variable Support in Wildcard Paths (#110, #114) (thanks @mwootendev!)
+  - Feature: Add wrap command (#102) (@akx)
+  - Feature: Support preserving variable values (#115) (thanks @mwootendev!)
+  - Enhancement: Make "No values found" warning more obvious (#116)
+  - Enhancement: Parse single strings as collections of one item in structured wildcard files (#113)
+  - Internal: Loosen transitive dependency pins to avoid downgrades (#122)
 - 0.30.4 - Fix corner case regression introduced in 0.30.0 (#107)
 - 0.30.3 - Fix spurious warnings introduced by #103 (#105)
 - 0.30.2 - No code changes.
