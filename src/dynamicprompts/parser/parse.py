@@ -30,6 +30,7 @@ Note that whitespace is preserved in case it is significant to the user.
 
 from __future__ import annotations
 
+import logging
 import re
 from functools import partial
 from typing import Iterable
@@ -52,6 +53,8 @@ from dynamicprompts.commands.variable_commands import (
     VariableAssignmentCommand,
 )
 from dynamicprompts.parser.config import ParserConfig, default_parser_config
+
+logger = logging.getLogger(__name__)
 
 real_num1 = pp.Combine(pp.Word(pp.nums) + "." + pp.Word(pp.nums))
 real_num2 = pp.Combine(pp.Word(pp.nums) + ".")
@@ -554,13 +557,39 @@ def parse(
     if prompt.isalnum():  # no need to actually parse anything
         return LiteralCommand(prompt)
 
-    tokens = get_cached_parser(parser_config).parse_string(
-        prompt,
-        parse_all=True,
-    )
+    try:
+        tokens = get_cached_parser(parser_config).parse_string(
+            prompt,
+            parse_all=True,
+        )
+    except pp.ParseException as fe:
+        logger.warning(
+            "Dynamic Prompts: PyParsing error:\n%s\n---",
+            fe.explain(depth=0),
+        )
+        raise
     if len(tokens) != 1:
         raise ValueError(f"Could not parse prompt {prompt!r}")
 
     tok = tokens[0]
     assert isinstance(tok, Command)
     return tok
+
+
+def try_parse(
+    prompt: str,
+    parser_config: ParserConfig = default_parser_config,
+) -> Command:
+    """
+    Try to parse a prompt string into a command, returning a LiteralCommand
+    if parsing fails.
+
+    :param prompt: The prompt string to parse.
+    :param parser_config: The parser configuration to use.
+    :return: A command representing the parsed prompt.
+    """
+    try:
+        return parse(prompt, parser_config=parser_config)
+    except pp.ParseException:
+        # The error will have been logged by `parse()`.
+        return LiteralCommand(prompt)
