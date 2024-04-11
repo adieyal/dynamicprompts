@@ -574,3 +574,22 @@ def parse(
     tok = tokens[0]
     assert isinstance(tok, Command)
     return tok
+
+
+def try_parse(
+    prompt: str,
+    parser_config: ParserConfig = default_parser_config,
+) -> Command:
+    """
+    Try to parse a prompt string into a command, returning a LiteralCommand
+    if parsing fails.
+
+    :param prompt: The prompt string to parse.
+    :param parser_config: The parser configuration to use.
+    :return: A command representing the parsed prompt.
+    """
+    try:
+        return parse(prompt, parser_config=parser_config)
+    except pp.ParseException:
+        # The error will have been logged by `parse()`.
+        return LiteralCommand(prompt)
