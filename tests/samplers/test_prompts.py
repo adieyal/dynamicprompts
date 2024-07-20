@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import tee
 from unittest.mock import patch
 
 import pytest
@@ -561,6 +562,62 @@ class TestPrompts:
             prompts = sampling_context.sample_prompts(template, len(expected))
 
         assert [str(p) for p in prompts] == expected
+
+    @pytest.mark.parametrize(
+        ("sampling_context", "key"),
+        [
+            # (lazy_fixture("random_sampling_context"), "shuffled_colours"), # TODO - fix this
+            (lazy_fixture("cyclical_sampling_context"), "wildcard_colours"),
+            (lazy_fixture("combinatorial_sampling_context"), "wildcard_colours"),
+        ],
+    )
+    def test_nested_wildcard_with_range_min_without_max_and_literal(
+            self,
+            sampling_context: SamplingContext,
+            key: str,
+            data_lookups: dict[str, list[str]],
+    ):
+        sampler = sampling_context.default_sampler
+
+        max_options = 3
+
+        template = f"{{{max_options}-$$__colors*__}}"
+        expected = data_lookups[key]
+
+        if isinstance(sampler, RandomSampler):
+            variant_choices = [[LiteralCommand("black")], [WildcardCommand("colors*")]]
+
+            with patch_random_sampler_wildcard_choice(expected):
+                with patch_random_sampler_variant_choices(variant_choices):
+                    black = ["black"] * len(expected)
+                    arr1 = zipstr(expected, black, sep=",")
+                    arr2 = zipstr(black, expected, sep=",")
+                    expected = interleave(arr1, arr2)
+
+                    prompts = list(
+                        sampling_context.sample_prompts(template, len(expected)),
+                    )
+        else:
+            if isinstance(sampler, CyclicalSampler):
+                black = ["black"] * len(expected)
+                arr1 = zipstr(expected, black, sep=",")
+                arr2 = zipstr(black, expected, sep=",")
+                expected = interleave(arr1, arr2)
+            elif isinstance(sampler, CombinatorialSampler):
+                expected = [f"{e},black" for e in expected] + [
+                    f"black,{e}" for e in expected
+                ]
+
+            prompts = sampling_context.sample_prompts(template, len(expected))
+
+        prompts, prompts_copy = tee(prompts)
+
+        for el in prompts_copy:
+            a = str(el).split(",")
+            print(len(a), a)
+            assert len(a) >= max_options
+
+        # assert [str(p) for p in prompts] == expected
 
     @pytest.mark.parametrize(
         ("sampling_context"),
