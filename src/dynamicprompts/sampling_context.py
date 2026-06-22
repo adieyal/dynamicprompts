@@ -147,16 +147,15 @@ class SamplingContext:
         If there are no variable assignments,
         the original commands and context are returned as-is.
         """
-        new_variables: dict[str, Command] = {}
+        context = self
         new_commands = []
         for command in commands:
             if isinstance(command, VariableAssignmentCommand):
-                new_variables[command.name] = self.process_variable_assignment(command)
+                value = context.process_variable_assignment(command)
+                context = context.with_variables({command.name: value})
             else:
                 new_commands.append(command)
-        if new_variables:
-            return new_commands, self.with_variables(new_variables)
-        return (new_commands, self)
+        return new_commands, context
 
     def process_variable_assignment(
         self,
