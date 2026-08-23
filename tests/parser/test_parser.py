@@ -273,6 +273,8 @@ class TestParser:
             ),  # https://github.com/adieyal/sd-dynamic-prompts/issues/223
             ("{!1-2$$cat|dog|bird}", 1, 2),
             ("{~1-2$$cat|dog|bird}", 1, 2),
+            ("{2-$$cat|dog|bird}", 2, 3),
+            ("{0-$$cat|dog|bird}", 0, 3),
         ],
     )
     def test_range(self, input, min_bound, max_bound):

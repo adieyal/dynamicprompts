@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Sized
 from itertools import cycle
 from typing import Any, Iterable, TypeVar
 
@@ -97,3 +98,8 @@ def choose_without_replacement(
             weights.remove(weights[values.index(chosen)])
             values.remove(chosen)
         return chosen_values
+
+
+def _fix_max_bound(max_bound: int | None, values: Sized | int) -> int:
+    max_options = values if isinstance(values, int) else len(values)
+    return min(max_bound, max_options) if max_bound else max_options

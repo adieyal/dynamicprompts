@@ -386,6 +386,8 @@ def _parse_bound_expr(expr, max_options):
                 lbound = int(expr["range"]["lower"])
             if "upper" in expr["range"]:
                 ubound = int(expr["range"]["upper"])
+            else:
+                ubound = None
 
     if "separator" in expr:
         separator = expr["separator"][0]
