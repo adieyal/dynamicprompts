@@ -22,6 +22,20 @@ def weighted_choice(*items) -> Any:
     return random.choices(population, weights=weights)[0]
 
 
+def flip_coin(first_result = True, second_result = False) -> bool:
+    return random.choice([first_result, second_result])
+
+
+def pick_multiple(items: Iterable[Any], returnLength: int | True = True) -> list[Any]:
+    if returnLength is True:
+        returnLength = random.randint(1, len(items))
+    if returnLength == 0:
+        return []
+    if returnLength > len(items):
+        return list(items)
+    return random.sample(list(items), returnLength)
+
+
 def permutation(
     items: Iterable[Any],
     low: int,
@@ -98,6 +112,8 @@ class PromptExtension(Extension):
 DYNAMICPROMPTS_FUNCTIONS: dict[str, Any] = {
     "choice": choice,
     "weighted_choice": weighted_choice,
+    "flip_coin": flip_coin,
+    "pick_multiple": pick_multiple,
     "random": random.random,
     "randint": random.randint,
     "permutations": permutation,
