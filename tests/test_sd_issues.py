@@ -10,6 +10,7 @@ from dynamicprompts.generators import (
 )
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.wildcards import WildcardManager
+from dynamicprompts.wildcards.collection.list import ListWildcardCollection
 from dynamicprompts.wildcards.collection.structured import _parse_structured_file_list
 
 
@@ -146,3 +147,22 @@ def test_sd_672(wildcard_manager: WildcardManager):
     tpl = "{|hot,}{|summer,}{|blue sky,}"
     generator = CombinatorialPromptGenerator(wildcard_manager)
     assert any("," in prompt for prompt in generator.generate(tpl))
+
+
+def test_sd_572(caplog):
+    """
+    Test that we don't crash if a wildcard collection we're expanding has
+    values that can't be parsed as wildcards.
+    """
+    wildcard_manager = WildcardManager.from_map(
+        {
+            "x": ListWildcardCollection(["{", "__", "}"]),
+        },
+    )
+    tpl = "{3$$__*__}"
+    generator = CombinatorialPromptGenerator(wildcard_manager)
+    prompts = set(generator.generate(tpl))
+    # Prompts will get generated...
+    assert prompts == {"__,{,}", "__,},{", "{,__,}", "{,},__", "},__,{", "},{,__"}
+    # Check we emitted some warnings as we went
+    assert ("Expected end of text" in r.message for r in caplog.records)

@@ -8,7 +8,7 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
-from dynamicprompts.parser.parse import parse
+from dynamicprompts.parser.parse import try_parse
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
 from dynamicprompts.types import ResultGen
@@ -30,7 +30,7 @@ def wildcard_to_variant(
     max_bound = min(max_bound, len(values))
 
     variant_options = [
-        VariantOption(parse(v, parser_config=context.parser_config))
+        VariantOption(try_parse(v, parser_config=context.parser_config))
         for v in values.iterate_string_values_weighted()
     ]
 
