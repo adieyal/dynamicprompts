@@ -280,3 +280,23 @@ class TestJinjaGenerator:
         prompts = generator.generate(template)
         for p in prompts:
             assert "\n" not in p
+
+    def test_jinja_template_from_file(self, generator: JinjaGenerator):
+        template = """
+        {%- import 'jinja/lib.jinja' as lib -%}
+        {{ lib.echo('test') -}}
+        """
+        assert generator.generate(template) == ["test"]
+
+        with patch("random.choice") as mock_choice:
+            mock_choice.side_effect = ["red", "blue", "red"]
+            template = """
+            {%- import 'jinja/lib.jinja' as lib with context -%}
+            {{ lib.mychoice() -}}
+            """
+
+            assert generator.generate(template, 3) == [
+                "This is a red rose",
+                "This is a blue rose",
+                "This is a red rose",
+            ]

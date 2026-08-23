@@ -69,7 +69,11 @@ class JinjaGenerator(PromptGenerator):
             PromptExtension,
         )
 
-        env = jinja2.Environment(extensions=[PromptExtension])
+        env_kwargs = dict(extensions=[PromptExtension])
+        # If wildcard root is specified, set it as jinja template root, also
+        if self._wildcard_manager.path:
+           env_kwargs.update(loader=jinja2.FileSystemLoader(self._wildcard_manager.path))
+        env = jinja2.Environment(**env_kwargs)
         prompt_blocks: list[str] = []
         env.globals.update(
             {

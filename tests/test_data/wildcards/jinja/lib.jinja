@@ -1,0 +1,6 @@
+{% macro echo(arg) -%}
+{{ arg }}
+{%- endmacro %}
+{% macro mychoice() -%}
+This is a {{ choice('red', 'blue') }} rose
+{%- endmacro %}
