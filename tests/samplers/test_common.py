@@ -758,6 +758,37 @@ class TestVariableCommands:
         cmd = parse("${a =! foo}${a}")
         assert str(next(random_sampling_context.generator_from_command(cmd))) == "foo"
 
+    def test_immediate_variable_assignment_uses_prior_assignment(
+        self,
+        random_sampling_context: SamplingContext,
+    ):
+        cmd = parse("${first=!red}${second=!${first} rose}${second}")
+
+        assert (
+            str(next(random_sampling_context.generator_from_command(cmd))) == "red rose"
+        )
+
+    def test_preserved_variable_uses_prior_assignment(
+        self,
+        random_sampling_context: SamplingContext,
+    ):
+        cmd = parse("${color=red}${color?=blue}${color}")
+
+        assert str(next(random_sampling_context.generator_from_command(cmd))) == "red"
+
+    def test_lazy_variable_assignment_uses_final_context(
+        self,
+        random_sampling_context: SamplingContext,
+    ):
+        cmd = parse(
+            "${color=red}${description=${color} rose}${color=blue}${description}",
+        )
+
+        assert (
+            str(next(random_sampling_context.generator_from_command(cmd)))
+            == "blue rose"
+        )
+
     @pytest.mark.parametrize(
         "prompt, possible_results",
         [
