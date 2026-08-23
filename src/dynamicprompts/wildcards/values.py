@@ -115,10 +115,11 @@ class WildcardValues:
         else:
             cum_weights = self.cum_weight_values
             while True:
-                # Grab a bunch (but not too many) random values at a time,
-                # to reduce the number of calls to `choices`.
+                # It is mendatory to use k=1 to always rely on the provided rng.
+                # When provding multiple seeds, if we start picking k>1 values at once, 
+                # the extra values after the first one won't be tied to the provided rng anymore.
                 yield from rng.choices(
                     self.string_values,
                     cum_weights=cum_weights,
-                    k=10,
+                    k=1,
                 )
