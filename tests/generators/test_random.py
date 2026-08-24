@@ -79,6 +79,16 @@ class TestRandomGenerator:
             mock_seed.assert_any_call(42)
             mock_seed.assert_any_call(43)
 
+    def test_generate_empty_template_with_seeds(
+        self,
+        generator: RandomPromptGenerator,
+    ):
+        with patch.object(generator._context.rand, "seed", autospec=True) as mock_seed:
+            prompts = generator.generate(template="", num_images=2, seeds=[42, 43])
+
+        assert prompts == []
+        mock_seed.assert_not_called()
+
     def test_generate_with_one_seed(self, generator: RandomPromptGenerator):
         with patch.object(generator._context.rand, "seed", autospec=True) as mock_seed:
             generator.generate(template="test_template", num_images=2, seeds=[42])
