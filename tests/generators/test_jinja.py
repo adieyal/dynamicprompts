@@ -245,6 +245,52 @@ class TestJinjaGenerator:
             assert mock_choice.call_args[0][0] == ("pink", "yellow", "black", "purple")
             assert mock_choice.call_args[1]["weights"] == (0.2, 0.3, 0.4, 0.1)
 
+    def test_flip_coin(self, generator: JinjaGenerator):
+        with patch("random.choice", return_value="caught") as mock_choice:
+            prompts = generator.generate(
+                "A {{ flip_coin('caught', 'fleeing') }} Pikachu",
+            )
+
+        assert prompts == ["A caught Pikachu"]
+        mock_choice.assert_called_once_with(("caught", "fleeing"))
+
+    def test_pick_multiple(self, generator: JinjaGenerator):
+        with patch("random.sample", return_value=["Misty", "Brock"]) as mock_sample:
+            prompts = generator.generate(
+                "{{ pick_multiple(['Ash', 'Misty', 'Brock'], 2)|join(' and ') }}",
+            )
+
+        assert prompts == ["Misty and Brock"]
+        mock_sample.assert_called_once_with(["Ash", "Misty", "Brock"], 2)
+
+    def test_pick_multiple_defaults_to_random_non_empty_length(self):
+        from dynamicprompts.jinja_extensions import pick_multiple
+
+        with (
+            patch("random.randint", return_value=2) as mock_randint,
+            patch("random.sample", return_value=["Misty", "Brock"]),
+        ):
+            result = pick_multiple(iter(["Ash", "Misty", "Brock"]))
+
+        assert result == ["Misty", "Brock"]
+        mock_randint.assert_called_once_with(1, 3)
+
+    def test_pick_multiple_empty_iterable(self):
+        from dynamicprompts.jinja_extensions import pick_multiple
+
+        assert pick_multiple(iter(())) == []
+
+    def test_pick_multiple_caps_length_to_available_items(self):
+        from dynamicprompts.jinja_extensions import pick_multiple
+
+        assert pick_multiple(iter(["Ash", "Misty"]), 3) == ["Ash", "Misty"]
+
+    def test_pick_multiple_rejects_negative_length(self):
+        from dynamicprompts.jinja_extensions import pick_multiple
+
+        with pytest.raises(ValueError, match="must not be negative"):
+            pick_multiple(["Ash"], -1)
+
     def test_permutations(self, generator: JinjaGenerator):
         template = """
         {% for val in permutations(["red", "green", "blue"], 1, 2) %}

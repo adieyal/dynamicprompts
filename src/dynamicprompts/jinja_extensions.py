@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import random
 from itertools import permutations
-from typing import Any, Callable, Iterable, cast
+from typing import Any, Callable, Iterable, TypeVar, cast
 
 from jinja2 import Environment, pass_environment
 from jinja2.ext import Extension
@@ -11,6 +11,8 @@ from jinja2.nodes import CallBlock
 from jinja2.parser import Parser
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 def choice(*items) -> Any:
@@ -22,18 +24,24 @@ def weighted_choice(*items) -> Any:
     return random.choices(population, weights=weights)[0]
 
 
-def flip_coin(first_result = True, second_result = False) -> bool:
-    return random.choice([first_result, second_result])
+def flip_coin(first_result: Any = True, second_result: Any = False) -> Any:
+    return random.choice((first_result, second_result))
 
 
-def pick_multiple(items: Iterable[Any], returnLength: int | True = True) -> list[Any]:
-    if returnLength is True:
-        returnLength = random.randint(1, len(items))
-    if returnLength == 0:
+def pick_multiple(
+    items: Iterable[T],
+    return_length: int | None = None,
+) -> list[T]:
+    values = list(items)
+    if not values or return_length == 0:
         return []
-    if returnLength > len(items):
-        return list(items)
-    return random.sample(list(items), returnLength)
+    if return_length is None:
+        return_length = random.randint(1, len(values))
+    if return_length < 0:
+        raise ValueError("return_length must not be negative")
+    if return_length >= len(values):
+        return values
+    return random.sample(values, return_length)
 
 
 def permutation(

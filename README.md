@@ -440,6 +440,23 @@ generator.generate(template)
 >> ['I love red roses', 'I love blue roses', 'I love green roses']
 ```
 
+Jinja templates also provide helpers for small random choices:
+
+```jinja
+{% if flip_coin() %}
+An optional detail
+{% endif %}
+
+{{ flip_coin("caught", "fleeing") }}
+{{ pick_multiple(["Ash", "Misty", "Brock"], 2) | join(" and ") }}
+```
+
+`flip_coin()` returns either `True` or `False`. When given two values, it
+returns one of them. `pick_multiple(items, return_length)` selects distinct
+items. When the length is omitted, it chooses between one and the number of
+available items. Empty input returns an empty list, and a requested length
+larger than the input returns every item.
+
 ## Template syntax
 
 You can find the complete syntax guide [here](docs/SYNTAX.md)
