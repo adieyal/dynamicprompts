@@ -7,9 +7,14 @@ from typing import Generator, Iterable
 from dynamicprompts.commands.base import Command
 from dynamicprompts.commands.literal_command import LiteralCommand
 from dynamicprompts.enums import SamplingMethod
-from dynamicprompts.utils import _fix_max_bound
 
 logger = logging.getLogger(__name__)
+
+
+def resolve_max_bound(max_bound: int | None, option_count: int) -> int:
+    if max_bound is None:
+        return option_count
+    return min(max_bound, option_count)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -22,7 +27,7 @@ class VariantOption:
 class VariantCommand(Command):
     variants: list[VariantOption]
     min_bound: int = 1
-    max_bound: int | None = None
+    max_bound: int | None = 1
     separator: str = ","
     sampling_method: SamplingMethod | None = None
 
@@ -33,7 +38,6 @@ class VariantCommand(Command):
             object.__setattr__(self, "max_bound", max_bound)
         min_bound = max(0, min_bound)
         object.__setattr__(self, "min_bound", min_bound)
-
 
     def __len__(self) -> int:
         return len(self.variants)
@@ -55,7 +59,7 @@ class VariantCommand(Command):
     def adjust_range(self) -> VariantCommand:
         max_options = len(self.variants)
         min_bound = min(self.min_bound, max_options)
-        max_bound = _fix_max_bound(self.max_bound, max_options)
+        max_bound = resolve_max_bound(self.max_bound, max_options)
         return dataclasses.replace(self, min_bound=min_bound, max_bound=max_bound)
 
     @classmethod

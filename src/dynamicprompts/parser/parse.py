@@ -379,6 +379,12 @@ def _parse_variant_command(parse_result: pp.ParseResults) -> VariantCommand:
             parts["bound_expr"],
             max_options=len(variants),
         )
+        is_wildcard_only = len(variants) == 1 and isinstance(
+            variants[0].value,
+            WildcardCommand,
+        )
+        if max_bound is None and not is_wildcard_only:
+            max_bound = len(variants)
     else:
         min_bound = max_bound = 1
         separator = ","

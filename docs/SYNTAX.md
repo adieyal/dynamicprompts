@@ -132,8 +132,12 @@ You can omit the lower or upper bound, and it will be treated as the minimum or 
 
 ```
 {-2$$chocolate|vanilla|strawberry} == {1-2$$chocolate|vanilla|strawberry}
-{1-$$chocolate|vanilla|strawberry} == {1-2$$chocolate|vanilla|strawberry}
+{1-$$chocolate|vanilla|strawberry} == {1-3$$chocolate|vanilla|strawberry}
 ```
+
+An omitted upper bound means all available options. This is resolved after a
+wildcard is expanded, so `{2-$$__colours__}` selects between two values and the
+number of entries in the `colours` wildcard.
 
 #### Limitations
 

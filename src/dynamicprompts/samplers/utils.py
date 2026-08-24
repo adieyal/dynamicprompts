@@ -8,11 +8,11 @@ from dynamicprompts.commands import (
     VariantOption,
     WildcardCommand,
 )
+from dynamicprompts.commands.variant_command import resolve_max_bound
 from dynamicprompts.parser.parse import try_parse
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
 from dynamicprompts.types import ResultGen
-from dynamicprompts.utils import _fix_max_bound
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +21,15 @@ def wildcard_to_variant(
     command: WildcardCommand,
     *,
     context: SamplingContext,
-    min_bound=1,
-    max_bound=1,
-    separator=",",
+    min_bound: int = 1,
+    max_bound: int | None = 1,
+    separator: str = ",",
 ) -> VariantCommand:
     wildcard = next(iter(context.sample_prompts(command.wildcard, 1))).text
     values = context.wildcard_manager.get_values(wildcard)
     max_options = len(values)
     min_bound = min(min_bound, max_options)
-    max_bound = _fix_max_bound(max_bound, max_options)
+    max_bound = resolve_max_bound(max_bound, max_options)
 
     variant_options = [
         VariantOption(try_parse(v, parser_config=context.parser_config))
