@@ -52,15 +52,15 @@ class WildcardManager:
     @classmethod
     def from_map(
         cls,
-        map: dict[str, WildcardCollection],
+        collections: dict[str, WildcardCollection],
         *,
-        wildcard_wrap=default_parser_config.wildcard_wrap,
+        wildcard_wrap: str = default_parser_config.wildcard_wrap,
     ) -> WildcardManager:
         """
         Build a WildcardManager from a map of paths to WildcardCollections.
         """
         manager = cls(wildcard_wrap=wildcard_wrap)
-        manager._tree = WildcardTree.from_map(map)
+        manager._tree = WildcardTree.from_map(collections)
         return manager
 
     @property

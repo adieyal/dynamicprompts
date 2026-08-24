@@ -667,12 +667,6 @@ def parse(
         )
     except pp.ParseSyntaxException as error:
         raise pp.ParseException(error.pstr, error.loc, error.msg) from error
-    except pp.ParseException as fe:
-        logger.warning(
-            "Dynamic Prompts: PyParsing error:\n%s\n---",
-            fe.explain(depth=0),
-        )
-        raise
     if len(tokens) != 1:
         raise ValueError(f"Could not parse prompt {prompt!r}")
 
@@ -695,6 +689,9 @@ def try_parse(
     """
     try:
         return parse(prompt, parser_config=parser_config)
-    except pp.ParseException:
-        # The error will have been logged by `parse()`.
+    except pp.ParseBaseException as error:
+        logger.warning(
+            "Could not parse prompt; treating it as literal:\n%s",
+            error.explain(depth=0),
+        )
         return LiteralCommand(prompt)

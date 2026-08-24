@@ -18,6 +18,7 @@ from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import (
     _create_weight_parser,
     parse,
+    try_parse,
 )
 from pyparsing import ParseException
 
@@ -338,6 +339,20 @@ class TestParser:
     def test_variant_breaks_without_closing_bracket(self):
         with pytest.raises(ParseException):
             parse("{cat|dog")
+
+    def test_parse_error_does_not_log_when_exception_is_propagated(self, caplog):
+        with pytest.raises(ParseException):
+            parse("{cat|dog")
+
+        assert not caplog.records
+
+    def test_try_parse_preserves_invalid_prompt_as_literal(self, caplog):
+        command = try_parse("{cat|dog")
+
+        assert command == LiteralCommand("{cat|dog")
+        assert any(
+            "treating it as literal" in record.message for record in caplog.records
+        )
 
     def test_variant_with_wildcard(self):
         variant = parse("{__test/colours__|washington}")

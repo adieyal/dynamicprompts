@@ -164,5 +164,5 @@ def test_sd_572(caplog):
     prompts = set(generator.generate(tpl))
     # Prompts will get generated...
     assert prompts == {"__,{,}", "__,},{", "{,__,}", "{,},__", "},__,{", "},{,__"}
-    # Check we emitted some warnings as we went
-    assert ("Expected end of text" in r.message for r in caplog.records)
+    # Check we explained the values that were preserved as literals.
+    assert any("Expected end of text" in record.message for record in caplog.records)
