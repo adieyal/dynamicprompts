@@ -105,6 +105,28 @@ class TestRandomGenerator:
             assert mock_seed.call_count == 2
             assert mock_seed.call_args_list[0] == mock_seed.call_args_list[1]
 
+    def test_weighted_wildcard_seeds_match_individual_generation(
+        self,
+        wildcard_manager: WildcardManager,
+    ):
+        template = "I saw a __weighted-animals/heavy__"
+        seeds = [1000, 1001, 1002, 1003]
+
+        combined = RandomPromptGenerator(wildcard_manager).generate(
+            template,
+            num_images=len(seeds),
+            seeds=seeds,
+        )
+        individual = [
+            RandomPromptGenerator(wildcard_manager).generate(
+                template,
+                seeds=seed,
+            )[0]
+            for seed in seeds
+        ]
+
+        assert combined == individual
+
     def test_cyclical_sampler_with_seeds(self, generator: RandomPromptGenerator):
         template = "A {@red|green|blue} ball"
         prompts = generator.generate(template=template, num_images=3, seeds=[1, 2, 3])
