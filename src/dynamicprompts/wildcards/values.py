@@ -116,7 +116,7 @@ class WildcardValues:
             cum_weights = self.cum_weight_values
             while True:
                 # It is mendatory to use k=1 to always rely on the provided rng.
-                # When provding multiple seeds, if we start picking k>1 values at once, 
+                # When provding multiple seeds, if we start picking k>1 values at once,
                 # the extra values after the first one won't be tied to the provided rng anymore.
                 yield from rng.choices(
                     self.string_values,
