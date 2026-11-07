@@ -5,43 +5,78 @@ import random
 from itertools import permutations
 from typing import Any, Callable, Iterable, TypeVar, cast
 
-from jinja2 import Environment, pass_environment
+from jinja2 import Environment, pass_context, pass_environment
 from jinja2.ext import Extension
 from jinja2.nodes import CallBlock
 from jinja2.parser import Parser
+from jinja2.runtime import Context
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
 
-def choice(*items) -> Any:
-    return random.choice(items)
+def _rand(environment: Environment) -> random.Random:
+    return cast(random.Random, environment.globals["rand"])
 
 
-def weighted_choice(*items) -> Any:
+@pass_environment
+def choice(environment: Environment, *items) -> Any:
+    return _rand(environment).choice(items)
+
+
+@pass_environment
+def weighted_choice(environment: Environment, *items) -> Any:
     population, weights = zip(*items)
-    return random.choices(population, weights=weights)[0]
+    return _rand(environment).choices(population, weights=weights)[0]
 
 
-def flip_coin(first_result: Any = True, second_result: Any = False) -> Any:
-    return random.choice((first_result, second_result))
+@pass_environment
+def flip_coin(
+    environment: Environment,
+    first_result: Any = True,
+    second_result: Any = False,
+) -> Any:
+    return _rand(environment).choice((first_result, second_result))
 
 
+@pass_environment
 def pick_multiple(
+    environment: Environment,
     items: Iterable[T],
     return_length: int | None = None,
 ) -> list[T]:
+    rand = _rand(environment)
     values = list(items)
     if not values or return_length == 0:
         return []
     if return_length is None:
-        return_length = random.randint(1, len(values))
+        return_length = rand.randint(1, len(values))
     if return_length < 0:
         raise ValueError("return_length must not be negative")
     if return_length >= len(values):
         return values
-    return random.sample(values, return_length)
+    return rand.sample(values, return_length)
+
+
+@pass_environment
+def random_float(environment: Environment) -> float:
+    return _rand(environment).random()
+
+
+@pass_environment
+def randint(environment: Environment, a: int, b: int) -> int:
+    return _rand(environment).randint(a, b)
+
+
+# A context filter, because Jinja folds environment filters on constant input
+# at compile time, which would freeze the "random" result for every render.
+@pass_context
+def random_filter(context: Context, seq: Any) -> Any:
+    try:
+        return _rand(context.environment).choice(seq)
+    except IndexError:
+        return context.environment.undefined("No random item, sequence was empty.")
 
 
 def permutation(
@@ -77,7 +112,7 @@ def wildcard(environment: Environment, wildcard_name: str) -> list[str]:
 def random_sample(environment: Environment, prompt: str) -> str:
     generator = environment.globals["generators"]["random"]  # type: ignore
 
-    ps = generator.generate(prompt)
+    ps = generator.generate(prompt, 1, seeds=[_rand(environment).randrange(2**32)])
     return str(next(iter(ps)))
 
 
@@ -122,8 +157,8 @@ DYNAMICPROMPTS_FUNCTIONS: dict[str, Any] = {
     "weighted_choice": weighted_choice,
     "flip_coin": flip_coin,
     "pick_multiple": pick_multiple,
-    "random": random.random,
-    "randint": random.randint,
+    "random": random_float,
+    "randint": randint,
     "permutations": permutation,
     "wildcard": wildcard,
     "random_sample": random_sample,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import random
+from typing import cast
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
 from dynamicprompts.generators.promptgenerator import (
@@ -67,12 +69,14 @@ class JinjaGenerator(PromptGenerator):
         from dynamicprompts.jinja_extensions import (
             DYNAMICPROMPTS_FUNCTIONS,
             PromptExtension,
+            random_filter,
         )
 
         # Templates in the wildcard folder can be imported or included.
         wildcard_path = self._wildcard_manager.path
         loader = jinja2.FileSystemLoader(wildcard_path) if wildcard_path else None
         env = jinja2.Environment(extensions=[PromptExtension], loader=loader)
+        env.filters["random"] = random_filter
         prompt_blocks: list[str] = []
         env.globals.update(
             {
@@ -80,6 +84,7 @@ class JinjaGenerator(PromptGenerator):
                 "prompt_blocks": prompt_blocks,
                 "parser_config": self._parser_config,
                 "generators": self._generators,
+                "rand": random.Random(),
                 **DYNAMICPROMPTS_FUNCTIONS,
             },
         )
@@ -90,10 +95,34 @@ class JinjaGenerator(PromptGenerator):
             raise GeneratorException(e.message) from e
         return jinja_template, prompt_blocks
 
-    def generate(self, template: str, num_prompts: int = 1, **kwargs) -> list[str]:
-        jinja_template, prompt_blocks = self._build_jinja_template(template)
+    def generate(
+        self,
+        template: str,
+        num_prompts: int = 1,
+        *,
+        seeds: list[int] | int | None = None,
+        **kwargs,
+    ) -> list[str]:
+        if self._unlink_seed_from_prompt:
+            seeds = None
+        elif seeds:
+            if isinstance(seeds, int):
+                seeds = [seeds]
 
-        prompts = [jinja_template.render(**self._context) for i in range(num_prompts)]
+            if len(seeds) == 1:
+                seeds = seeds * num_prompts
+
+            if len(seeds) != num_prompts:
+                raise ValueError(f"Expected {num_prompts} seeds, but got {len(seeds)}")
+
+        jinja_template, prompt_blocks = self._build_jinja_template(template)
+        rand = cast(random.Random, jinja_template.environment.globals["rand"])
+
+        prompts = []
+        for i in range(num_prompts):
+            if seeds:
+                rand.seed(seeds[i])
+            prompts.append(jinja_template.render(**self._context))
 
         if prompt_blocks:  # May have been set by the templates being rendered
             prompts = prompt_blocks

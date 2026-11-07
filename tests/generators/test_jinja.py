@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import random
 from unittest.mock import patch
 
+import jinja2
 import pytest
 from dynamicprompts.generators.jinjagenerator import JinjaGenerator
 from dynamicprompts.generators.promptgenerator import GeneratorException
@@ -12,6 +14,12 @@ from dynamicprompts.wildcards.values import WildcardValues
 pytest.importorskip("jinja2")
 
 GET_VALUES = "dynamicprompts.wildcards.wildcard_manager.WildcardManager.get_values"
+
+
+def _stub_env() -> jinja2.Environment:
+    env = jinja2.Environment()
+    env.globals["rand"] = random.Random()
+    return env
 
 
 @pytest.fixture
@@ -26,7 +34,7 @@ class TestJinjaGenerator:
         assert generator.generate(template) == [template]
 
     def test_choice_prompt(self, generator: JinjaGenerator):
-        with patch("random.choice") as mock_choice:
+        with patch("random.Random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "blue", "red"]
             template = "This is a {{ choice('red', 'blue') }} rose"
 
@@ -37,7 +45,7 @@ class TestJinjaGenerator:
             ]
 
     def test_two_choice_prompt(self, generator: JinjaGenerator):
-        with patch("random.choice") as mock_choice:
+        with patch("random.Random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "triangle", "blue", "square"]
             template = "This is a {{ choice('red', 'blue') }} {{ choice('triangle', 'square') }}"
             assert generator.generate(template, 2) == [
@@ -178,7 +186,7 @@ class TestJinjaGenerator:
         {% prompt %}My favourite colour is {{ choice(wildcard("__colours__")) }}{% endprompt %}
         """
 
-        with patch("random.choice") as mock_choice:
+        with patch("random.Random.choice") as mock_choice:
             mock_choice.return_value = "yellow"
 
             assert generator.generate(template) == ["My favourite colour is yellow"]
@@ -229,7 +237,7 @@ class TestJinjaGenerator:
         assert generator.generate(template) == ["My favourite number is 0.3"]
 
     def test_choice(self, generator: JinjaGenerator):
-        with patch("random.choice") as mock_choice:
+        with patch("random.Random.choice") as mock_choice:
             mock_choice.return_value = "red"
             template = """
             {% prompt %}My favourite color is {{ choice("red", "green", "orange") }}{% endprompt %}
@@ -237,7 +245,7 @@ class TestJinjaGenerator:
             assert generator.generate(template) == ["My favourite color is red"]
 
     def test_weighted_choice(self, generator: JinjaGenerator):
-        with patch("random.choices") as mock_choice:
+        with patch("random.Random.choices") as mock_choice:
             mock_choice.side_effect = [["yellow"]]
             template = """My favourite colour is {{ weighted_choice(("pink", 0.2), ("yellow", 0.3), ("black", 0.4), ("purple", 0.1)) }}"""
 
@@ -246,7 +254,7 @@ class TestJinjaGenerator:
             assert mock_choice.call_args[1]["weights"] == (0.2, 0.3, 0.4, 0.1)
 
     def test_flip_coin(self, generator: JinjaGenerator):
-        with patch("random.choice", return_value="caught") as mock_choice:
+        with patch("random.Random.choice", return_value="caught") as mock_choice:
             prompts = generator.generate(
                 "A {{ flip_coin('caught', 'fleeing') }} Pikachu",
             )
@@ -255,7 +263,10 @@ class TestJinjaGenerator:
         mock_choice.assert_called_once_with(("caught", "fleeing"))
 
     def test_pick_multiple(self, generator: JinjaGenerator):
-        with patch("random.sample", return_value=["Misty", "Brock"]) as mock_sample:
+        with patch(
+            "random.Random.sample",
+            return_value=["Misty", "Brock"],
+        ) as mock_sample:
             prompts = generator.generate(
                 "{{ pick_multiple(['Ash', 'Misty', 'Brock'], 2)|join(' and ') }}",
             )
@@ -266,11 +277,11 @@ class TestJinjaGenerator:
     def test_pick_multiple_defaults_to_random_non_empty_length(self):
         from dynamicprompts.jinja_extensions import pick_multiple
 
-        with patch("random.randint", return_value=2) as mock_randint, patch(
-            "random.sample",
+        with patch("random.Random.randint", return_value=2) as mock_randint, patch(
+            "random.Random.sample",
             return_value=["Misty", "Brock"],
         ):
-            result = pick_multiple(iter(["Ash", "Misty", "Brock"]))
+            result = pick_multiple(_stub_env(), iter(["Ash", "Misty", "Brock"]))
 
         assert result == ["Misty", "Brock"]
         mock_randint.assert_called_once_with(1, 3)
@@ -278,18 +289,18 @@ class TestJinjaGenerator:
     def test_pick_multiple_empty_iterable(self):
         from dynamicprompts.jinja_extensions import pick_multiple
 
-        assert pick_multiple(iter(())) == []
+        assert pick_multiple(_stub_env(), iter(())) == []
 
     def test_pick_multiple_caps_length_to_available_items(self):
         from dynamicprompts.jinja_extensions import pick_multiple
 
-        assert pick_multiple(iter(["Ash", "Misty"]), 3) == ["Ash", "Misty"]
+        assert pick_multiple(_stub_env(), iter(["Ash", "Misty"]), 3) == ["Ash", "Misty"]
 
     def test_pick_multiple_rejects_negative_length(self):
         from dynamicprompts.jinja_extensions import pick_multiple
 
         with pytest.raises(ValueError, match="must not be negative"):
-            pick_multiple(["Ash"], -1)
+            pick_multiple(_stub_env(), ["Ash"], -1)
 
     def test_permutations(self, generator: JinjaGenerator):
         template = """
@@ -334,7 +345,7 @@ class TestJinjaGenerator:
         """
         assert generator.generate(template) == ["test"]
 
-        with patch("random.choice") as mock_choice:
+        with patch("random.Random.choice") as mock_choice:
             mock_choice.side_effect = ["red", "blue", "red"]
             template = """
             {%- import 'jinja/lib.jinja' as lib with context -%}
@@ -357,3 +368,52 @@ class TestJinjaGenerator:
 
         with pytest.raises(jinja2.TemplateNotFound):
             generator.generate(f"{{% include '{template_name}' %}}")
+
+
+SEEDED_TEMPLATES = [
+    "{{ choice('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h') }}",
+    "{{ ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']|random }}",
+    "{{ pick_multiple(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'], 3)|join(',') }}",
+    "{{ random_sample('{a|b|c|d|e|f|g|h}') }}",
+    "{{ randint(1, 1000000) }} {{ random() }}",
+]
+
+
+class TestJinjaSeeds:
+    @pytest.mark.parametrize("template", SEEDED_TEMPLATES)
+    def test_same_seed_same_output(self, generator: JinjaGenerator, template: str):
+        first = generator.generate(template, 5, seeds=[1, 2, 3, 4, 5])
+        second = generator.generate(template, 5, seeds=[1, 2, 3, 4, 5])
+        assert first == second
+
+    def test_single_seed_is_repeated(self, generator: JinjaGenerator):
+        prompts = generator.generate("{{ randint(1, 1000000) }}", 3, seeds=7)
+        assert len(set(prompts)) == 1
+
+    @pytest.mark.parametrize("template", SEEDED_TEMPLATES)
+    def test_different_seeds_can_differ(
+        self,
+        generator: JinjaGenerator,
+        template: str,
+    ):
+        prompts = generator.generate(template, 5, seeds=[1, 2, 3, 4, 5])
+        assert len(set(prompts)) > 1
+
+    def test_seeds_length_mismatch(self, generator: JinjaGenerator):
+        with pytest.raises(ValueError, match="Expected 3 seeds, but got 2"):
+            generator.generate("x", 3, seeds=[1, 2])
+
+    def test_unlink_seed_ignores_seeds(self, wildcard_manager: WildcardManager):
+        generator = JinjaGenerator(wildcard_manager, unlink_seed_from_prompt=True)
+        prompts = generator.generate("{{ randint(1, 10**12) }}", 3, seeds=1)
+        assert len(set(prompts)) > 1
+
+    def test_global_random_state_untouched(self, generator: JinjaGenerator):
+        template = (
+            "{{ choice('a', 'b') }} {{ ['a', 'b']|random }} "
+            "{{ pick_multiple(['a', 'b', 'c']) }} {{ random() }} "
+            "{{ random_sample('{a|b}') }}"
+        )
+        state = random.getstate()
+        generator.generate(template, 3, seeds=[1, 2, 3])
+        assert random.getstate() == state
