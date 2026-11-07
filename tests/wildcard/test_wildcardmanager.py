@@ -408,3 +408,16 @@ def test_single_string_in_structured_parsed_as_list(wildcard_manager: WildcardMa
     assert wildcard_manager.get_values("artists/moonbase").string_values == [
         "john madden",
     ]
+
+
+def test_from_map_keeps_collections_when_cache_is_cleared():
+    manager = WildcardManager.from_map(
+        {"w": ListWildcardCollection(["b", "a", "a"])},
+    )
+    assert list(manager.get_values("w")) == ["a", "b"]
+
+    manager.dedup_wildcards = False
+    assert list(manager.get_values("w")) == ["a", "a", "b"]
+
+    manager.clear_cache()
+    assert list(manager.get_values("w")) == ["a", "a", "b"]

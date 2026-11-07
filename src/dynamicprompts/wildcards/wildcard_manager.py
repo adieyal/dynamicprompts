@@ -134,7 +134,9 @@ class WildcardManager:
         """
         Clear the cache of the wildcard manager.
         """
-        self._tree = None
+        # A tree built by from_map() has no roots to rebuild from, so keep it.
+        if self._root_map:
+            self._tree = None
         self._values_cache.clear()
 
     def match_collections(self, wildcard: str) -> Iterable[WildcardCollection]:
