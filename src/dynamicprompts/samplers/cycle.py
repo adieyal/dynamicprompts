@@ -10,6 +10,7 @@ from dynamicprompts.commands import (
     VariantCommand,
     WildcardCommand,
 )
+from dynamicprompts.commands.variant_command import resolve_max_bound
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
@@ -79,7 +80,10 @@ class CyclicalSampler(Sampler):
 
             combinations = (
                 combo
-                for bound in range(command.min_bound, command.max_bound + 1)
+                for bound in range(
+                    command.min_bound,
+                    resolve_max_bound(command.max_bound, len(command)) + 1,
+                )
                 for combo in command.get_value_combinations(bound)
             )
 

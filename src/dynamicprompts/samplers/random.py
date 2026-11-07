@@ -10,6 +10,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
     WrapCommand,
 )
+from dynamicprompts.commands.variant_command import resolve_max_bound
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
@@ -49,7 +50,7 @@ class RandomSampler(Sampler):
         # Wraps randint for ease of testing
         return context.rand.randint(
             command.min_bound,
-            command.max_bound,
+            resolve_max_bound(command.max_bound, len(command)),
         )
 
     def _get_wildcard_choice_generator(
@@ -87,7 +88,7 @@ class RandomSampler(Sampler):
             command = command.adjust_range()
 
             num_choices = min(
-                command.max_bound,
+                resolve_max_bound(command.max_bound, len(command)),
                 self._get_variant_num_choices(command, context),
             )
 

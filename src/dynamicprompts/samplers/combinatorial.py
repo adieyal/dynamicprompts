@@ -12,6 +12,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
     WrapCommand,
 )
+from dynamicprompts.commands.variant_command import resolve_max_bound
 from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
 from dynamicprompts.samplers.utils import (
@@ -124,7 +125,7 @@ class CombinatorialSampler(Sampler):
             variant_command = variant_command.adjust_range()
             for bound in range(
                 variant_command.min_bound,
-                variant_command.max_bound + 1,
+                resolve_max_bound(variant_command.max_bound, len(variant_command)) + 1,
             ):
                 for combo in variant_command.get_value_combinations(bound):
                     for prompt_arr in _combo_to_prompt(context, combo):

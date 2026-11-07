@@ -266,9 +266,9 @@ class TestJinjaGenerator:
     def test_pick_multiple_defaults_to_random_non_empty_length(self):
         from dynamicprompts.jinja_extensions import pick_multiple
 
-        with (
-            patch("random.randint", return_value=2) as mock_randint,
-            patch("random.sample", return_value=["Misty", "Brock"]),
+        with patch("random.randint", return_value=2) as mock_randint, patch(
+            "random.sample",
+            return_value=["Misty", "Brock"],
         ):
             result = pick_multiple(iter(["Ash", "Misty", "Brock"]))
 

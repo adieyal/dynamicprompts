@@ -11,8 +11,6 @@ from pathlib import Path
 from typing import List, Type, Union
 
 import pytest
-from pyparsing import ParseException
-
 from dynamicprompts.commands import (
     LiteralCommand,
     SequenceCommand,
@@ -23,6 +21,7 @@ from dynamicprompts.generators import CombinatorialPromptGenerator
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.wildcards import WildcardManager
+from pyparsing import ParseException
 
 WILDCARDS = Path(__file__).parent.parent / "test_data" / "literal_fallback"
 MAX_PROMPTS = 6
