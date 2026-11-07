@@ -338,7 +338,7 @@ magic_generator = MagicPromptGenerator(
 )
 
 num_prompts = 5
-generator.generate("I love {red|green|blue} roses", num_prompts)
+magic_generator.generate("I love {red|green|blue} roses", num_prompts)
 
 >> ['I love red roses trending on artstation #vividart #pixiv', 'I love red roses trending on artstation artwork', 'I love blue roses breakfast club, cute, intricate, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, unreal engine 5, 8 k, art by artgerm and greg rutkowski and alphonse mucha', 'I love green roses I love green flowers, smile, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws', 'I love red roses smile, Tristan Eaton, victo ngai, artgerm, RHADS, ross draws']
 
