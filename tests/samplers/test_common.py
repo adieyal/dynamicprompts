@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import random
 from itertools import cycle, islice, zip_longest
 from unittest.mock import patch
@@ -13,6 +14,7 @@ from dynamicprompts.commands import (
     WildcardCommand,
 )
 from dynamicprompts.enums import SamplingMethod
+from dynamicprompts.generators import RandomPromptGenerator
 from dynamicprompts.parser.parse import parse
 from dynamicprompts.samplers import CombinatorialSampler, CyclicalSampler, RandomSampler
 from dynamicprompts.sampling_context import SamplingContext
@@ -738,20 +740,60 @@ class TestVariableCommands:
         random_sampling_context: SamplingContext,
         immediate: bool,
     ):
-        prompt = "${number={1|2|3|4|5}}the number is ${number}"
+        prompt = "${number={1|2|3|4|5}}${number} and ${number}"
         if immediate:
             prompt = prompt.replace("number=", "number=!")
         cmd = parse(prompt)
-        gen = random_sampling_context.generator_from_command(cmd)
-        seen = set(islice(gen, 40))
+        context = dataclasses.replace(random_sampling_context, rand=random.Random(42))
+        gen = context.generator_from_command(cmd)
+        seen = [str(p).split(" and ") for p in islice(gen, 40)]
+        # Either way, the variable is resampled across prompts (#96)
+        assert len({left for left, _ in seen}) > 1
         if immediate:
-            # Since the variable is immediately resolved, no matter how many times
-            # we sample the random generator, we must get the same result
-            assert len(seen) == 1
+            # ...but an immediate variable has one value within a prompt
+            assert all(left == right for left, right in seen)
         else:
-            # Otherwise we should've seen more than one result (but since it's a
-            # random context, we can't guarantee that we'll see all 5)
-            assert len(seen) > 1
+            assert any(left != right for left, right in seen)
+
+    def test_immediate_variable_per_prompt_with_generator(self):
+        prompts = RandomPromptGenerator(seed=1).generate("${f=!{a|b|c}}{x|y} ${f}", 6)
+        assert len({p.split()[1] for p in prompts}) > 1
+
+    @pytest.mark.parametrize("sampling_context", sampling_context_lazy_fixtures)
+    def test_immediate_variable_preset_wins(self, sampling_context: SamplingContext):
+        cmd = parse("${f?=!{a|b}}${f} ${f}")
+        context = sampling_context.with_variables({"f": LiteralCommand("preset")})
+        prompts = [str(p) for p in islice(context.sample_prompts(cmd), 4)]
+        assert prompts == ["preset preset"] * len(prompts)
+
+    def test_cyclical_immediate_variable_rotates_with_other_parts(
+        self,
+        cyclical_sampling_context: SamplingContext,
+    ):
+        cmd = parse("${f=!{a|b}}{x|y|z} ${f} __colors-cold__")
+        prompts = [
+            str(p) for p in islice(cyclical_sampling_context.sample_prompts(cmd), 6)
+        ]
+        # The variant keeps rotating while the variable cycles. A wildcard may
+        # read variables, so it keeps one rotation per variable value.
+        assert prompts == [
+            "x a blue",
+            "y b blue",
+            "z a green",
+            "x b green",
+            "y a blue",
+            "z b blue",
+        ]
+
+    def test_cyclical_variant_reading_immediate_variable_does_not_restart(
+        self,
+        cyclical_sampling_context: SamplingContext,
+    ):
+        cmd = parse("${f=!{a|b}}{x|y ${f}}")
+        prompts = [
+            str(p) for p in islice(cyclical_sampling_context.sample_prompts(cmd), 4)
+        ]
+        assert prompts == ["x", "x", "y a", "y b"]
 
     def test_immediate_literal_variable(self, random_sampling_context: SamplingContext):
         # Just a coverage test for the optimization for literal variables

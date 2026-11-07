@@ -22,6 +22,26 @@ from dynamicprompts.utils import rotate_and_join
 logger = logging.getLogger(__name__)
 
 
+def _is_sampled_immediate_assignment(command: Command) -> bool:
+    # Literal values need no sampling (see process_variable_assignment).
+    return (
+        isinstance(command, VariableAssignmentCommand)
+        and command.immediate
+        and not isinstance(command.value, LiteralCommand)
+    )
+
+
+def _may_read_variables(command: Command) -> bool:
+    if isinstance(command, LiteralCommand):
+        return False
+    if isinstance(command, SequenceCommand):
+        return any(_may_read_variables(c) for c in command.tokens)
+    if isinstance(command, VariantCommand):
+        return any(_may_read_variables(c) for c in command.values)
+    # Variable accesses, and wildcards, whose files may reference variables.
+    return True
+
+
 class Sampler:
     def generator_from_command(
         self,
@@ -72,10 +92,59 @@ class Sampler:
         command: SequenceCommand,
         context: SamplingContext,
     ) -> ResultGen:
-        tokens, context = context.process_variable_assignments(command.tokens)
-        sub_generators = [context.generator_from_command(c) for c in tokens]
+        if not any(_is_sampled_immediate_assignment(c) for c in command.tokens):
+            tokens, context = context.process_variable_assignments(command.tokens)
+            sub_generators = [context.generator_from_command(c) for c in tokens]
+
+            while True:
+                yield rotate_and_join(sub_generators, separator=command.separator)
+
+        # Immediate assignments are evaluated once per prompt (#96).
+        # Generators are kept across prompts so stateful samplers (cyclical)
+        # don't restart: a command that can't read variables keeps one generator,
+        # one that can gets one generator per set of immediate values.
+        generators: dict[tuple[int, tuple[str, ...]], ResultGen] = {}
+
+        def get_generator(
+            index: int,
+            sub_command: Command,
+            sub_context: SamplingContext,
+            values: tuple[str, ...],
+        ) -> ResultGen:
+            key = (index, values if _may_read_variables(sub_command) else ())
+            if key not in generators:
+                generators[key] = sub_context.generator_from_command(sub_command)
+            return generators[key]
 
         while True:
+            prompt_context = context
+            values: tuple[str, ...] = ()
+            for index, token in enumerate(command.tokens):
+                if not isinstance(token, VariableAssignmentCommand):
+                    continue
+                if _is_sampled_immediate_assignment(token) and (
+                    token.overwrite or token.name not in prompt_context.variables
+                ):
+                    value_gen = get_generator(
+                        index,
+                        token.value,
+                        prompt_context,
+                        values,
+                    )
+                    value = str(next(value_gen))
+                    values += (value,)
+                    prompt_context = prompt_context.with_variables(
+                        {token.name: LiteralCommand(value)},
+                    )
+                else:
+                    prompt_context = prompt_context.with_variables(
+                        {token.name: prompt_context.process_variable_assignment(token)},
+                    )
+            sub_generators = [
+                get_generator(index, token, prompt_context, values)
+                for index, token in enumerate(command.tokens)
+                if not isinstance(token, VariableAssignmentCommand)
+            ]
             yield rotate_and_join(sub_generators, separator=command.separator)
 
     def _get_literal(
