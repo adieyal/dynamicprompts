@@ -457,6 +457,19 @@ items. When the length is omitted, it chooses between one and the number of
 available items. Empty input returns an empty list, and a requested length
 larger than the input returns every item.
 
+Templates stored in the wildcard folder can be imported or included, so macros can be shared between prompts. Paths are relative to the wildcard folder and cannot leave it.
+
+```python
+generator = JinjaGenerator(WildcardManager(path="/path/to/wildcards"))
+
+template = """
+{% import "flowers.jinja" as flowers %}
+{{ flowers.describe("rose") }}
+"""
+
+generator.generate(template)
+```
+
 ## Template syntax
 
 You can find the complete syntax guide [here](docs/SYNTAX.md)

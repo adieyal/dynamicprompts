@@ -148,7 +148,7 @@ class TestJinjaGenerator:
         wildcard_manager: WildcardManager,
     ):
         template = f"""
-        {{% for colour in wildcard("{wildcard_manager.to_wildcard('colours')}") %}}
+        {{% for colour in wildcard("{wildcard_manager.to_wildcard("colours")}") %}}
             {{% prompt %}}My favourite colour is {{{{ colour }}}}{{% endprompt %}}
         {{% endfor %}}
         """
@@ -346,3 +346,14 @@ class TestJinjaGenerator:
                 "This is a blue rose",
                 "This is a red rose",
             ]
+
+    @pytest.mark.parametrize("template_name", ["../README.md", "/etc/hostname"])
+    def test_jinja_templates_cannot_leave_wildcard_folder(
+        self,
+        generator: JinjaGenerator,
+        template_name: str,
+    ):
+        import jinja2
+
+        with pytest.raises(jinja2.TemplateNotFound):
+            generator.generate(f"{{% include '{template_name}' %}}")
