@@ -457,7 +457,7 @@ items. When the length is omitted, it chooses between one and the number of
 available items. Empty input returns an empty list, and a requested length
 larger than the input returns every item.
 
-Templates stored in the wildcard folder can be imported or included, so macros can be shared between prompts. Paths are relative to the wildcard folder and cannot leave it.
+Templates stored in the wildcard folder can be imported or included, so macros can be shared between prompts. Paths are relative to the wildcard folder. `..` cannot be used to leave it, but symlinks inside the folder are followed.
 
 ```python
 generator = JinjaGenerator(WildcardManager(path="/path/to/wildcards"))
