@@ -45,6 +45,149 @@ class TestParser:
 
     @pytest.mark.parametrize(
         "input",
+        ["$0", "$10", "$tephanie", "50%", "100% FREE"],
+    )
+    def test_incomplete_command_lookalikes_are_literal(self, input: str):
+        assert parse(input) == LiteralCommand(input)
+
+    @pytest.mark.parametrize(
+        "input",
+        [
+            "${",
+            "%{",
+            "${}",
+            "${name!}",
+            "%{before}",
+            # A complete opener commits: a later valid command doesn't rescue it.
+            "abc ${ broken then ${ok}",
+            "abc %{ broken then %{x$$y}",
+        ],
+    )
+    def test_malformed_complete_command_raises(self, input: str):
+        with pytest.raises(ParseException):
+            parse(input)
+
+    @pytest.mark.parametrize(
+        "input, expected",
+        [
+            (r"\{\}\$\%\_\\", "{}$%_\\"),
+            (r"unknown \q escape", r"unknown \q escape"),
+            (r"\(word\)", r"\(word\)"),
+            (r"(word:1.2) \(lit\)", r"(word:1.2) \(lit\)"),
+            (r"C:\dir\\file", r"C:\dir\file"),
+            (r"a\{b", "a{b"),
+            (r"a\#b", "a#b"),
+            (r"a\\b", r"a\b"),
+            (r"a\q", r"a\q"),
+            (r"{\{|\}}", None),
+        ],
+    )
+    def test_literal_escapes(self, input: str, expected: str | None):
+        command = parse(input)
+        if expected is not None:
+            assert command == LiteralCommand(expected)
+        else:
+            assert isinstance(command, VariantCommand)
+            assert [value.literal for value in command.values] == ["{", "}"]
+
+    def test_wildcard_wrapper_requires_complete_nonempty_body(self):
+        for input in ("__", "__unmatched", "<lora:foo__bar:1>"):
+            assert parse(input) == LiteralCommand(input)
+
+        with pytest.raises(ParseException):
+            parse("__foo()__")
+
+    def test_custom_wildcard_wrapper_requires_complete_nonempty_body(self):
+        config = ParserConfig(wildcard_wrap="@@")
+        assert parse("@@", parser_config=config) == LiteralCommand("@@")
+        assert parse("@@unmatched", parser_config=config) == LiteralCommand(
+            "@@unmatched",
+        )
+        command = parse("@@foo@@", parser_config=config)
+        assert isinstance(command, WildcardCommand)
+        assert command.wildcard == "foo"
+
+    @pytest.mark.parametrize(
+        ("wrapper", "template"),
+        [
+            ("__", "<lora:foo__bar:1> and __real__"),
+            ("@@", "<lora:foo@@bar:1> and @@real@@"),
+        ],
+    )
+    def test_literal_wrapper_lookalike_does_not_hide_later_wildcard(
+        self,
+        wrapper: str,
+        template: str,
+    ):
+        config = ParserConfig(wildcard_wrap=wrapper)
+        literal, wildcard = cast(
+            SequenceCommand,
+            parse(template, parser_config=config),
+        )
+        assert literal == LiteralCommand(f"<lora:foo{wrapper}bar:1> and ")
+        assert wildcard == WildcardCommand("real")
+
+    @pytest.mark.parametrize(
+        ("wrapper", "template", "expected"),
+        [
+            (
+                "__",
+                "x __dir/a<b>__",
+                [LiteralCommand("x "), WildcardCommand("dir/a<b>")],
+            ),
+            (
+                "__",
+                "x __dir/e>f__ y",
+                [
+                    LiteralCommand("x "),
+                    WildcardCommand("dir/e>f"),
+                    LiteralCommand(" y"),
+                ],
+            ),
+            (
+                "__",
+                "x __dir/a<b>__ __x__",
+                [
+                    LiteralCommand("x "),
+                    WildcardCommand("dir/a<b>"),
+                    LiteralCommand(" "),
+                    WildcardCommand("x"),
+                ],
+            ),
+            (
+                "@@",
+                "x @@dir/a<b>@@",
+                [LiteralCommand("x "), WildcardCommand("dir/a<b>")],
+            ),
+            (
+                "__",
+                "<lora:__wild__:1>",
+                [
+                    LiteralCommand("<lora:"),
+                    WildcardCommand("wild"),
+                    LiteralCommand(":1>"),
+                ],
+            ),
+        ],
+    )
+    def test_wildcard_paths_with_angle_brackets_after_text(
+        self,
+        wrapper: str,
+        template: str,
+        expected: list[Command],
+    ):
+        command = parse(template, parser_config=ParserConfig(wildcard_wrap=wrapper))
+        assert isinstance(command, SequenceCommand)
+        assert list(command.tokens) == expected
+
+    @pytest.mark.parametrize("value", ("$0", "$10", "$tephanie"))
+    def test_variant_literals_preserve_unescaped_dollars(self, value: str):
+        command = parse(f"{{{value}|x}}")
+        assert isinstance(command, VariantCommand)
+        assert [option.literal for option in command.values] == [value, "x"]
+
+    @pytest.mark.parametrize(
+        "input",
         [
             "colours",
             "path/to/colours",
@@ -480,3 +623,80 @@ class TestParser:
         assert isinstance(cmd, WildcardCommand)
         assert cmd.wildcard == "foo"
         assert cmd.variables == expected_vars
+
+    @pytest.mark.parametrize(
+        "var_spec, expected_vars",
+        [
+            ("( animal = bear )", {"animal": LiteralCommand("bear")}),
+            (
+                "(animal=red fox, color=deep blue)",
+                {
+                    "animal": LiteralCommand("red fox"),
+                    "color": LiteralCommand("deep blue"),
+                },
+            ),
+            ("(animal=bear,)", {"animal": LiteralCommand("bear")}),
+            (
+                r"(animal=one\, two, note=first\=second, text=\(round\))",
+                {
+                    "animal": LiteralCommand("one, two"),
+                    "note": LiteralCommand("first=second"),
+                    "text": LiteralCommand("(round)"),
+                },
+            ),
+            (
+                r"(description=(soft, blue (water)), path=one\\two)",
+                {
+                    "description": LiteralCommand("(soft, blue (water))"),
+                    "path": LiteralCommand(r"one\two"),
+                },
+            ),
+        ],
+    )
+    def test_wildcard_arguments_parse_whitespace_and_escapes(
+        self,
+        var_spec: str,
+        expected_vars: dict,
+    ):
+        command = parse(f"__foo{var_spec}__")
+        assert isinstance(command, WildcardCommand)
+        assert command.variables == expected_vars
+
+    def test_wildcard_argument_values_retain_prompt_semantics(self):
+        command = parse("__foo(color={red|blue}, source=__colours__)__")
+        assert isinstance(command, WildcardCommand)
+        assert command.variables == {
+            "color": VariantCommand.from_literals_and_weights(["red", "blue"]),
+            "source": WildcardCommand("colours"),
+        }
+
+    def test_wildcard_argument_escapes_are_applied_once(self):
+        command = parse(r"__echo(x=a\\\\b, y=\\{p|q})__")
+        assert isinstance(command, WildcardCommand)
+        assert command.variables == {
+            "x": LiteralCommand(r"a\\b"),
+            "y": SequenceCommand.from_literals(
+                [
+                    LiteralCommand("\\"),
+                    VariantCommand.from_literals_and_weights(["p", "q"]),
+                ],
+            ),
+        }
+        # The same text at top level gives the same command.
+        assert command.variables["y"] == parse(r"\\{p|q}")
+
+    @pytest.mark.parametrize(
+        "var_spec",
+        [
+            "(=bear)",
+            "(animal)",
+            "(animal=   )",
+            "(,animal=bear)",
+            "(animal=bear,,color=red)",
+            "(animal=bear,,)",
+            "(animal={bear|)",
+        ],
+    )
+    def test_wildcard_arguments_reject_invalid_syntax(self, var_spec: str):
+        with pytest.raises(ParseException):
+            parse(f"__foo{var_spec}__")

@@ -111,24 +111,52 @@ def _configure_wildcard(
     parser_config: ParserConfig,
     prompt: pp.ParserElement,
 ) -> pp.ParserElement:
-    wildcard_enclosure = pp.Suppress(parser_config.wildcard_wrap)
-    wildcard_variable_spec = (
-        OPT_WS
-        + pp.Literal("(")
-        + pp.Regex(r"[^)]+")("variable_spec")
-        + pp.Suppress(")")
-    )
+    wrap = re.escape(parser_config.wildcard_wrap)
+    # A wildcard body neither starts nor ends with whitespace, so a lone wrapper
+    # in prose (`a __ b`, `<lora:foo__bar:1> __a__`) falls back to literal text.
+    wildcard_opener = pp.Suppress(pp.Regex(wrap + r"(?=\S)"))
+    wildcard_closer = pp.Suppress(pp.Regex(r"(?<=\S)" + wrap))
+    balanced_parentheses, wildcard_variable_spec = _configure_wildcard_variable_spec()
     wc_path = prompt()("path")
 
     wildcard = (
-        wildcard_enclosure
+        wildcard_opener
         + pp.Opt(sampler_symbol)("sampling_method")
         + wc_path
-        + pp.Opt(wildcard_variable_spec)
-        + wildcard_enclosure
+        # Commit (ErrorStop) to the arguments only when a balanced (...) is
+        # directly followed by the closer; a malformed argument list then raises.
+        + pp.Opt(
+            OPT_WS
+            + pp.FollowedBy(balanced_parentheses + wildcard_closer)
+            - wildcard_variable_spec,
+        )
+        + wildcard_closer
     )
 
     return wildcard("wildcard").leave_whitespace()
+
+
+def _configure_wildcard_variable_spec() -> tuple[pp.ParserElement, pp.ParserElement]:
+    """Configure validated, balanced named wildcard arguments."""
+    escaped_character = pp.Regex(r"\\[\s\S]")
+    balanced_parentheses = pp.Forward()
+    parenthesized_content = pp.ZeroOrMore(
+        escaped_character | pp.Regex(r"[^()\\]+") | balanced_parentheses,
+    )
+    balanced_parentheses <<= pp.original_text_for(
+        pp.Suppress("(") + parenthesized_content + pp.Suppress(")"),
+    )
+    value_atom = escaped_character | balanced_parentheses | pp.Regex(r"[^(),\\]+")
+    value = pp.original_text_for(pp.OneOrMore(value_atom))("value")
+    value.add_condition(lambda tokens: bool(tokens[0].strip()))
+    argument = pp.Group(
+        OPT_WS + var_name("name") + OPT_WS + pp.Suppress("=") + OPT_WS + value + OPT_WS,
+    )
+    arguments = pp.delimited_list(argument, delim=",") + pp.Opt(pp.Suppress(","))
+    variable_spec = (
+        OPT_WS + pp.Suppress("(") + arguments("variable_spec") + pp.Suppress(")")
+    )
+    return balanced_parentheses, variable_spec
 
 
 def _configure_wildcard_path(
@@ -171,15 +199,50 @@ def _configure_literal_sequence(
         # - ) denotes the end of wildcard variable parameters
         non_literal_chars += r")("
 
-    non_literal_chars = re.escape(non_literal_chars)
-    literal = pp.Regex(
+    non_literal_chars = re.escape(non_literal_chars + "\\")
+    text = pp.Regex(
         rf"((?!{re.escape(parser_config.wildcard_wrap)})[^{non_literal_chars}])+",
-    )(
+    )
+    reserved = re.escape(_reserved_chars(parser_config))
+    escape = pp.Regex(rf"\\([{reserved}])")
+    escape.set_parse_action(lambda t: t[0][1])
+    # A backslash that starts no escape is plain text in the same run, so it
+    # does not open a token boundary where a // comment could be skipped.
+    kept_backslash = pp.Regex(rf"\\(?![{reserved}])")
+    # Combine: no comment skipping inside one run; escapes become plain text once.
+    literal = pp.Combine(pp.OneOrMore(text | escape | kept_backslash))(
         "literal",
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
 
     return literal_sequence
+
+
+def _reserved_chars(parser_config: ParserConfig) -> str:
+    return "".join(
+        sorted(
+            {
+                "#",
+                "|",
+                "\\",
+                *parser_config.variant_start,
+                *parser_config.variant_end,
+                *parser_config.variable_start,
+                *parser_config.variable_end,
+                *parser_config.wrap_start,
+                *parser_config.wrap_end,
+                *parser_config.wildcard_wrap,
+            },
+        ),
+    )
+
+
+def _configure_stray_char(terminators: list[str]) -> pp.ParserElement:
+    """One character that begins no command here: the literal fallback."""
+    stray: pp.ParserElement = pp.Regex(r"[^#]")
+    for terminator in terminators:
+        stray = ~pp.Literal(terminator) + stray
+    return stray.leave_whitespace()
 
 
 def _create_weight_parser() -> pp.ParserElement:
@@ -224,7 +287,9 @@ def _configure_variable_access(
 ) -> pp.ParserElement:
     variable_access = pp.Group(
         pp.Suppress(parser_config.variable_start)
-        + OPT_WS
+        # Commit (ErrorStop) after the complete opener: a malformed body raises
+        # instead of falling back to literal text.
+        - OPT_WS
         + var_name("name")
         + OPT_WS
         + pp.Optional(pp.Literal(":") + OPT_WS + prompt()("default"))
@@ -245,7 +310,8 @@ def _configure_variable_assignment(
         + OPT_WS
         + pp.Opt(pp.Literal("?"))("preserve_existing_value")
         + pp.Literal("=")
-        + pp.Opt(pp.Literal("!"))("immediate")
+        # Commit only after `=`: before it, this must still fall back to access.
+        - pp.Opt(pp.Literal("!"))("immediate")
         + OPT_WS
         + prompt()("value")
         + OPT_WS
@@ -260,7 +326,8 @@ def _configure_wrap_command(
 ) -> pp.ParserElement:
     wrap_command = pp.Group(
         pp.Suppress(parser_config.wrap_start)
-        + OPT_WS
+        # Commit (ErrorStop) after the complete opener.
+        - OPT_WS
         + prompt()("wrapper")
         + OPT_WS
         + variant_delim
@@ -277,8 +344,17 @@ def _parse_literal_command(parse_result: pp.ParseResults) -> LiteralCommand:
 
 
 def _parse_sequence_or_single_command(parse_result: pp.ParseResults) -> Command:
-    children = list(parse_result)
-    assert all(isinstance(c, Command) for c in children)
+    children: list[Command] = []
+    for child in parse_result:
+        assert isinstance(child, Command)
+        if (
+            children
+            and isinstance(child, LiteralCommand)
+            and isinstance(children[-1], LiteralCommand)
+        ):
+            children[-1] = LiteralCommand(children[-1].literal + child.literal)
+        else:
+            children.append(child)
     if len(children) == 1:  # If there is only one child, return it directly
         return children[0]
     return SequenceCommand(tokens=children)
@@ -324,21 +400,29 @@ def _parse_sampling_method(sampling_method_symbol: str | None) -> SamplingMethod
 
 
 def _parse_variable_spec(
-    variable_spec: str,
+    variable_spec: pp.ParseResults,
     parser_config: ParserConfig,
 ) -> Iterable[tuple[str, Command]]:
     """
-    Parse a wildcard command's variable spec string to a variable->Command iterable.
+    Parse validated wildcard arguments to a variable->Command iterable.
     """
-    for pair in variable_spec.split(","):
-        key, _, value = pair.partition("=")
-        value = value.strip()
+    # Remove the argument-only escapes here; keep escapes of characters the
+    # prompt syntax reserves (always backslash, plus any configured delimiter)
+    # for parse() to decode, so every escape is applied exactly once.
+    reserved = _reserved_chars(parser_config)
+    for argument in variable_spec:
+        key = argument["name"]
+        value = re.sub(
+            r"\\([,=()\\])",
+            lambda match: match[0] if match[1] in reserved else match[1],
+            argument["value"],
+        ).strip()
         command: Command
         if value.isalnum():  # no need to bother...
             command = LiteralCommand(value)
         else:
             command = parse(value, parser_config=parser_config)
-        yield key.strip(), command
+        yield key, command
 
 
 def _parse_wildcard_command(
@@ -479,6 +563,16 @@ def create_parser(
         parser_config=parser_config,
     )
 
+    # Literal text is the fallback of ordered choice: when no command parses at a
+    # position, one character becomes literal and parsing resumes after it. Each
+    # stray excludes only what ends its context.
+    stray = _configure_stray_char([parser_config.variant_start])
+    variant_stray = _configure_stray_char(
+        [parser_config.variant_start, parser_config.variant_end, "|", "$$"],
+    )
+    wildcard_stray = _configure_stray_char(
+        [parser_config.variant_start, parser_config.wildcard_wrap, "(", ")"],
+    )
     chunk = (
         variable_assignment
         | variable_access
@@ -486,15 +580,22 @@ def create_parser(
         | variants
         | wildcard
         | literal_sequence
+        | stray
     )
     variant_chunk = (
-        variable_access | wrap_command | variants | wildcard | variant_literal_sequence
+        variable_access
+        | wrap_command
+        | variants
+        | wildcard
+        | variant_literal_sequence
+        | variant_stray
     )
     wildcard_chunk = (
         wildcard_variable_access
         | variants
         | wildcard_literal_sequence
         | variant_literal_sequence
+        | wildcard_stray
     )
 
     prompt <<= pp.ZeroOrMore(chunk)("prompt")
@@ -511,6 +612,8 @@ def create_parser(
     )
     variants.set_parse_action(_parse_variant_command)
     literal_sequence.set_parse_action(_parse_literal_command)
+    for stray_char in (stray, variant_stray, wildcard_stray):
+        stray_char.set_parse_action(_parse_literal_command)
     wildcard_literal_sequence.set_parse_action(_parse_literal_command)
     variant_literal_sequence.set_parse_action(_parse_literal_command)
     variable_access.set_parse_action(_parse_variable_access_command)
@@ -554,10 +657,13 @@ def parse(
     if prompt.isalnum():  # no need to actually parse anything
         return LiteralCommand(prompt)
 
-    tokens = get_cached_parser(parser_config).parse_string(
-        prompt,
-        parse_all=True,
-    )
+    try:
+        tokens = get_cached_parser(parser_config).parse_string(
+            prompt,
+            parse_all=True,
+        )
+    except pp.ParseSyntaxException as error:
+        raise pp.ParseException(error.pstr, error.loc, error.msg) from error
     if len(tokens) != 1:
         raise ValueError(f"Could not parse prompt {prompt!r}")
 

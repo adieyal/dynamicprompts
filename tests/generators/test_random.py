@@ -5,7 +5,10 @@ import pytest
 from dynamicprompts.generators.randomprompt import RandomPromptGenerator
 from dynamicprompts.wildcards import WildcardManager
 
-from tests.samplers.utils import patch_random_sampler_wildcard_choice
+from tests.samplers.utils import (
+    patch_random_sampler_variant_choices_with_literals,
+    patch_random_sampler_wildcard_choice,
+)
 
 
 @pytest.fixture
@@ -30,6 +33,35 @@ class TestRandomGenerator:
             prompts = list(generator.generate(prompt, 4))
 
         assert [str(p) for p in prompts] == [f"I saw a {animal}" for animal in animals]
+
+    def test_wildcard_values_preserve_literal_openers_and_escapes(self, tmp_path):
+        wildcard_file = tmp_path / "parser-literals.yaml"
+        wildcard_file.write_text(
+            "- '$0'\n- '\\{braces\\}'\n- 'unknown \\q escape'\n",
+        )
+        generator = RandomPromptGenerator(WildcardManager(path=tmp_path))
+        expected = ["$0", "{braces}", r"unknown \q escape"]
+        with patch_random_sampler_wildcard_choice(
+            ["$0", r"\{braces\}", r"unknown \q escape"],
+        ):
+            prompts = list(generator.generate("__parser-literals__", 3))
+
+        assert list(map(str, prompts)) == expected
+
+    def test_variant_values_preserve_unescaped_dollars(self, tmp_path):
+        wildcard_file = tmp_path / "parser-dollars.yaml"
+        wildcard_file.write_text("- '{$0|x}'\n- '{$10|x}'\n- '{$tephanie|x}'\n")
+        generator = RandomPromptGenerator(WildcardManager(path=tmp_path))
+
+        with patch_random_sampler_wildcard_choice(
+            ["{$0|x}", "{$10|x}", "{$tephanie|x}"],
+        ):
+            with patch_random_sampler_variant_choices_with_literals(
+                ["$0", "$10", "$tephanie"],
+            ):
+                prompts = list(generator.generate("__parser-dollars__", 3))
+
+        assert list(map(str, prompts)) == ["$0", "$10", "$tephanie"]
 
     def test_without_wildcard_manager(self):
         generator = RandomPromptGenerator()

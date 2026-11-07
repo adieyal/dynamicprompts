@@ -37,6 +37,37 @@ class TestCombinatorialGenerator:
             "I love butter",
         ]
 
+    def test_wildcard_values_preserve_literal_openers_and_escapes(
+        self,
+        tmp_path,
+    ):
+        wildcard_file = tmp_path / "parser-literals.yaml"
+        wildcard_file.write_text(
+            "- '$0'\n- '\\{braces\\}'\n- 'unknown \\q escape'\n",
+        )
+        wildcard_manager = WildcardManager(path=tmp_path)
+        generator = CombinatorialPromptGenerator(wildcard_manager)
+
+        assert list(generator.generate("__parser-literals__")) == [
+            "$0",
+            "{braces}",
+            r"unknown \q escape",
+        ]
+
+    def test_variant_values_preserve_unescaped_dollars(self, tmp_path):
+        wildcard_file = tmp_path / "parser-dollars.yaml"
+        wildcard_file.write_text("- '{$0|x}'\n- '{$10|x}'\n- '{$tephanie|x}'\n")
+        generator = CombinatorialPromptGenerator(WildcardManager(path=tmp_path))
+
+        assert list(generator.generate("__parser-dollars__")) == [
+            "$0",
+            "x",
+            "$10",
+            "x",
+            "$tephanie",
+            "x",
+        ]
+
     def test_generate_variant_with_separator(self, wildcard_manager: WildcardManager):
         prompt = "{2$$ and $$A|B|C}"
         generator = CombinatorialPromptGenerator(wildcard_manager)
