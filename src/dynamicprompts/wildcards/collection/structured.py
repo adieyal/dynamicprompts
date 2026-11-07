@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import warnings
 from pathlib import Path
 from typing import Any, Iterable
@@ -14,6 +15,9 @@ from dynamicprompts.wildcards.item import WildcardItem
 log = logging.getLogger(__name__)
 
 
+_LEADING_WEIGHT = re.compile(r"(?P<weight>\d+(?:\.\d+)?)::")
+
+
 def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem]:
     """
     Parse a single list in a structured file (JSON or YAML) and yield the wildcard items.
@@ -22,16 +26,13 @@ def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem
         if not item:
             continue
         if isinstance(item, str):
-            # See if the item _could_ have a prefix weight before attempting to parse.
-            if item[0].isdigit() and "::" in item:
-                weight_text, _, content = item.rpartition("::")
-                try:
-                    yield WildcardItem(content=content, weight=float(weight_text))
-                    continue
-                except ValueError:
-                    # When failing to parse the weight,
-                    # fall through to yielding the item as-is.
-                    pass
+            match = _LEADING_WEIGHT.match(item)
+            if match:
+                yield WildcardItem(
+                    content=item[match.end() :],
+                    weight=float(match.group("weight")),
+                )
+                continue
             yield item
             continue
         elif isinstance(item, dict):
@@ -118,7 +119,9 @@ def parse_structured_file(file_path: Path) -> Iterable[tuple[str, WildcardCollec
         return _parse_structured_file_dict(data, file_path=file_path)
     if isinstance(data, list):
         # See if the data is a flat list of strings
-        valid_entries = [e for e in data if isinstance(e, str)]
+        valid_entries = list(
+            _parse_structured_file_list([e for e in data if isinstance(e, str)]),
+        )
         if valid_entries:
             # Only return a collection if it's not empty.
             collection = ListWildcardCollection(
