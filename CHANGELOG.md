@@ -1,3 +1,17 @@
+- 0.32.0
+  - Feature: Jinja templates can import and include templates from the wildcard folder (#138) (thanks @yak1ex!)
+  - Feature: Jinja helpers `flip_coin` and `pick_multiple` (#134) (thanks @Jaid!)
+  - Feature: `try_parse()` and `WildcardManager.from_map()` APIs; an unparseable wildcard value no longer fails the whole generation (#126) (@akx)
+  - Fix: Text that only looks like syntax stays literal, e.g. `$tephanie`, `$5`, `50%`, `100% FREE`, unmatched `__` and LoRA tags such as `<lora:foo__bar:1>` (sd-dynamic-prompts #885, #845, #750, #866)
+  - Fix: Structured YAML/JSON weights are read only from a leading number, so `2::{|3::blood} red` keeps its nested weights; root-level lists are now weighted too (sd-dynamic-prompts #841)
+  - Fix: Wildcard arguments are validated (`__w(a=1, b=2)__`), support balanced parentheses and `\` escapes in values (sd-dynamic-prompts #779)
+  - Fix: `{3-$$__wildcard__}` respects the minimum when the maximum is omitted (#132) (thanks @bluelovers!)
+  - Fix: Seeded generation of an empty prompt returns no prompts instead of raising `StopIteration` (#137) (thanks @asoraruf!)
+  - Fix: Weighted wildcards give the same result in a seeded batch as when generated one seed at a time (#141) (thanks @LunarX!)
+  - Fix: Variable assignments can use earlier variables, e.g. `${a=1}${b=!${a}2}` and `__dir/${v}__` (#146) (thanks @pspkurara!)
+  - Behaviour change: Backslash escapes reserved characters (`\{`, `\|`, `\$`, `\#`, `\\`); other backslashes are kept as typed, so `\(word\)` is unchanged
+  - Behaviour change: A complete opener with a malformed body raises an error, e.g. `${`, `%{a` and `{a\}`
+  - Behaviour change: Empty strings in structured YAML/JSON lists are skipped
 - 0.31.0
   - Feature: Add Variable Support in Wildcard Paths (#110, #114) (thanks @mwootendev!)
   - Feature: Add wrap command (#102) (@akx)
