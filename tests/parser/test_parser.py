@@ -512,6 +512,33 @@ class TestParser:
         assert five.literal == "\n        five\n        "
 
     @pytest.mark.parametrize(
+        ("prompt", "expected"),
+        [
+            ('shirt with "#python" text', 'shirt with "#python" text'),
+            ("hex #ff0000 red", "hex #ff0000 red"),
+            ("tag#1 here", "tag#1 here"),
+            ("a #b # comment", "a #b "),
+            ("cat #", "cat "),
+            ("cat\n   #indented comment\ndog", "cat\n    \ndog"),
+            ("#comment\ndog", "\ndog"),
+        ],
+    )
+    def test_hash_starts_comment_only_at_line_start_or_before_space(
+        self,
+        prompt: str,
+        expected: str,
+    ):
+        # 143: a # followed by text mid-line is literal, e.g. hashtags and colours.
+        command = parse(prompt)
+        assert isinstance(command, LiteralCommand)
+        assert command.literal == expected
+
+    def test_hashtags_in_variant(self):
+        variant = parse('{"#python"|"#geek"} shirt')[0]
+        assert isinstance(variant, VariantCommand)
+        assert [v.literal for v in variant.values] == ['"#python"', '"#geek"']
+
+    @pytest.mark.parametrize(
         "input",
         [
             "[cat|dog]",  # alternating words

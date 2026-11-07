@@ -74,7 +74,8 @@ MAIN_OUTPUTS: dict[str, Expected] = {
     "{50%|60%}": ParseException,
     "x %{}": ParseException,
     "emoji \U0001f642 {a|b}": ["emoji \U0001f642 a", "emoji \U0001f642 b"],
-    "a #c\n{b|c}": ["a  \nb", "a  \nc"],
+    # 143: a # followed by text mid-line is literal, not a comment.
+    "a #c\n{b|c}": ["a #c\nb", "a #c\nc"],
     "x __~a__": ["x a-val"],
     "x __@a__": ["x a-val"],
     "x {@a|b}": ["x a"],

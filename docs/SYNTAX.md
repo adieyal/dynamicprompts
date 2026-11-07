@@ -520,6 +520,8 @@ As your prompts become more complex, the become harder to read. To prevent creat
    In ${season:summer}, I wear ${season:summer} shirts and ${season:summer} trousers
 ```
 
+A `#` starts a comment at the start of a line or when it is followed by a space. Elsewhere it is plain text, so hashtags and colours such as `#python` and `#ff0000` stay in the prompt. Write `\#` to keep a `#` that would otherwise start a comment.
+
 Note that regular wildcard .txt files use a newline to represent new wildcard and so whitespace is not permitted. In this case you should consider using the YAML wildcard format. Here is a real-world example from the [publicprompts](https://github.com/adieyal/sd-dynamic-prompts/blob/main/collections/publicprompts.yaml) wildcard file:
 
 ```

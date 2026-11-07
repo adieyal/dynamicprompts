@@ -180,7 +180,7 @@ def _configure_literal_sequence(
 ) -> pp.ParserElement:
     # Characters that are not allowed in a literal
     # - { denotes the start of a variant (or whatever variant_start is set to  )
-    # - # denotes the start of a comment
+    # - # may start a comment (a # that doesn't is matched by literal_hash)
     # - $ denotes the start of a variable command (or whatever variable_start is set to)
     # - % denotes the start of a wrap command (or whatever wrap_start is set to)
     non_literal_chars = (
@@ -212,13 +212,23 @@ def _configure_literal_sequence(
     # A backslash that starts no escape is plain text in the same run, so it
     # does not open a token boundary where a // comment could be skipped.
     kept_backslash = pp.Regex(rf"\\(?![{reserved}])")
+    literal_hash = pp.Regex("#").add_condition(
+        lambda s, loc, toks: not _starts_comment(s, loc),
+    )
     # Combine: no comment skipping inside one run; escapes become plain text once.
-    literal = pp.Combine(pp.OneOrMore(text | escape | kept_backslash))(
+    literal = pp.Combine(pp.OneOrMore(text | escape | kept_backslash | literal_hash))(
         "literal",
     ).leave_whitespace()
     literal_sequence = pp.OneOrMore(literal)
 
     return literal_sequence
+
+
+def _starts_comment(instring: str, loc: int) -> bool:
+    """A # starts a comment at the start of a line or before whitespace (#143)."""
+    after = instring[loc + 1 : loc + 2]
+    line_start = instring.rfind("\n", 0, loc) + 1
+    return not after or after.isspace() or not instring[line_start:loc].strip()
 
 
 def _reserved_chars(parser_config: ParserConfig) -> str:
@@ -614,7 +624,11 @@ def create_parser(
     wildcard_prompt <<= pp.OneOrMore(wildcard_chunk, stop_on=pp.Char("("))("prompt")
 
     # Configure comments
-    prompt.ignore("#" + pp.restOfLine)
+    prompt.ignore(
+        pp.Regex(r"#[^\n]*").add_condition(
+            lambda s, loc, toks: _starts_comment(s, loc),
+        ),
+    )
     prompt.ignore("//" + pp.restOfLine)
     prompt.ignore(pp.c_style_comment)
 

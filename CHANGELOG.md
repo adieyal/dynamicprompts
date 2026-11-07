@@ -1,6 +1,7 @@
 - Unreleased
   - Fix: Jinja templates use the generation seed; `JinjaGenerator.generate(..., seeds=...)` gives reproducible results and no longer touches Python's global random state (#108)
   - Behaviour change: Immediate variables (`${f=!{a|b}}`) are evaluated once per prompt instead of once per batch with the random and cyclical samplers (#96)
+  - Behaviour change: `#` starts a comment only at the start of a line or when followed by whitespace, so hashtags and colours such as `#python` and `#ff0000` stay in the prompt (#143)
 - 0.32.0
   - Feature: Jinja templates can import and include templates from the wildcard folder (#138) (thanks @yak1ex!)
   - Feature: Jinja helpers `flip_coin` and `pick_multiple` (#134) (thanks @Jaid!)
