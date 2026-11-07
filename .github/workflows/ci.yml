@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest] # ubuntu-latest has no Python 3.8
         python-version: ["3.8"] # minimum supported version
     steps:
       - uses: actions/checkout@v4
