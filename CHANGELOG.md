@@ -1,3 +1,5 @@
+- 0.34.1
+  - Fix type annotations and lint from 0.34.0; 0.34.0 was not published to PyPI
 - 0.34.0
   - Feature: `CombinatorialPromptGenerator.count(template)` returns the exact number of prompts the template yields, without generating them (`ExactCount`, or `UnboundedCount` for a recursive wildcard); `samplers.count.count_combinations()` is the underlying function
   - Feature: `CombinatorialPromptGenerator.prompt_at(template, index)` returns the prompt at any index directly, in `generate()` order; random parts are seeded from the generator's seed and the index; cyclical parts (`{@a|b}`) take the value `generate()` gives them at that index. Known limit: inside a cyclic wildcard (`__@w__` or a cyclical part) whose lines contain an immediate assignment sampled from a variant (e.g. the line `${v=!{a|b|c}} ${v}-{x|y}`), `prompt_at` returns the cycle's first value and may differ from `generate()`

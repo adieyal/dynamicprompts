@@ -4,7 +4,7 @@ import dataclasses
 import warnings
 from itertools import islice
 from random import Random
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Iterator
 
 from dynamicprompts.commands import Command, LiteralCommand
 from dynamicprompts.commands.variable_commands import VariableAssignmentCommand
@@ -122,7 +122,7 @@ class SamplingContext:
         else:
             raise TypeError(f"Expected prompt to be str or Command, got {type(prompt)}")
 
-        gen = self.generator_from_command(command)
+        gen: Iterator[SamplingResult] = self.generator_from_command(command)
         if self.yields_once(command):
             gen = islice(gen, 1)
 

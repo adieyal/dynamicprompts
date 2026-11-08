@@ -4,7 +4,6 @@ from collections import Counter
 from random import Random
 
 import pytest
-
 from dynamicprompts.commands.base import SamplingMethod
 from dynamicprompts.generators import CombinatorialPromptGenerator
 from dynamicprompts.sampling_context import SamplingContext

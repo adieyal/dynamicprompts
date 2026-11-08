@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 
 import pytest
-
 from dynamicprompts.generators import CombinatorialPromptGenerator
 from dynamicprompts.parser.config import ParserConfig
 from dynamicprompts.samplers.combinatorial import CombinatorialSampler

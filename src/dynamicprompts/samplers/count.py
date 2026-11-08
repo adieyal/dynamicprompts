@@ -472,6 +472,6 @@ def _cyclical_wildcard_at(
         return next(get_wildcard_not_found_fallback(command, _isolated(context)))
     lines = list(values.iterate_string_values_weighted())
     draw, line = divmod(draw, len(lines))
-    command = parse(lines[line], parser_config=context.parser_config)
-    result = _nonfinite_at(command, context, draw)
+    line_command = parse(lines[line], parser_config=context.parser_config)
+    result = _nonfinite_at(line_command, context, draw)
     return result.whitespace_squashed() if context.ignore_whitespace else result

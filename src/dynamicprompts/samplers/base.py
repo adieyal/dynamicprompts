@@ -17,7 +17,7 @@ from dynamicprompts.commands.variable_commands import (
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
-from dynamicprompts.types import ResultGen
+from dynamicprompts.types import ResultGen, to_result_gen
 from dynamicprompts.utils import rotate_and_join
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,7 @@ class Sampler:
             command_to_sample,
         )
         if context.yields_once(command_to_sample):
-            return islice(gen, 1)
+            return to_result_gen(islice(gen, 1))
         return gen
 
     def _get_wrap(
