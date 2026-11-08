@@ -219,6 +219,8 @@ class MagicPromptGenerator(PromptGenerator):
         prompts = self._generator(
             orig_prompts,
             max_length=self._max_prompt_length,
+            # transformers 5 pipelines default to max_new_tokens=256, which overrides max_length.
+            max_new_tokens=None,
             temperature=self._temperature,
             batch_size=self._batch_size,
         )

@@ -1,3 +1,5 @@
+- 0.33.3
+  - Fix: MagicPromptGenerator honours `max_prompt_length` with transformers 5, whose pipelines otherwise generate up to 256 new tokens
 - 0.33.2
   - Fix: MagicPromptGenerator retries loading the model after a failed load, instead of failing with a `TypeError` until restart
   - Feature: `CombinatorialPromptGenerator(seed=...)` makes random choices inside a template (`{~a|b}`) repeatable

@@ -171,3 +171,16 @@ def test_failed_load_is_retried(monkeypatch):
     generator = MagicPromptGenerator()
     assert generator._generator is transformers.pipeline.return_value
     assert transformers.AutoModelForCausalLM.from_pretrained.call_count == 2
+
+
+def test_max_prompt_length_is_not_overridden():
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+
+    pipeline = MagicMock(return_value=[[{"generated_text": "a cat, detailed"}]])
+    generator = MagicPromptGenerator(max_prompt_length=42)
+    generator._generator = pipeline
+    generator.generate("a cat")
+
+    kwargs = pipeline.call_args.kwargs
+    assert kwargs["max_length"] == 42
+    assert kwargs["max_new_tokens"] is None
