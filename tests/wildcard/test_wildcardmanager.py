@@ -414,10 +414,11 @@ def test_from_map_keeps_collections_when_cache_is_cleared():
     manager = WildcardManager.from_map(
         {"w": ListWildcardCollection(["b", "a", "a"])},
     )
+    # Duplicate lines are kept by default; dedup_wildcards is opt-in.
+    assert list(manager.get_values("w")) == ["a", "a", "b"]
+
+    manager.dedup_wildcards = True
     assert list(manager.get_values("w")) == ["a", "b"]
 
-    manager.dedup_wildcards = False
-    assert list(manager.get_values("w")) == ["a", "a", "b"]
-
     manager.clear_cache()
-    assert list(manager.get_values("w")) == ["a", "a", "b"]
+    assert list(manager.get_values("w")) == ["a", "b"]

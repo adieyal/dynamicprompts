@@ -1,3 +1,11 @@
+- 0.34.0
+  - Feature: `CombinatorialPromptGenerator.count(template)` returns the exact number of prompts the template yields, without generating them (`ExactCount`, or `UnboundedCount` for a recursive wildcard); `samplers.count.count_combinations()` is the underlying function
+  - Feature: `CombinatorialPromptGenerator.prompt_at(template, index)` returns the prompt at any index directly, in `generate()` order; random parts are seeded from the generator's seed and the index; cyclical parts (`{@a|b}`) take the value `generate()` gives them at that index. Known limit: inside a cyclic wildcard (`__@w__` or a cyclical part) whose lines contain an immediate assignment sampled from a variant (e.g. the line `${v=!{a|b|c}} ${v}-{x|y}`), `prompt_at` returns the cycle's first value and may differ from `generate()`
+  - Behaviour change: The combinatorial sampler no longer de-duplicates: equal variant options (`{a|a|b}`), equal options in `$$` combinations (`{2$$a|a|b}` yields 6) and equal results all count
+  - Behaviour change: The cyclical sampler keeps equal options in `$$` combinations too: `{@2$$a|a|b}` cycles through 6 combinations (`a,a`, `a,b`, `a,a`, `a,b`, `b,a`, `b,a`) instead of 4 (`a,b`, `a,b`, `b,a`, `b,a`)
+  - Behaviour change: `WildcardManager.dedup_wildcards` defaults to `False`, so a line listed twice is yielded twice and drawn twice as often; set it to `True` for the old behaviour
+  - Fix: A missing wildcard yields its `__name__` text once in combinatorial mode instead of endlessly; `{__missing__|x}` no longer hangs and `{__missing__}` yields its text instead of nothing
+  - Fix: A random or cyclical part standing alone in combinatorial mode (`{~a|b}`, a wildcard line, a variable value or a wrap part) yields one prompt instead of endlessly
 - 0.33.3
   - Fix: MagicPromptGenerator honours `max_prompt_length` with transformers 5, whose pipelines otherwise generate up to 256 new tokens
 - 0.33.2

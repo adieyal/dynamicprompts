@@ -32,7 +32,8 @@ STAR_WILDCARDS = ParserConfig(wildcard_wrap="**")
 
 Expected = Union[List[str], Type[Exception]]
 
-# Main's outputs for the corpus.
+# Main's outputs for the corpus, except that a missing wildcard now yields its
+# text once in the combinatorial sampler instead of endlessly.
 MAIN_OUTPUTS: dict[str, Expected] = {
     "x __${n:a}__": ["x a-val"],
     "__${n:a}__": ["a-val"],
@@ -52,8 +53,8 @@ MAIN_OUTPUTS: dict[str, Expected] = {
     "a\\": ["a\\"],
     "{a|b\\}": ["a", "b\\"],
     "{a\\}": ["a\\"],
-    "__a\\b__": ["__a\\b__"] * MAX_PROMPTS,
-    "x __a\\b__": ["x __a\\b__"] * MAX_PROMPTS,
+    "__a\\b__": ["__a\\b__"],
+    "x __a\\b__": ["x __a\\b__"],
     "a\\\\": ["a\\\\"],
     "\\__a__": ["\\a-val"],
     "x \\__a__": ["x \\a-val"],
@@ -85,7 +86,7 @@ MAIN_OUTPUTS: dict[str, Expected] = {
     "a __ b": ParseException,
     "snake__case text": ParseException,
     # Kept as on main: inner edges are non-space, so the two `__` pair up.
-    "snake__case and other__thing": ["snake__case and other__thing"] * MAX_PROMPTS,
+    "snake__case and other__thing": ["snake__case and other__thing"],
     "<lora:foo__bar:1> __a__": ParseException,
     "<lora:foo__bar:1>, __a__ x__b__y": ParseException,
     "$tephanie $0 $10 50% 100% FREE": ParseException,
@@ -101,7 +102,7 @@ MAIN_OUTPUTS: dict[str, Expected] = {
     "x __a(v=1,,)__": ["x a-val"],
     "x__y(z) __a__": ParseException,
     "__a(v=\\,1)__": ["a-val"],
-    "__${n}(v=1)__": ["__n__"] * MAX_PROMPTS,
+    "__${n}(v=1)__": ["__n__"],
     "a # c\n{b|c}": ["a  \nb", "a  \nc"],
     "x\\__a__": ["x\\a-val"],
 }
@@ -194,8 +195,8 @@ def test_every_intended_difference_is_in_the_corpus():
         # A trailing backslash stays literal.
         ("a\\", ["a\\"]),
         # Backslashes in wildcard paths are kept, as on main.
-        ("__a\\b__", ["__a\\b__"] * MAX_PROMPTS),
-        ("x __a\\b__", ["x __a\\b__"] * MAX_PROMPTS),
+        ("__a\\b__", ["__a\\b__"]),
+        ("x __a\\b__", ["x __a\\b__"]),
     ],
 )
 def test_former_regressions(prompt: str, expected: list[str]):

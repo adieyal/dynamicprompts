@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Iterable, cast
+from itertools import islice
+from typing import Iterable
 
 from dynamicprompts.commands import (
     Command,
@@ -17,12 +18,12 @@ from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.command_collection import CommandCollection
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
+    sole_wildcard,
     wildcard_to_variant,
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
 from dynamicprompts.types import ResultGen
-from dynamicprompts.utils import dedupe
 
 logger = logging.getLogger(__name__)
 
@@ -105,14 +106,8 @@ class CombinatorialSampler(Sampler):
         if len(variant_command.variants) == 0:
             return
 
-        seen = set()
-        is_wildcard_variant = len(variant_command.values) == 1 and isinstance(
-            variant_command.values[0],
-            WildcardCommand,
-        )
-
-        if is_wildcard_variant:
-            wildcard_command = cast(WildcardCommand, variant_command.values[0])
+        wildcard_command = sole_wildcard(variant_command)
+        if wildcard_command is not None:
             wildcard_variant = wildcard_to_variant(
                 wildcard_command,
                 context=context,
@@ -120,6 +115,10 @@ class CombinatorialSampler(Sampler):
                 max_bound=variant_command.max_bound,
                 separator=variant_command.separator,
             )
+            if not wildcard_variant.variants:
+                # No lines: the wildcard yields its not-found text, as a token does.
+                yield from self._get_wildcard(wildcard_command, context)
+                return
             yield from self._get_variant(wildcard_variant, context)
         else:
             variant_command = variant_command.adjust_range()
@@ -129,14 +128,10 @@ class CombinatorialSampler(Sampler):
             ):
                 for combo in variant_command.get_value_combinations(bound):
                     for prompt_arr in _combo_to_prompt(context, combo):
-                        deduped_arr = dedupe(prompt_arr, key=lambda r: r.dedupe_key)
-                        correct_size = len(deduped_arr) == bound
-                        if correct_size and deduped_arr not in seen:
-                            seen.add(deduped_arr)
-                            yield SamplingResult.joined(
-                                deduped_arr,
-                                separator=variant_command.separator,
-                            )
+                        yield SamplingResult.joined(
+                            prompt_arr,
+                            separator=variant_command.separator,
+                        )
 
     def _get_wildcard(
         self,
@@ -149,7 +144,7 @@ class CombinatorialSampler(Sampler):
         values = context.wildcard_manager.get_values(wildcard_path)
 
         if not values:
-            yield from get_wildcard_not_found_fallback(command, context)
+            yield from islice(get_wildcard_not_found_fallback(command, context), 1)
             return
 
         for val in values.iterate_string_values_weighted():

@@ -17,6 +17,13 @@ from dynamicprompts.types import ResultGen
 logger = logging.getLogger(__name__)
 
 
+def sole_wildcard(command: VariantCommand) -> WildcardCommand | None:
+    """The wildcard of a variant whose only option is a wildcard (`{2$$__w__}`)."""
+    if len(command.values) == 1 and isinstance(command.values[0], WildcardCommand):
+        return command.values[0]
+    return None
+
+
 def wildcard_to_variant(
     command: WildcardCommand,
     *,
@@ -52,6 +59,7 @@ def get_wildcard_not_found_fallback(
 ) -> ResultGen:
     """
     Logs a warning, then infinitely yields the wrapped wildcard.
+    The combinatorial sampler takes one value of it.
     """
     if isinstance(command.wildcard, Command):
         wildcard = next(iter(context.sample_prompts(command.wildcard, 1))).text

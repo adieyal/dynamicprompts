@@ -95,7 +95,8 @@ class VariantCommand(Command):
         if k <= 0:
             yield []
         else:
-            for value in values:
-                other_values = [v for v in values if v != value]
+            for i, value in enumerate(values):
+                # Exclude the chosen position only; equal options elsewhere stay.
+                other_values = values[:i] + values[i + 1 :]
                 for item in self.get_value_combinations(k - 1, values=other_values):
                     yield [value] + item

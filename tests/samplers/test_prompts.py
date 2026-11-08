@@ -477,7 +477,10 @@ class TestPrompts:
         [
             (lazy_fixture("random_sampling_context"), ["A __missing__ wildcard"] * 5),
             (lazy_fixture("cyclical_sampling_context"), ["A __missing__ wildcard"] * 5),
-            (lazy_fixture("combinatorial_sampling_context"), []),
+            (
+                lazy_fixture("combinatorial_sampling_context"),
+                ["A __missing__ wildcard"],
+            ),
         ],
     )
     def test_missing_wildcard(

@@ -39,7 +39,7 @@ class WildcardManager:
         self._tree: WildcardTree | None = None
         self._values_cache: dict[str, WildcardValues] = {}
         self._sort_wildcards = True
-        self._dedup_wildcards = True
+        self._dedup_wildcards = False
         self.shuffle_wildcards = False
         self._root_map = {}
         if root_map:

@@ -123,6 +123,8 @@ class SamplingContext:
             raise TypeError(f"Expected prompt to be str or Command, got {type(prompt)}")
 
         gen = self.generator_from_command(command)
+        if self.yields_once(command):
+            gen = islice(gen, 1)
 
         if self.ignore_whitespace:
             gen = (res.whitespace_squashed() for res in gen)
@@ -135,6 +137,16 @@ class SamplingContext:
         if command.sampling_method:
             return command.sampling_method
         return self.default_sampling_method
+
+    def yields_once(self, command: Command) -> bool:
+        """
+        Whether a random or cyclical command stands alone in a finite (combinatorial)
+        context, where it yields one value instead of an endless stream.
+        """
+        return (
+            not self.default_sampling_method.is_nonfinite()
+            and self.get_effective_sampling_method(command).is_nonfinite()
+        )
 
     def process_variable_assignments(
         self,

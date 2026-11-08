@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from itertools import islice
 
 from dynamicprompts.commands import (
     Command,
@@ -40,6 +41,26 @@ def _may_read_variables(command: Command) -> bool:
         return any(_may_read_variables(c) for c in command.values)
     # Variable accesses, and wildcards, whose files may reference variables.
     return True
+
+
+def resolve_variable(
+    command: VariableAccessCommand,
+    context: SamplingContext,
+) -> Command:
+    """
+    The command a variable access samples: its value, else its default,
+    else the context's unknown_variable_value. Raises KeyError if there is none.
+    """
+    variable = command.name
+    command_to_sample = context.variables.get(variable, command.default)
+    if not command_to_sample:
+        if context.unknown_variable_value is None:
+            raise KeyError(f"Variable {variable} is not defined in this context")
+        elif isinstance(context.unknown_variable_value, str):
+            command_to_sample = LiteralCommand(context.unknown_variable_value)
+        else:
+            command_to_sample = context.unknown_variable_value
+    return command_to_sample
 
 
 class Sampler:
@@ -160,18 +181,13 @@ class Sampler:
         command: VariableAccessCommand,
         context: SamplingContext,
     ) -> ResultGen:
-        variable = command.name
-        command_to_sample = context.variables.get(variable, command.default)
-        if not command_to_sample:
-            if context.unknown_variable_value is None:
-                raise KeyError(f"Variable {variable} is not defined in this context")
-            elif isinstance(context.unknown_variable_value, str):
-                command_to_sample = LiteralCommand(context.unknown_variable_value)
-            else:
-                command_to_sample = context.unknown_variable_value
-        return context.for_sampling_variable(variable).generator_from_command(
+        command_to_sample = resolve_variable(command, context)
+        gen = context.for_sampling_variable(command.name).generator_from_command(
             command_to_sample,
         )
+        if context.yields_once(command_to_sample):
+            return islice(gen, 1)
+        return gen
 
     def _get_wrap(
         self,
