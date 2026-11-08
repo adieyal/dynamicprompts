@@ -95,6 +95,13 @@ class WildcardManager:
         return self._path
 
     @property
+    def root_map(self) -> RootMap:
+        """
+        The roots wildcards are loaded from, keyed by the name prefix they are mounted under.
+        """
+        return self._root_map
+
+    @property
     def wildcard_wrap(self) -> str:
         """
         The string that is used as the prefix and suffix of a wildcard

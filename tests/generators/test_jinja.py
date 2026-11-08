@@ -369,6 +369,20 @@ class TestJinjaGenerator:
         with pytest.raises(jinja2.TemplateNotFound):
             generator.generate(f"{{% include '{template_name}' %}}")
 
+    def test_jinja_templates_from_every_root(self, tmp_path):
+        first, second, mounted = (tmp_path / n for n in ("first", "second", "mounted"))
+        for folder, text in ((first, "one"), (second, "two"), (mounted, "three")):
+            folder.mkdir()
+            (folder / f"{text}.jinja").write_text(text)
+        manager = WildcardManager(root_map={"": [first, second], "extra": [mounted]})
+
+        prompts = JinjaGenerator(manager).generate(
+            "{% include 'one.jinja' %} {% include 'two.jinja' %} "
+            "{% include 'extra/three.jinja' %}",
+        )
+
+        assert prompts == ["one two three"]
+
 
 SEEDED_TEMPLATES = [
     "{{ choice('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h') }}",

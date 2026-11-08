@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
+from pathlib import Path
 from typing import cast
 
 from dynamicprompts.generators.combinatorial import CombinatorialPromptGenerator
@@ -72,9 +73,21 @@ class JinjaGenerator(PromptGenerator):
             random_filter,
         )
 
-        # Templates in the wildcard folder can be imported or included.
-        wildcard_path = self._wildcard_manager.path
-        loader = jinja2.FileSystemLoader(wildcard_path) if wildcard_path else None
+        # Templates in the wildcard folders can be imported or included.
+        # A root mounted under a prefix is reached as "<prefix>/<template>".
+        loaders: list[jinja2.BaseLoader] = []
+        for prefix, items in self._wildcard_manager.root_map.items():
+            folders = [item for item in items if isinstance(item, Path)]
+            if not folders:
+                continue
+            folder_loader = jinja2.FileSystemLoader(folders)
+            prefix = prefix.strip("/")
+            loaders.append(
+                jinja2.PrefixLoader({prefix: folder_loader})
+                if prefix
+                else folder_loader,
+            )
+        loader = jinja2.ChoiceLoader(loaders) if loaders else None
         env = jinja2.Environment(extensions=[PromptExtension], loader=loader)
         env.filters["random"] = random_filter
         prompt_blocks: list[str] = []
