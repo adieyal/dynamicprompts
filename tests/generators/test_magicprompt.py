@@ -149,3 +149,25 @@ def test_generate_passes_kwargs():
     generator.generate("Test prompt", **kwargs)
 
     mock_generator.generate.assert_called_with("Test prompt", **kwargs)
+
+
+def test_failed_load_is_retried(monkeypatch):
+    from dynamicprompts.generators import magicprompt
+    from dynamicprompts.generators.magicprompt import MagicPromptGenerator
+
+    monkeypatch.setattr(MagicPromptGenerator, "generator", None)
+    monkeypatch.setattr(MagicPromptGenerator, "_model_name", None)
+    transformers = MagicMock()
+    transformers.AutoModelForCausalLM.from_pretrained.side_effect = [
+        OSError("download failed"),
+        MagicMock(),
+    ]
+    monkeypatch.setattr(magicprompt, "_import_transformers", lambda: transformers)
+
+    with pytest.raises(OSError):
+        MagicPromptGenerator()
+    assert MagicPromptGenerator._model_name is None
+
+    generator = MagicPromptGenerator()
+    assert generator._generator is transformers.pipeline.return_value
+    assert transformers.AutoModelForCausalLM.from_pretrained.call_count == 2

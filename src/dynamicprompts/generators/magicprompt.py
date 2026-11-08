@@ -155,8 +155,12 @@ class MagicPromptGenerator(PromptGenerator):
         return self._model_name
 
     def set_model(self, model_name: str) -> None:
-        if model_name != MagicPromptGenerator._model_name:
-            MagicPromptGenerator._model_name = model_name
+        # Load when the model changes, or when an earlier load failed (generator is None).
+        # _load_pipeline records the model name only after loading succeeds.
+        if (
+            model_name != MagicPromptGenerator._model_name
+            or MagicPromptGenerator.generator is None
+        ):
             MagicPromptGenerator.generator = None
 
             self._generator = self._load_pipeline(model_name)

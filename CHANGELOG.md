@@ -1,3 +1,7 @@
+- 0.33.2
+  - Fix: MagicPromptGenerator retries loading the model after a failed load, instead of failing with a `TypeError` until restart
+  - Feature: `CombinatorialPromptGenerator(seed=...)` makes random choices inside a template (`{~a|b}`) repeatable
+  - The `magicprompt` extra allows transformers 5
 - 0.33.1
   - Fix: Jinja templates can import and include templates from every wildcard root, not only a single `path`; a root mounted under a prefix is reached as `prefix/template`. New `WildcardManager.root_map` property
 - 0.33.0

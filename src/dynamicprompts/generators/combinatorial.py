@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from random import Random
 
 from dynamicprompts import constants
 from dynamicprompts.enums import SamplingMethod
@@ -18,13 +19,19 @@ class CombinatorialPromptGenerator(PromptGenerator):
         wildcard_manager: WildcardManager | None = None,
         ignore_whitespace: bool = False,
         parser_config: ParserConfig = default_parser_config,
+        seed: int | None = None,
     ) -> None:
+        """
+        :param seed: Seeds random choices inside the template (such as `{~a|b}`),
+            so the same seed gives the same prompts. Without it they use the shared generator.
+        """
         wildcard_manager = wildcard_manager or WildcardManager()
         self._context = SamplingContext(
             wildcard_manager=wildcard_manager,
             default_sampling_method=SamplingMethod.COMBINATORIAL,
             ignore_whitespace=ignore_whitespace,
             parser_config=parser_config,
+            rand=constants.DEFAULT_RANDOM if seed is None else Random(seed),
         )
 
     def generate(

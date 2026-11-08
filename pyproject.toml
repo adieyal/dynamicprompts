@@ -32,7 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 attentiongrabber = []  # empty list for backwards compatibility (no "no extra" warnings)
-magicprompt = ["transformers[torch]<5"]
+magicprompt = ["transformers[torch]<6"]
 feelinglucky = ["requests<3"]
 yaml = ["pyyaml<7"]
 dev = [

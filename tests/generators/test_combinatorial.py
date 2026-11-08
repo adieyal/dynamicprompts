@@ -131,3 +131,17 @@ def test_generate_accepts_kwargs():
     generator = CombinatorialPromptGenerator()
     generator.generate("template", max_prompts=5, extra_arg="value")
     # shouldn't raise an exception
+
+
+def test_seed_makes_random_choices_repeatable():
+    template = "{~a|b|c|d|e|f|g|h} {x|y}"
+    first = CombinatorialPromptGenerator(seed=3).generate(template)
+    runs = {
+        tuple(CombinatorialPromptGenerator(seed=3).generate(template)) for _ in range(5)
+    }
+    assert runs == {tuple(first)}
+    others = {
+        tuple(CombinatorialPromptGenerator(seed=seed).generate(template))
+        for seed in range(10)
+    }
+    assert len(others) > 1
