@@ -622,13 +622,13 @@ The `~` is used for a random sampler and `@` for cyclical. The syntax for varian
 
 If a sampler is not explicitly specified, the default sampler is used, the value of which depends on your generator.
 
-A `~`, `!` or `@` straight after `{` is always read as a sampler. To start the first option with one of these characters, escape it with a backslash. For example, artist tags that need a literal `@`:
+A `~`, `!` or `@` at the start of a variant (after the `{` and any whitespace) is always read as a sampler. To start the first option with one of these characters, escape it with a backslash. For example, artist tags that need a literal `@`:
 
 ```
 {\@aster crowley|@uo denim|@igiroitsu}
 ```
 
-`\~`, `\!` and `\@` produce the literal character anywhere in a prompt.
+`\~`, `\!` and `\@` produce the literal character anywhere in prompt text. Custom separators (`{2$$ and $$a|b}`) don't decode escapes, so write these characters there without a backslash.
 
 Example using a random sampler and explicitly setting the second variant to use a cyclical sampler:
 
