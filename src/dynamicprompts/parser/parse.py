@@ -238,6 +238,10 @@ def _reserved_chars(parser_config: ParserConfig) -> str:
                 "#",
                 "|",
                 "\\",
+                # Sampler markers, so `{\@a|b}` keeps a literal leading @ (#147).
+                "~",
+                "!",
+                "@",
                 *parser_config.variant_start,
                 *parser_config.variant_end,
                 *parser_config.variable_start,

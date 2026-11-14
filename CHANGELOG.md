@@ -1,3 +1,5 @@
+- 0.34.2
+  - Fix: `\@`, `\~` and `\!` escape the sampler markers, so a variant's first option can start with a literal marker, e.g. `{\@artist|@other}` (#147)
 - 0.34.1
   - Fix type annotations and lint from 0.34.0; 0.34.0 was not published to PyPI
 - 0.34.0
