@@ -80,6 +80,7 @@ class TestParser:
             (r"a\#b", "a#b"),
             (r"a\\b", r"a\b"),
             (r"a\q", r"a\q"),
+            (r"\@x \~y \!z", "@x ~y !z"),
             (r"{\{|\}}", None),
         ],
     )
@@ -90,6 +91,17 @@ class TestParser:
         else:
             assert isinstance(command, VariantCommand)
             assert [value.literal for value in command.values] == ["{", "}"]
+
+    @pytest.mark.parametrize("marker", ["@", "~", "!"])
+    def test_escaped_sampler_marker_is_literal_first_option(self, marker: str):
+        # Issue #147: Anima artist tags start with a literal @.
+        command = parse(rf"{{\{marker}a|{marker}b}}")
+        assert isinstance(command, VariantCommand)
+        assert command.sampling_method is None
+        assert [value.literal for value in command.values] == [
+            f"{marker}a",
+            f"{marker}b",
+        ]
 
     def test_wildcard_wrapper_requires_complete_nonempty_body(self):
         for input in ("__", "__unmatched", "<lora:foo__bar:1>"):
