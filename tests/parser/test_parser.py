@@ -421,6 +421,7 @@ class TestParser:
             ("{1::cat|2::dog|3::bird} test", [1, 2, 3]),
             ("{0.2::cat|0.3::dog|0.4::bird} test", [0.2, 0.3, 0.4]),
             ("{1::cat|dog|3::bird} test", [1, 1, 3]),  # default weight
+            ("{1 ::cat|2   ::dog|3::bird} test", [1, 2, 3]),  # spaces before "::"
         ],
     )
     def test_variant_with_weights(self, input, weights):

@@ -264,7 +264,7 @@ def _configure_stray_char(terminators: list[str]) -> pp.ParserElement:
 
 def _create_weight_parser() -> pp.ParserElement:
     weight_delim = pp.Suppress("::")
-    weight = (pp.common.real | pp.common.integer) + weight_delim
+    weight = (pp.common.real | pp.common.integer) + OPT_WS + weight_delim
 
     return weight
 
