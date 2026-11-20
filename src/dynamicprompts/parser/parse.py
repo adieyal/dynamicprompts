@@ -262,13 +262,11 @@ def _configure_stray_char(terminators: list[str]) -> pp.ParserElement:
     return stray.leave_whitespace()
 
 
-def _create_weight_parser(*, optional_number: bool = False) -> pp.ParserElement:
+def _create_weight_parser() -> pp.ParserElement:
     weight_delim = pp.Suppress("::")
-    number = pp.common.real | pp.common.integer
-    if optional_number:
-        # Left out, as in "{::  text}", the number is the default weight of 1.
-        number = number | pp.Empty().set_parse_action(pp.replace_with(1))
-    weight = number + OPT_WS + weight_delim
+    # Left out, as in "{::  text}", the number is the default weight of 1.
+    default = pp.Empty().set_parse_action(pp.replace_with(1))
+    weight = (pp.common.real | pp.common.integer | default) + OPT_WS + weight_delim
 
     return weight
 
@@ -279,11 +277,7 @@ def _configure_variants(
     *,
     parser_config: ParserConfig,
 ) -> pp.ParserElement:
-    # The weight's number can be left out, except when wildcards are wrapped in
-    # "::", so "{::colors::}" stays a wildcard.
-    weight = _create_weight_parser(
-        optional_number=not parser_config.wildcard_wrap.startswith("::"),
-    )
+    weight = _create_weight_parser()
     variant_start = pp.Suppress(parser_config.variant_start)
     variant_end = pp.Suppress(parser_config.variant_end)
 

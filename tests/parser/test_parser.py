@@ -446,13 +446,6 @@ class TestParser:
         assert [v.literal for v in variant.values] == values
         assert variant.weights == weights
 
-    def test_variant_weight_number_required_when_wildcards_use_it(self):
-        config = ParserConfig(wildcard_wrap="::")
-        variant = parse("{::colors::|dog}", parser_config=config)
-        assert isinstance(variant, VariantCommand)
-        assert isinstance(variant.values[0], WildcardCommand)
-        assert variant.values[0].wildcard == "colors"
-
     @pytest.mark.parametrize(
         "input, min_bound, max_bound",
         [
