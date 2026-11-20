@@ -431,6 +431,29 @@ class TestParser:
         assert [v.literal for v in variant.values] == ["cat", "dog", "bird"]
 
     @pytest.mark.parametrize(
+        "input, values, weights",
+        [
+            ("{::  cat| dog}", ["  cat", "dog"], [1, 1]),  # spaces kept
+            ("{ :: cat|3 ::dog}", [" cat", "dog"], [1, 3]),  # spaces before
+            ("{::::cat|dog}", ["::cat", "dog"], [1, 1]),  # literal "::"
+            ("{2::::cat|dog}", ["::cat", "dog"], [2, 1]),  # literal "::"
+            ("{cat|dog ::  x}", ["cat", "dog ::  x"], [1, 1]),  # not at start
+        ],
+    )
+    def test_variant_weight_without_number(self, input, values, weights):
+        variant = parse(input)
+        assert isinstance(variant, VariantCommand)
+        assert [v.literal for v in variant.values] == values
+        assert variant.weights == weights
+
+    def test_variant_weight_number_required_when_wildcards_use_it(self):
+        config = ParserConfig(wildcard_wrap="::")
+        variant = parse("{::colors::|dog}", parser_config=config)
+        assert isinstance(variant, VariantCommand)
+        assert isinstance(variant.values[0], WildcardCommand)
+        assert variant.values[0].wildcard == "colors"
+
+    @pytest.mark.parametrize(
         "input, min_bound, max_bound",
         [
             ("{2$$cat|dog|bird}", 2, 2),

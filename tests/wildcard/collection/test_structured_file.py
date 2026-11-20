@@ -94,6 +94,26 @@ def test_structured_weights_allow_spaces_before_delimiter():
     ]
 
 
+def test_structured_weights_allow_spaces_before_weight():
+    entries = list(
+        _parse_structured_file_list(
+            [
+                " 3    ::red",
+                "10.5  ::blue",
+                " 0.25 ::green",
+                "  prefix 2::unchanged",
+            ],
+        ),
+    )
+
+    assert entries == [
+        WildcardItem(content="red", weight=3),
+        WildcardItem(content="blue", weight=10.5),
+        WildcardItem(content="green", weight=0.25),
+        "  prefix 2::unchanged",
+    ]
+
+
 def test_json_and_yaml_structured_weights_are_identical(tmp_path: Path):
     json_path, yaml_path = _write_weighted_files(tmp_path)
 

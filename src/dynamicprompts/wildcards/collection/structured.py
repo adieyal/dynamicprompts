@@ -15,7 +15,7 @@ from dynamicprompts.wildcards.item import WildcardItem
 log = logging.getLogger(__name__)
 
 
-_LEADING_WEIGHT = re.compile(r"(?P<weight>\d+(?:\.\d+)?)[ \t]*::")
+_LEADING_WEIGHT = re.compile(r"\s*(?P<weight>\d+(?:\.\d+)?)\s*::")
 
 
 def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem]:
