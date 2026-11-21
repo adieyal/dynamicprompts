@@ -125,7 +125,9 @@ def parse_structured_file(file_path: Path) -> Iterable[tuple[str, WildcardCollec
     if isinstance(data, list):
         # See if the data is a flat list of strings
         valid_entries = list(
-            _parse_structured_file_list([e for e in data if isinstance(e, str)]),
+            _parse_structured_file_list(
+                [e for e in data if isinstance(e, str) or e is None],
+            ),
         )
         if valid_entries:
             # Only return a collection if it's not empty.

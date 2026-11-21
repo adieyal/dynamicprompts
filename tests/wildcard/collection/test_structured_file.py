@@ -137,6 +137,19 @@ def test_structured_blank_single_values_are_kept(tmp_path: Path):
     }
 
 
+def test_structured_top_level_blank_entries_are_kept(tmp_path: Path):
+    json_path = tmp_path / "colors.json"
+    json_path.write_text('[null, "red"]')
+    yaml_path = tmp_path / "blank.yaml"
+    yaml_path.write_text("-\n")
+
+    assert {
+        name: list(c.get_values())
+        for path in (json_path, yaml_path)
+        for name, c in parse_structured_file(path)
+    } == {"colors": ["", "red"], "blank": [""]}
+
+
 def test_json_and_yaml_structured_weights_are_identical(tmp_path: Path):
     json_path, yaml_path = _write_weighted_files(tmp_path)
 
