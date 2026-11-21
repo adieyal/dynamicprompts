@@ -15,6 +15,7 @@ from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
     wildcard_to_variant,
+    wildcard_value_prompt,
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
@@ -126,7 +127,7 @@ class RandomSampler(Sampler):
         gen = self._get_wildcard_choice_generator(context, values)
         while True:
             value = next(gen)
-            yield from context.sample_prompts(value, 1)
+            yield from context.sample_prompts(wildcard_value_prompt(value), 1)
 
     def _get_wrap(self, command: WrapCommand, context: SamplingContext) -> ResultGen:
         wrapper_gen = context.generator_from_command(command.wrapper)

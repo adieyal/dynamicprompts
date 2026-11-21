@@ -15,6 +15,7 @@ from dynamicprompts.samplers.base import Sampler
 from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
     wildcard_to_variant,
+    wildcard_value_prompt,
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
@@ -114,7 +115,7 @@ class CyclicalSampler(Sampler):
             return
 
         value_samplers = (
-            new_context.sample_prompts(val)
+            new_context.sample_prompts(wildcard_value_prompt(val))
             for val in wc_values.iterate_string_values_weighted()
         )
         value_result_gens = [to_result_gen(val) for val in value_samplers]

@@ -23,8 +23,9 @@ def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem
     Parse a single list in a structured file (JSON or YAML) and yield the wildcard items.
     """
     for item in value:
-        if not item:
-            continue
+        if item is None:
+            # A "-" with nothing after it is a blank entry, the same as "- ''".
+            item = ""
         if isinstance(item, str):
             match = _LEADING_WEIGHT.match(item)
             if match:
@@ -40,7 +41,8 @@ def _parse_structured_file_list(value: list[Any]) -> Iterable[str | WildcardItem
             #     and {"content": "foo", "weight": 1.1}
             weight = float(item.get("weight", 1))
             content = item.get("text") or item.get("content") or ""
-            if content:
+            # An empty "text" or "content" is a blank entry.
+            if content or "text" in item or "content" in item:
                 if weight == 1:
                     yield content
                 else:
@@ -62,7 +64,10 @@ def _parse_structured_file_dict(
         if not isinstance(name, str):
             continue
 
-        if not value:
+        if value is None:
+            # A key with nothing after it is a single blank entry, like "key: ''".
+            value = ""
+        if not value and not isinstance(value, str):
             continue
 
         prefix_and_name = (*prefix, name)

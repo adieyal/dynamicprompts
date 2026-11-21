@@ -54,6 +54,15 @@ class TestCombinatorialGenerator:
             r"unknown \q escape",
         ]
 
+    def test_empty_wildcard_value_is_a_combination(self, tmp_path):
+        (tmp_path / "empty.yaml").write_text("- '1::'\n- red\n")
+        generator = CombinatorialPromptGenerator(WildcardManager(path=tmp_path))
+
+        assert list(generator.generate("[__empty__]")) == ["[]", "[red]"]
+        assert generator.count("[__empty__]").value == 2
+        assert generator.prompt_at("[__empty__]", 0) == "[]"
+        assert generator.prompt_at("[__empty__]", 1) == "[red]"
+
     def test_variant_values_preserve_unescaped_dollars(self, tmp_path):
         wildcard_file = tmp_path / "parser-dollars.yaml"
         wildcard_file.write_text("- '{$0|x}'\n- '{$10|x}'\n- '{$tephanie|x}'\n")

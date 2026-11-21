@@ -114,6 +114,29 @@ def test_structured_weights_allow_spaces_before_weight():
     ]
 
 
+def test_structured_blank_entries_are_kept():
+    entries = list(
+        _parse_structured_file_list(
+            ["red", "", None, {"text": ""}, {"text": "", "weight": 2}],
+        ),
+    )
+
+    assert entries == ["red", "", "", "", WildcardItem(content="", weight=2)]
+
+
+def test_structured_blank_single_values_are_kept(tmp_path: Path):
+    yaml_path = tmp_path / "blanks.yaml"
+    yaml_path.write_text("empty: ''\nnothing:\nred: red\n")
+
+    collections = dict(parse_structured_file(yaml_path))
+
+    assert {name: list(c.get_values()) for name, c in collections.items()} == {
+        "empty": [""],
+        "nothing": [""],
+        "red": ["red"],
+    }
+
+
 def test_json_and_yaml_structured_weights_are_identical(tmp_path: Path):
     json_path, yaml_path = _write_weighted_files(tmp_path)
 
