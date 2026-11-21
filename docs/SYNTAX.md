@@ -73,6 +73,7 @@ You can add weights to options to control their relative frequency. To do this, 
 
 The weights are relative and do not have to add up to 1.
 If you omit a weight, it is assumed to be 1.
+The number can also be left out, as in `{::  text|other}`, to use the default weight of 1. Like any weighted option, the spaces after `::` are kept, so the first option is `  text`. Without a weight, spaces at the start of an option are removed.
 Weights are also possible in YAML wildcard files, [see below](#weighted-options-in-yaml).
 
 ### Choosing Multiple Values

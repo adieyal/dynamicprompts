@@ -20,6 +20,7 @@ from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
     sole_wildcard,
     wildcard_to_variant,
+    wildcard_value_prompt,
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
@@ -149,7 +150,7 @@ class CombinatorialSampler(Sampler):
 
         for val in values.iterate_string_values_weighted():
             # Parse and generate prompts from wildcard value
-            yield from context.sample_prompts(val)
+            yield from context.sample_prompts(wildcard_value_prompt(val))
 
     def _get_literal(
         self,

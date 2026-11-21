@@ -33,6 +33,7 @@ from dynamicprompts.samplers.utils import (
     get_wildcard_not_found_fallback,
     sole_wildcard,
     wildcard_to_variant,
+    wildcard_value_prompt,
 )
 from dynamicprompts.sampling_context import SamplingContext
 from dynamicprompts.sampling_result import SamplingResult
@@ -228,7 +229,7 @@ def _count_wildcard(
     expanding = expanding | {path}
     return _combined(
         [
-            _count_sampled(line, context, expanding)
+            _count_sampled(wildcard_value_prompt(line), context, expanding)
             for line in values.iterate_string_values_weighted()
         ],
         sum,
@@ -389,7 +390,8 @@ def _wildcard_at(
     values = context.wildcard_manager.get_values(path)
     if not values:
         return next(get_wildcard_not_found_fallback(command, _isolated(context)))
-    for line in values.iterate_string_values_weighted():
+    for value in values.iterate_string_values_weighted():
+        line = wildcard_value_prompt(value)
         size = _exact(_count_sampled(line, _isolated(context), frozenset()))
         if index < size:
             return _sampled_at(line, context, index)

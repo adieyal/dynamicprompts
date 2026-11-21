@@ -4,6 +4,7 @@ import logging
 
 from dynamicprompts.commands import (
     Command,
+    LiteralCommand,
     VariantCommand,
     VariantOption,
     WildcardCommand,
@@ -51,6 +52,13 @@ def wildcard_to_variant(
         command.sampling_method,
     )
     return wildcard_variant
+
+
+def wildcard_value_prompt(value: str) -> str | Command:
+    """
+    An empty wildcard value gives one empty result, not none, so it can be picked.
+    """
+    return value or LiteralCommand("")
 
 
 def get_wildcard_not_found_fallback(

@@ -48,6 +48,29 @@ class TestRandomGenerator:
 
         assert list(map(str, prompts)) == expected
 
+    def test_empty_wildcard_value_can_be_picked(self, tmp_path):
+        (tmp_path / "empty.yaml").write_text("- '1::'\n- red\n")
+        (tmp_path / "only-empty.yaml").write_text("- '1::'\n")
+        generator = RandomPromptGenerator(WildcardManager(path=tmp_path), seed=1)
+
+        assert Counter(generator.generate("[__empty__]", 100)).keys() == {
+            "[]",
+            "[red]",
+        }
+        assert generator.generate("[__only-empty__]", 3) == ["[]", "[]", "[]"]
+        assert generator.generate("[__@empty__]", 4) == ["[]", "[red]", "[]", "[red]"]
+
+    def test_blank_yaml_entries_can_be_picked(self, tmp_path):
+        (tmp_path / "blank.yaml").write_text("- ''\n- red\n-\n")
+        (tmp_path / "only-blank.yaml").write_text("- ''\n")
+        generator = RandomPromptGenerator(WildcardManager(path=tmp_path), seed=1)
+
+        assert Counter(generator.generate("[__blank__]", 100)).keys() == {
+            "[]",
+            "[red]",
+        }
+        assert generator.generate("[__only-blank__]", 2) == ["[]", "[]"]
+
     def test_variant_values_preserve_unescaped_dollars(self, tmp_path):
         wildcard_file = tmp_path / "parser-dollars.yaml"
         wildcard_file.write_text("- '{$0|x}'\n- '{$10|x}'\n- '{$tephanie|x}'\n")

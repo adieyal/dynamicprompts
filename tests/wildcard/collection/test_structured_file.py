@@ -94,6 +94,62 @@ def test_structured_weights_allow_spaces_before_delimiter():
     ]
 
 
+def test_structured_weights_allow_spaces_before_weight():
+    entries = list(
+        _parse_structured_file_list(
+            [
+                " 3    ::red",
+                "10.5  ::blue",
+                " 0.25 ::green",
+                "  prefix 2::unchanged",
+            ],
+        ),
+    )
+
+    assert entries == [
+        WildcardItem(content="red", weight=3),
+        WildcardItem(content="blue", weight=10.5),
+        WildcardItem(content="green", weight=0.25),
+        "  prefix 2::unchanged",
+    ]
+
+
+def test_structured_blank_entries_are_kept():
+    entries = list(
+        _parse_structured_file_list(
+            ["red", "", None, {"text": ""}, {"text": "", "weight": 2}],
+        ),
+    )
+
+    assert entries == ["red", "", "", "", WildcardItem(content="", weight=2)]
+
+
+def test_structured_blank_single_values_are_kept(tmp_path: Path):
+    yaml_path = tmp_path / "blanks.yaml"
+    yaml_path.write_text("empty: ''\nnothing:\nred: red\n")
+
+    collections = dict(parse_structured_file(yaml_path))
+
+    assert {name: list(c.get_values()) for name, c in collections.items()} == {
+        "empty": [""],
+        "nothing": [""],
+        "red": ["red"],
+    }
+
+
+def test_structured_top_level_blank_entries_are_kept(tmp_path: Path):
+    json_path = tmp_path / "colors.json"
+    json_path.write_text('[null, "red"]')
+    yaml_path = tmp_path / "blank.yaml"
+    yaml_path.write_text("-\n")
+
+    assert {
+        name: list(c.get_values())
+        for path in (json_path, yaml_path)
+        for name, c in parse_structured_file(path)
+    } == {"colors": ["", "red"], "blank": [""]}
+
+
 def test_json_and_yaml_structured_weights_are_identical(tmp_path: Path):
     json_path, yaml_path = _write_weighted_files(tmp_path)
 
